@@ -44,8 +44,10 @@ StickyWindow(#wnd,#True)
 settings()
 registerShortcuts()
 
-;CocoaMessage(0,application,"activateIgnoringOtherApps:",#YES)
-;HideWindow(#wnd,#False)
+If Not CountGadgetItems(#gadShortcuts)
+  CocoaMessage(0,application,"activateIgnoringOtherApps:",#YES)
+  HideWindow(#wnd,#False)
+EndIf
 
 Repeat
   Define ev = WaitWindowEvent()

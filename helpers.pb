@@ -2,6 +2,7 @@
   vImageUnpremultiplyData_RGBA8888 (*src, *dest, flags) 
 EndImport
 
+; code by wilbert (http://www.purebasic.fr/english/viewtopic.php?p=392073#p392073)
 Procedure loadImageEx(Image,Filename.s)
   Protected.i Result, Rep, vImg.vImage_Buffer
   Protected Size.NSSize, Point.NSPoint
@@ -34,14 +35,6 @@ Procedure loadImageEx(Image,Filename.s)
   ProcedureReturn Result
 EndProcedure
 
-Procedure.f getBackingScaleFactor()
-  Define backingScaleFactor.CGFloat = 1.0
-  If OSVersion() >= #PB_OS_MacOSX_10_7
-    CocoaMessage(@backingScaleFactor,CocoaMessage(0,0,"NSScreen mainScreen"),"backingScaleFactor")
-  EndIf
-  ProcedureReturn backingScaleFactor
-EndProcedure
-
 ; code by Shardik (http://www.purebasic.fr/english/viewtopic.php?p=393256#p393256)
 Procedure setListIconColumnJustification(ListIconID.I,ColumnIndex.I,Alignment.I)
   Protected ColumnHeaderCell.I
@@ -59,6 +52,14 @@ Procedure setListIconColumnJustification(ListIconID.I,ColumnIndex.I,Alignment.I)
 
   ; ----- Redraw ListIcon contents to see change
   CocoaMessage(0, GadgetID(ListIconID), "reloadData")
+EndProcedure
+
+Procedure.f getBackingScaleFactor()
+  Define backingScaleFactor.CGFloat = 1.0
+  If OSVersion() >= #PB_OS_MacOSX_10_7
+    CocoaMessage(@backingScaleFactor,CocoaMessage(0,0,"NSScreen mainScreen"),"backingScaleFactor")
+  EndIf
+  ProcedureReturn backingScaleFactor
 EndProcedure
 ; IDE Options = PureBasic 5.42 LTS (MacOS X - x64)
 ; Folding = -
