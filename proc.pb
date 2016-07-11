@@ -54,9 +54,8 @@ Procedure initResources()
   If FileSize(GetEnvironmentVariable("HOME") + "/.config/" + #myName) = -1
     CreateDirectory(GetEnvironmentVariable("HOME") + "/.config/" + #myName)
   EndIf
-  ;LoadFont(#resFont,#wndFont,#wndFontSize)
-  ;LoadFont(#resFontMono,#wndFontMono,#wndFontMonoSize)
-  If LoadImageEx(#resLogo,GetPathPart(ProgramFilename()) + "../Resources/main.icns")
+  LoadFont(#resBigFont,"Courier",18,#PB_Font_Bold)
+  If LoadImageEx(#resLogo,GetPathPart(ProgramFilename()) + "../Resources/main.icns") And LoadImageEx(#resAdd,GetPathPart(ProgramFilename()) + "../Resources/add.png") And LoadImageEx(#resDel,GetPathPart(ProgramFilename()) + "../Resources/del.png")
     CopyImage(#resLogo,#resIcon)
     If getBackingScaleFactor() >= 2.0
       ResizeImage(#resIcon,36,36,#PB_Image_Smooth)
@@ -67,29 +66,45 @@ Procedure initResources()
       imageSize\width = 64
       imageSize\height = 64
       CocoaMessage(0,ImageID(#resLogo),"setSize:@",@ImageSize)
+      imageSize\width = 24
+      imageSize\height = 24
+      CocoaMessage(0,ImageID(#resAdd),"setSize:@",@ImageSize)
+      CocoaMessage(0,ImageID(#resDel),"setSize:@",@ImageSize)
     Else
       ResizeImage(#resLogo,64,64,#PB_Image_Smooth)
       ResizeImage(#resIcon,18,18,#PB_Image_Smooth)
+      ResizeImage(#resAdd,24,24,#PB_Image_Smooth)
+      ResizeImage(#resDel,24,24,#PB_Image_Smooth)
     EndIf
     CocoaMessage(0,ImageID(#resIcon),"setTemplate:",#True)
   Else
     Debug "failed to load image"
+    End 1
   EndIf
 EndProcedure
 
-Procedure menuActions()
+Procedure menuEvents()
   Shared application.i
   Select EventMenu()
     Case #menuAbout
       CocoaMessage(0,application,"activateIgnoringOtherApps:",#YES)
       SetGadgetState(#gadTabs,1)
+      SetActiveGadget(#gadCopyright)
       HideWindow(#wnd,#False)
     Case #menuPrefs
       CocoaMessage(0,application,"activateIgnoringOtherApps:",#YES)
       SetGadgetState(#gadTabs,0)
+      SetActiveGadget(#gadShortcuts)
       HideWindow(#wnd,#False)
     Case #menuQuit
       die()
+  EndSelect
+EndProcedure
+
+Procedure gadgetEvents()
+  Select EventGadget()
+    Case #gadWebDeveloper
+      RunProgram("open","http://deseven.info","")
   EndSelect
 EndProcedure
 
@@ -97,18 +112,18 @@ Procedure buildMenu()
   Shared statusBar.i,statusItem.i
   Protected itemLength.CGFloat = 32
   If Not (statusBar And statusItem)
-    StatusBar.i = CocoaMessage(0,0,"NSStatusBar systemStatusBar")
-    StatusItem.i = CocoaMessage(0,CocoaMessage(0,StatusBar,"statusItemWithLength:",#NSSquareStatusBarItemLength),"retain")
+    statusBar.i = CocoaMessage(0,0,"NSStatusBar systemStatusBar")
+    statusItem.i = CocoaMessage(0,CocoaMessage(0,StatusBar,"statusItemWithLength:",#NSSquareStatusBarItemLength),"retain")
   EndIf
   If IsMenu(#menu) : FreeMenu(#menu) : EndIf
   CreatePopupMenu(#menu)
   MenuItem(#menuPrefs,"Preferences...")
-  BindMenuEvent(#menu,#menuPrefs,@menuActions())
+  BindMenuEvent(#menu,#menuPrefs,@menuEvents())
   MenuItem(#menuAbout,"About")
-  BindMenuEvent(#menu,#menuAbout,@menuActions())
+  BindMenuEvent(#menu,#menuAbout,@menuEvents())
   MenuBar()
   MenuItem(#menuQuit,"Quit")
-  BindMenuEvent(#menu,#menuQuit,@menuActions())
+  BindMenuEvent(#menu,#menuQuit,@menuEvents())
   CocoaMessage(0,StatusItem,"setHighlightMode:",@"YES")
   CocoaMessage(0,StatusItem,"setLength:@",@itemLength)
   CocoaMessage(0,StatusItem,"setImage:",ImageID(#resIcon))
