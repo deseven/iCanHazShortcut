@@ -139,15 +139,11 @@ Procedure registerShortcuts()
 EndProcedure
 
 Procedure action(action.s)
-  Protected program.s,params.s
-  Protected programEnd.l = FindString(action," ")
-  If programEnd
-    program = Left(action,programEnd-1)
-    params = Mid(action,programEnd+1)
-  Else
-    program = action
+  Protected pid = RunProgram("/bin/bash","","",#PB_Program_Write|#PB_Program_Open)
+  If IsProgram(pid)
+    WriteProgramString(pid,action)
   EndIf
-  RunProgram(program,params,"")
+  CloseProgram(pid)
 EndProcedure
 
 Macro editingMode()

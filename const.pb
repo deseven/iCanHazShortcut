@@ -1,6 +1,6 @@
 ﻿; main
 #myName = "iCanHazShortcut"
-#myVer = "0.3.0"
+#myVer = "0.3.1"
 
 ; enums
 Enumeration main
