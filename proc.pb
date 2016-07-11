@@ -1,48 +1,4 @@
-﻿ImportC "/System/Library/Frameworks/Accelerate.framework/Accelerate"
-  vImageUnpremultiplyData_RGBA8888 (*src, *dest, flags) 
-EndImport
-
-Procedure loadImageEx(Image,Filename.s)
-  Protected.i Result, Rep, vImg.vImage_Buffer
-  Protected Size.NSSize, Point.NSPoint
-  CocoaMessage(@Rep, 0, "NSImageRep imageRepWithContentsOfFile:$", @Filename)
-  If Rep
-    Size\width = CocoaMessage(0, Rep, "pixelsWide")
-    Size\height = CocoaMessage(0, Rep, "pixelsHigh")
-    If Size\width And Size\height
-      CocoaMessage(0, Rep, "setSize:@", @Size)
-    Else
-      CocoaMessage(@Size, Rep, "size")
-    EndIf
-    If Size\width And Size\height
-      Result = CreateImage(Image, Size\width, Size\height, 32, #PB_Image_Transparent)
-      If Result
-        If Image = #PB_Any : Image = Result : EndIf
-        StartDrawing(ImageOutput(Image))
-        CocoaMessage(0, Rep, "drawAtPoint:@", @Point)
-        If CocoaMessage(0, Rep, "hasAlpha")
-          vImg\data = DrawingBuffer()
-          vImg\width = OutputWidth()
-          vImg\height = OutputHeight()
-          vImg\rowBytes = DrawingBufferPitch()
-          vImageUnPremultiplyData_RGBA8888(@vImg, @vImg, 0)
-        EndIf
-        StopDrawing()
-      EndIf
-    EndIf
-  EndIf  
-  ProcedureReturn Result
-EndProcedure
-
-Procedure.f getBackingScaleFactor()
-  Define backingScaleFactor.CGFloat = 1.0
-  If OSVersion() >= #PB_OS_MacOSX_10_7
-    CocoaMessage(@backingScaleFactor,CocoaMessage(0,0,"NSScreen mainScreen"),"backingScaleFactor")
-  EndIf
-  ProcedureReturn backingScaleFactor
-EndProcedure
-
-Procedure die()
+﻿Procedure die()
   End 0
 EndProcedure
 
@@ -101,13 +57,6 @@ Procedure menuEvents()
   EndSelect
 EndProcedure
 
-Procedure gadgetEvents()
-  Select EventGadget()
-    Case #gadWebDeveloper
-      RunProgram("open","http://deseven.info","")
-  EndSelect
-EndProcedure
-
 Procedure buildMenu()
   Shared statusBar.i,statusItem.i
   Protected itemLength.CGFloat = 32
@@ -129,6 +78,33 @@ Procedure buildMenu()
   CocoaMessage(0,StatusItem,"setImage:",ImageID(#resIcon))
   CocoaMessage(0,StatusItem,"setMenu:",CocoaMessage(0,MenuID(#menu),"firstObject"))
 EndProcedure
+
+Macro editingMode()
+  editingState = #True
+  HideGadget(#gadShortcuts,#True)
+  OpenGadgetList(#gadTabs,0)
+  TextGadget(#gadBg,0,0,400,300,"") ; dirty fix for a strange redraw behavior
+  FreeGadget(#gadBg)
+  TextGadget(#gadShortcutSelectorCap,10,12,60,20,"Shortcut:")
+  ShortcutGadget(#gadShortcutSelector,70,10,80,20,0)
+  CocoaMessage(0,GadgetID(#gadShortcutSelector),"setAlignment:",#NSCenterTextAlignment)
+  Define placeholder.s = "press keys"
+  CocoaMessage(0,CocoaMessage(0,GadgetID(#gadShortcutSelector),"cell"),"setPlaceholderString:$",@placeholder)
+  TextGadget(#gadActionCap,10,42,60,20,"Action:")
+  StringGadget(#gadAction,70,40,290,20,"")
+  CocoaMessage(0,GadgetID(#gadAction),"setFocusRingType:",2)
+  placeholder.s = "input command which will be executed"
+  CocoaMessage(0,CocoaMessage(0,GadgetID(#gadAction),"cell"),"setPlaceholderString:$",@placeholder)
+  TextGadget(#gadActionHelp,10,70,360,150,~"You can use any command that works in your terminal.\nTo launch specific app (for example, Automator) simply enter 'open -a Automator'.\nFor more info and usage options refer to the output of the 'open' command.")
+  CloseGadgetList()
+EndMacro
+
+Macro viewingMode()
+  editingState = #False
+  FreeGadget(#gadShortcutSelectorCap) : FreeGadget(#gadShortcutSelector)
+  FreeGadget(#gadActionCap) : FreeGadget(#gadAction) : FreeGadget(#gadActionHelp)
+  HideGadget(#gadShortcuts,#False)
+EndMacro
 ; IDE Options = PureBasic 5.42 LTS (MacOS X - x64)
 ; Folding = --
 ; EnableUnicode

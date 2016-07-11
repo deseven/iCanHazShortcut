@@ -2,7 +2,6 @@
 #myName = "iCanHazShortcut"
 #myVer = "0.1.0"
 
-
 ; enums
 Enumeration main
   #wnd
@@ -22,6 +21,12 @@ Enumeration gadgets
   #gadCopyright
   #gadWebDeveloper
   #gadLicense
+  #gadBg
+  #gadShortcutSelector
+  #gadAction
+  #gadShortcutSelectorCap
+  #gadActionCap
+  #gadActionHelp
 EndEnumeration
 
 Enumeration resources

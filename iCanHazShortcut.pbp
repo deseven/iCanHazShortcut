@@ -7,27 +7,33 @@
   <section name="data">
     <explorer view="../../" pattern="0"/>
     <log show="1"/>
-    <lastopen date="2016-07-11 09:58" user="deseven" host="de7air.local"/>
+    <lastopen date="2016-07-11 14:22" user="deseven" host="de7air.local"/>
   </section>
   <section name="files">
     <file name="const.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
-      <fingerprint md5="d41d8cd98f00b204e9800998ecf8427e"/>
+      <fingerprint md5="d4fcc961499a4651ff0b7519dec36ffe"/>
     </file>
     <file name="main.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
-      <fingerprint md5="48b1daa28f038c1625adc6dee5afbf9b"/>
+      <fingerprint md5="d474f012d6d185ea0fa16bb7fac909d5"/>
     </file>
     <file name="proc.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
-      <fingerprint md5="8bdf8c666c4c5dc4571c11732058eb96"/>
+      <fingerprint md5="ad22c45806e06fc4a5e1a9f57fac8f29"/>
+    </file>
+    <file name="helpers.pb">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
+      <fingerprint md5="1de29d32aceafac724f5d06b75087cac"/>
     </file>
   </section>
   <section name="targets">
     <target name="Default Target" enabled="1" default="1">
       <inputfile value="main.pb"/>
       <outputfile value="iCanHazShortcut.app"/>
-      <options unicode="1" xpskin="1" debug="1"/>
+      <executable value="iCanHazShortcut.app"/>
+      <options unicode="1" thread="1" xpskin="1" debug="1"/>
+      <tools>ICHS_INJECT,ICHS_INJECT_BUILD</tools>
     </target>
   </section>
 </project>
