@@ -2,15 +2,43 @@
   End 0
 EndProcedure
 
-Procedure initResources()
-  Protected imageSize.NSSize
-  Protected path.s = GetPathPart(ProgramFilename()) + "../Resources/"
+Procedure settings(save.b = #False)
+  Protected shortcut.s,action.s,i.l
   If FileSize(GetEnvironmentVariable("HOME") + "/.config") = -1
     CreateDirectory(GetEnvironmentVariable("HOME") + "/.config")
   EndIf
   If FileSize(GetEnvironmentVariable("HOME") + "/.config/" + #myName) = -1
     CreateDirectory(GetEnvironmentVariable("HOME") + "/.config/" + #myName)
   EndIf
+  Protected path.s = GetEnvironmentVariable("HOME") + "/.config/" + #myName + "/config.ini"
+  If save
+    CreatePreferences(path,#PB_Preference_GroupSeparator)
+    For i = 0 To CountGadgetItems(#gadShortcuts)-1
+      shortcut = GetGadgetItemText(#gadShortcuts,i,0)
+      action = GetGadgetItemText(#gadShortcuts,i,1)
+      PreferenceGroup("shortcut" + Str(i+1))
+      WritePreferenceString("shortcut",shortcut)
+      WritePreferenceString("action",action)
+    Next
+  Else
+    OpenPreferences(path,#PB_Preference_GroupSeparator)
+    ExaminePreferenceGroups()
+    While NextPreferenceGroup()
+      If FindString(PreferenceGroupName(),"shortcut") = 1
+        shortcut = ReadPreferenceString("shortcut","")
+        action = ReadPreferenceString("action","")
+        If Len(action) And Len(shortcut)
+          AddGadgetItem(#gadShortcuts,-1,shortcut + ~"\n" + action)
+        EndIf
+      EndIf
+    Wend
+  EndIf
+  ClosePreferences()
+EndProcedure
+
+Procedure initResources()
+  Protected imageSize.NSSize
+  Protected path.s = GetPathPart(ProgramFilename()) + "../Resources/"
   LoadFont(#resBigFont,"Courier",18,#PB_Font_Bold)
   If LoadImageEx(#resLogo,path+"main.icns") And LoadImageEx(#resAdd,path+"add.png") And LoadImageEx(#resDel,path+"del.png") And LoadImageEx(#resOk,path+"ok.png") And LoadImageEx(#resFailed,path+"failed.png")
     CopyImage(#resLogo,#resIcon)

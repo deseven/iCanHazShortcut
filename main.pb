@@ -41,8 +41,11 @@ SetActiveGadget(#gadShortcuts)
 CloseGadgetList()
 StickyWindow(#wnd,#True)
 
-CocoaMessage(0,application,"activateIgnoringOtherApps:",#YES)
-HideWindow(#wnd,#False)
+settings()
+registerShortcuts()
+
+;CocoaMessage(0,application,"activateIgnoringOtherApps:",#YES)
+;HideWindow(#wnd,#False)
 
 Repeat
   Define ev = WaitWindowEvent()
@@ -56,6 +59,7 @@ Repeat
             If Len(GetGadgetText(#gadShortcutSelector)) > 0 And Len(GetGadgetText(#gadAction)) > 0
               AddGadgetItem(#gadShortcuts,-1,GetGadgetText(#gadShortcutSelector) + ~"\n" + GetGadgetText(#gadAction))
               registerShortcuts()
+              settings(#True)
               viewingMode()
             Else
               MessageRequester(#myName,"Please define your hotkey and action first.")
@@ -68,8 +72,9 @@ Repeat
             viewingMode()
           Else
             i = GetGadgetState(#gadShortcuts)
-            RemoveGadgetItem(#gadShortcuts,GetGadgetState(#gadShortcuts))
+            RemoveGadgetItem(#gadShortcuts,i)
             registerShortcuts()
+            settings(#True)
             If CountGadgetItems(#gadShortcuts) > i
               SetGadgetState(#gadShortcuts,i)
             Else
@@ -84,7 +89,7 @@ Repeat
       If ev >= #PB_Event_FirstCustomValue
         Define shortcut.l = ev - #PB_Event_FirstCustomValue
         If CountGadgetItems(#gadShortcuts) => shortcut+1
-          Debug "running " + GetGadgetItemText(#gadShortcuts,shortcut,1)
+          ;Debug "running " + GetGadgetItemText(#gadShortcuts,shortcut,1)
           action(GetGadgetItemText(#gadShortcuts,shortcut,1))
         EndIf
       EndIf
