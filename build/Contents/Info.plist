@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>English</string>
+	<key>CFBundleExecutable</key>
+	<string>iCanHazShortcut</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleIconFile</key>
+	<string>main.icns</string>
+	<key>CFBundleIdentifier</key>
+	<string>info.deseven.icanhazshortcut</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleSignature</key>
+	<string>PURE</string>
+	<key>CFBundleVersion</key>
+	<string>0.1.0</string>
+	<key>CFBundleName</key>
+	<string>iCanHazShortcut</string>
+	<key>CSResourcesFileMapped</key>
+	<true/>
+	<key>NSHighResolutionCapable</key>
+	<true/>
+	<key>LSUIElement</key>
+	<true/>
+	<key>NSDisablePersistence</key>
+	<true/>
+	<key>LSMinimumSystemVersion</key>
+	<string>10.8</string>
+	<key>NSAppleScriptEnabled</key>
+	<false/>
+</dict>
+</plist>
