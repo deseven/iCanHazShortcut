@@ -40,7 +40,7 @@ Procedure initResources()
   Protected imageSize.NSSize
   Protected path.s = GetPathPart(ProgramFilename()) + "../Resources/"
   LoadFont(#resBigFont,"Courier",18,#PB_Font_Bold)
-  If LoadImageEx(#resLogo,path+"main.icns") And LoadImageEx(#resAdd,path+"add.png") And LoadImageEx(#resDel,path+"del.png") And LoadImageEx(#resOk,path+"ok.png") And LoadImageEx(#resFailed,path+"failed.png")
+  If LoadImageEx(#resLogo,path+"main.icns") And LoadImageEx(#resAdd,path+"add.png") And LoadImageEx(#resEdit,path+"edit.png") And LoadImageEx(#resDel,path+"del.png") And LoadImageEx(#resApply,path+"apply.png") And LoadImageEx(#resCancel,path+"cancel.png") And LoadImageEx(#resOk,path+"ok.png") And LoadImageEx(#resFailed,path+"failed.png") And LoadImageEx(#resUp,path+"up.png") And LoadImageEx(#resDown,path+"down.png")
     CopyImage(#resLogo,#resIcon)
     If getBackingScaleFactor() >= 2.0
       ResizeImage(#resIcon,36,36,#PB_Image_Smooth)
@@ -54,7 +54,12 @@ Procedure initResources()
       imageSize\width = 24
       imageSize\height = 24
       CocoaMessage(0,ImageID(#resAdd),"setSize:@",@ImageSize)
+      CocoaMessage(0,ImageID(#resEdit),"setSize:@",@ImageSize)
       CocoaMessage(0,ImageID(#resDel),"setSize:@",@ImageSize)
+      CocoaMessage(0,ImageID(#resApply),"setSize:@",@ImageSize)
+      CocoaMessage(0,ImageID(#resCancel),"setSize:@",@ImageSize)
+      CocoaMessage(0,ImageID(#resUp),"setSize:@",@ImageSize)
+      CocoaMessage(0,ImageID(#resDown),"setSize:@",@ImageSize)
       imageSize\width = 16
       imageSize\height = 16
       CocoaMessage(0,ImageID(#resOk),"setSize:@",@ImageSize)
@@ -63,7 +68,12 @@ Procedure initResources()
       ResizeImage(#resLogo,64,64,#PB_Image_Smooth)
       ResizeImage(#resIcon,18,18,#PB_Image_Smooth)
       ResizeImage(#resAdd,24,24,#PB_Image_Smooth)
+      ResizeImage(#resEdit,24,24,#PB_Image_Smooth)
       ResizeImage(#resDel,24,24,#PB_Image_Smooth)
+      ResizeImage(#resApply,24,24,#PB_Image_Smooth)
+      ResizeImage(#resCancel,24,24,#PB_Image_Smooth)
+      ResizeImage(#resUp,24,24,#PB_Image_Smooth)
+      ResizeImage(#resDown,24,24,#PB_Image_Smooth)
       ResizeImage(#resOk,16,16,#PB_Image_Smooth)
       ResizeImage(#resFailed,16,16,#PB_Image_Smooth)
     EndIf
@@ -141,30 +151,59 @@ Procedure action(action.s)
 EndProcedure
 
 Macro editingMode()
-  editingState = #True
   HideGadget(#gadShortcuts,#True)
+  HideGadget(#gadAdd,#True)
+  HideGadget(#gadEdit,#True)
+  HideGadget(#gadDel,#True)
+  HideGadget(#gadUp,#True)
+  HideGadget(#gadDown,#True)
   OpenGadgetList(#gadTabs,0)
   TextGadget(#gadBg,0,0,400,300,"") ; dirty fix for a strange redraw behavior
   FreeGadget(#gadBg)
   TextGadget(#gadShortcutSelectorCap,10,12,60,20,"Shortcut:")
   ShortcutGadget(#gadShortcutSelector,70,10,80,20,0)
+  CocoaMessage(0,GadgetID(#gadShortcutSelector),"setFocusRingType:",1)
   CocoaMessage(0,GadgetID(#gadShortcutSelector),"setAlignment:",#NSCenterTextAlignment)
   Define placeholder.s = "press keys"
   CocoaMessage(0,CocoaMessage(0,GadgetID(#gadShortcutSelector),"cell"),"setPlaceholderString:$",@placeholder)
   TextGadget(#gadActionCap,10,42,60,20,"Action:")
   StringGadget(#gadAction,70,40,290,20,"")
-  CocoaMessage(0,GadgetID(#gadAction),"setFocusRingType:",2)
+  CocoaMessage(0,GadgetID(#gadAction),"setFocusRingType:",1)
   placeholder.s = "input command which will be executed"
   CocoaMessage(0,CocoaMessage(0,GadgetID(#gadAction),"cell"),"setPlaceholderString:$",@placeholder)
   TextGadget(#gadActionHelp,10,70,360,150,~"You can use any command that works in your terminal.\nTo launch specific app (for example, Automator) simply enter 'open -a Automator'.\nFor more info and usage options refer to the output of the 'open' command.")
+  HideGadget(#gadApply,#False)
+  HideGadget(#gadCancel,#False)
   CloseGadgetList()
 EndMacro
 
 Macro viewingMode()
-  editingState = #False
   FreeGadget(#gadShortcutSelectorCap) : FreeGadget(#gadShortcutSelector)
   FreeGadget(#gadActionCap) : FreeGadget(#gadAction) : FreeGadget(#gadActionHelp)
+  HideGadget(#gadCancel,#True)
+  HideGadget(#gadApply,#True)
+  TextGadget(#gadBg,0,0,400,300,"") ; dirty fix for a strange redraw behavior
+  FreeGadget(#gadBg)
   HideGadget(#gadShortcuts,#False)
+  HideGadget(#gadAdd,#False)
+  HideGadget(#gadEdit,#False)
+  HideGadget(#gadDel,#False)
+  HideGadget(#gadUp,#False)
+  HideGadget(#gadDown,#False)
+  SetGadgetState(#gadShortcuts,-1)
+EndMacro
+
+Macro recalcUpDown()
+  If GetGadgetState(#gadShortcuts) = 0
+    DisableGadget(#gadUp,#True)
+    DisableGadget(#gadDown,#False)
+  ElseIf GetGadgetState(#gadShortcuts) + 1 = CountGadgetItems(#gadShortcuts)
+    DisableGadget(#gadUp,#False)
+    DisableGadget(#gadDown,#True)
+  Else
+    DisableGadget(#gadUp,#False)
+    DisableGadget(#gadDown,#False)
+  EndIf
 EndMacro
 ; IDE Options = PureBasic 5.42 LTS (MacOS X - x64)
 ; Folding = --

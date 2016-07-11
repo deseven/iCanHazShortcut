@@ -5,7 +5,7 @@ EnableExplicit
 
 Define statusBar.i,statusItem.i,i.l
 Define application.i = CocoaMessage(0,0,"NSApplication sharedApplication")
-Define editingState.b = #False
+Define editExistent.b = #False
 
 IncludeFile "helpers.pb"
 IncludeFile "proc.pb"
@@ -25,8 +25,20 @@ SetGadgetAttribute(#gadShortcuts,#PB_ListIcon_List,#True)
 CocoaMessage(0,GadgetID(#gadShortcuts),"setFocusRingType:",1)
 AddGadgetColumn(#gadShortcuts,1,"Action",240)
 setListIconColumnJustification(#gadShortcuts,0,2)
-ButtonImageGadget(#gadAdd,296,222,36,34,ImageID(#resAdd))
+ButtonImageGadget(#gadAdd,260,222,36,34,ImageID(#resAdd))
+ButtonImageGadget(#gadEdit,296,222,36,34,ImageID(#resEdit))
 ButtonImageGadget(#gadDel,332,222,36,34,ImageID(#resDel))
+ButtonImageGadget(#gadApply,296,222,36,34,ImageID(#resApply))
+ButtonImageGadget(#gadCancel,332,222,36,34,ImageID(#resCancel))
+ButtonImageGadget(#gadUp,2,222,36,34,ImageID(#resUp))
+ButtonImageGadget(#gadDown,38,222,36,34,ImageID(#resDown))
+CocoaMessage(0,GadgetID(#gadAdd),"setFocusRingType:",1)
+CocoaMessage(0,GadgetID(#gadEdit),"setFocusRingType:",1)
+CocoaMessage(0,GadgetID(#gadDel),"setFocusRingType:",1)
+CocoaMessage(0,GadgetID(#gadApply),"setFocusRingType:",1)
+CocoaMessage(0,GadgetID(#gadCancel),"setFocusRingType:",1)
+CocoaMessage(0,GadgetID(#gadUp),"setFocusRingType:",1)
+CocoaMessage(0,GadgetID(#gadDown),"setFocusRingType:",1)
 AddGadgetItem(#gadTabs,1,"About")
 ImageGadget(#gadLogo,25,0,64,64,ImageID(#resLogo))
 TextGadget(#gadNameVer,89,8,270,20,#myName + " " + #myVer,#PB_Text_Center)
@@ -37,6 +49,9 @@ SetGadgetColor(#gadWebDeveloper,#PB_Gadget_FrontColor,$bb0000)
 EditorGadget(#gadLicense,5,70,360,180,#PB_Editor_ReadOnly|#PB_Editor_WordWrap)
 AddGadgetItem(#gadLicense,-1,#LICENSE)
 SetActiveGadget(#gadShortcuts)
+DisableGadget(#gadEdit,#True) : DisableGadget(#gadDel,#True)
+DisableGadget(#gadUp,#True) : DisableGadget(#gadDown,#True)
+HideGadget(#gadApply,#True) : HideGadget(#gadCancel,#True)
 
 CloseGadgetList()
 StickyWindow(#wnd,#True)
@@ -44,6 +59,7 @@ StickyWindow(#wnd,#True)
 settings()
 registerShortcuts()
 
+;If #True
 If Not CountGadgetItems(#gadShortcuts)
   CocoaMessage(0,application,"activateIgnoringOtherApps:",#YES)
   HideWindow(#wnd,#False)
@@ -54,38 +70,70 @@ Repeat
   Select ev
     Case #PB_Event_Gadget
       Select EventGadget()
+        Case #gadShortcuts
+          If EventType() = #PB_EventType_Change
+            If GetGadgetState(#gadShortcuts) <> -1
+              DisableGadget(#gadEdit,#False) : DisableGadget(#gadDel,#False)
+              recalcUpDown()
+            Else
+              DisableGadget(#gadEdit,#True) : DisableGadget(#gadDel,#True)
+              DisableGadget(#gadUp,#True) : DisableGadget(#gadDown,#True)
+            EndIf
+          EndIf
         Case #gadWebDeveloper
           RunProgram("open","http://deseven.info","")
         Case #gadAdd
-          If editingState
-            If Len(GetGadgetText(#gadShortcutSelector)) > 0 And Len(GetGadgetText(#gadAction)) > 0
-              AddGadgetItem(#gadShortcuts,-1,GetGadgetText(#gadShortcutSelector) + ~"\n" + GetGadgetText(#gadAction))
-              registerShortcuts()
-              settings(#True)
-              viewingMode()
-            Else
-              MessageRequester(#myName,"Please define your hotkey and action first.")
-            EndIf
-          Else
-            editingMode()
-          EndIf
+          editingMode()
+        Case #gadEdit
+          editExistent = #True
+          editingMode()
+          SetGadgetText(#gadShortcutSelector,GetGadgetItemText(#gadShortcuts,GetGadgetState(#gadShortcuts),0))
+          SetGadgetText(#gadAction,GetGadgetItemText(#gadShortcuts,GetGadgetState(#gadShortcuts),1))
         Case #gadDel
-          If editingState
-            viewingMode()
+          i = GetGadgetState(#gadShortcuts)
+          RemoveGadgetItem(#gadShortcuts,i)
+          registerShortcuts()
+          settings(#True)
+          If CountGadgetItems(#gadShortcuts) > i
+            SetGadgetState(#gadShortcuts,i)
           Else
-            i = GetGadgetState(#gadShortcuts)
-            RemoveGadgetItem(#gadShortcuts,i)
+            SetGadgetState(#gadShortcuts,CountGadgetItems(#gadShortcuts)-1)
+          EndIf
+          recalcUpDown()
+        Case #gadApply
+          If Len(GetGadgetText(#gadShortcutSelector)) > 0 And Len(GetGadgetText(#gadAction)) > 0
+            If editExistent
+              AddGadgetItem(#gadShortcuts,GetGadgetState(#gadShortcuts),GetGadgetText(#gadShortcutSelector) + ~"\n" + GetGadgetText(#gadAction))
+              RemoveGadgetItem(#gadShortcuts,GetGadgetState(#gadShortcuts)+1)
+              editExistent = #False  
+            Else
+              AddGadgetItem(#gadShortcuts,-1,GetGadgetText(#gadShortcutSelector) + ~"\n" + GetGadgetText(#gadAction))
+            EndIf
             registerShortcuts()
             settings(#True)
-            If CountGadgetItems(#gadShortcuts) > i
-              SetGadgetState(#gadShortcuts,i)
-            Else
-              SetGadgetState(#gadShortcuts,CountGadgetItems(#gadShortcuts)-1)
-            EndIf
+            viewingMode()
+          Else
+            MessageRequester(#myName,"Please define your hotkey and action first.")
           EndIf
+        Case #gadCancel
+          viewingMode()
+        Case #gadUp
+          AddGadgetItem(#gadShortcuts,GetGadgetState(#gadShortcuts)-1,GetGadgetItemText(#gadShortcuts,GetGadgetState(#gadShortcuts),0) + ~"\n" + GetGadgetItemText(#gadShortcuts,GetGadgetState(#gadShortcuts),1))
+          RemoveGadgetItem(#gadShortcuts,GetGadgetState(#gadShortcuts)+1)
+          SetGadgetState(#gadShortcuts,GetGadgetState(#gadShortcuts)-1)
+          registerShortcuts()
+          settings(#True)
+        Case #gadDown
+          AddGadgetItem(#gadShortcuts,GetGadgetState(#gadShortcuts)+2,GetGadgetItemText(#gadShortcuts,GetGadgetState(#gadShortcuts),0) + ~"\n" + GetGadgetItemText(#gadShortcuts,GetGadgetState(#gadShortcuts),1))
+          RemoveGadgetItem(#gadShortcuts,GetGadgetState(#gadShortcuts))
+          SetGadgetState(#gadShortcuts,GetGadgetState(#gadShortcuts)+1)
+          registerShortcuts()
+          settings(#True)
       EndSelect
     Case #PB_Event_CloseWindow
-      If editingState : viewingMode() : EndIf
+      If IsGadget(#gadShortcutSelectorCap)
+        viewingMode()
+      EndIf
       HideWindow(#wnd,#True)
     Default
       If ev >= #PB_Event_FirstCustomValue

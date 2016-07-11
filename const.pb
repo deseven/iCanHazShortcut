@@ -1,6 +1,6 @@
 ﻿; main
 #myName = "iCanHazShortcut"
-#myVer = "0.2.1"
+#myVer = "0.3.0"
 
 ; enums
 Enumeration main
@@ -15,7 +15,12 @@ Enumeration gadgets
   #gadTabs
   #gadShortcuts
   #gadAdd
+  #gadEdit
   #gadDel
+  #gadApply
+  #gadCancel
+  #gadUp
+  #gadDown
   #gadLogo
   #gadNameVer
   #gadCopyright
@@ -34,7 +39,12 @@ Enumeration resources
   #resIcon
   #resLogo
   #resAdd
+  #resEdit
   #resDel
+  #resApply
+  #resCancel
+  #resUp
+  #resDown
   #resOk
   #resFailed
   #resFont
