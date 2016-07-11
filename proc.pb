@@ -4,6 +4,7 @@ EndProcedure
 
 Procedure initResources()
   Protected imageSize.NSSize
+  Protected path.s = GetPathPart(ProgramFilename()) + "../Resources/"
   If FileSize(GetEnvironmentVariable("HOME") + "/.config") = -1
     CreateDirectory(GetEnvironmentVariable("HOME") + "/.config")
   EndIf
@@ -11,7 +12,7 @@ Procedure initResources()
     CreateDirectory(GetEnvironmentVariable("HOME") + "/.config/" + #myName)
   EndIf
   LoadFont(#resBigFont,"Courier",18,#PB_Font_Bold)
-  If LoadImageEx(#resLogo,GetPathPart(ProgramFilename()) + "../Resources/main.icns") And LoadImageEx(#resAdd,GetPathPart(ProgramFilename()) + "../Resources/add.png") And LoadImageEx(#resDel,GetPathPart(ProgramFilename()) + "../Resources/del.png")
+  If LoadImageEx(#resLogo,path+"main.icns") And LoadImageEx(#resAdd,path+"add.png") And LoadImageEx(#resDel,path+"del.png") And LoadImageEx(#resOk,path+"ok.png") And LoadImageEx(#resFailed,path+"failed.png")
     CopyImage(#resLogo,#resIcon)
     If getBackingScaleFactor() >= 2.0
       ResizeImage(#resIcon,36,36,#PB_Image_Smooth)
@@ -26,11 +27,17 @@ Procedure initResources()
       imageSize\height = 24
       CocoaMessage(0,ImageID(#resAdd),"setSize:@",@ImageSize)
       CocoaMessage(0,ImageID(#resDel),"setSize:@",@ImageSize)
+      imageSize\width = 16
+      imageSize\height = 16
+      CocoaMessage(0,ImageID(#resOk),"setSize:@",@ImageSize)
+      CocoaMessage(0,ImageID(#resFailed),"setSize:@",@ImageSize)
     Else
       ResizeImage(#resLogo,64,64,#PB_Image_Smooth)
       ResizeImage(#resIcon,18,18,#PB_Image_Smooth)
       ResizeImage(#resAdd,24,24,#PB_Image_Smooth)
       ResizeImage(#resDel,24,24,#PB_Image_Smooth)
+      ResizeImage(#resOk,16,16,#PB_Image_Smooth)
+      ResizeImage(#resFailed,16,16,#PB_Image_Smooth)
     EndIf
     CocoaMessage(0,ImageID(#resIcon),"setTemplate:",#True)
   Else
@@ -77,6 +84,32 @@ Procedure buildMenu()
   CocoaMessage(0,StatusItem,"setLength:@",@itemLength)
   CocoaMessage(0,StatusItem,"setImage:",ImageID(#resIcon))
   CocoaMessage(0,StatusItem,"setMenu:",CocoaMessage(0,MenuID(#menu),"firstObject"))
+EndProcedure
+
+Procedure registerShortcuts()
+  Protected i.l
+  globalHK::remove("",0,#True) ; unregistering all to be on the safe side
+  For i = 0 To CountGadgetItems(#gadShortcuts)-1
+    Protected shortcut.s = GetGadgetItemText(#gadShortcuts,i,0)
+    If globalHK::add(shortcut,#PB_Event_FirstCustomValue + i)
+      AddGadgetItem(#gadShortcuts,i,GetGadgetItemText(#gadShortcuts,i,0) + ~"\n" + GetGadgetItemText(#gadShortcuts,i,1),ImageID(#resOk))
+    Else
+      AddGadgetItem(#gadShortcuts,i,GetGadgetItemText(#gadShortcuts,i,0) + ~"\n" + GetGadgetItemText(#gadShortcuts,i,1),ImageID(#resFailed))
+    EndIf
+    RemoveGadgetItem(#gadShortcuts,i+1)
+  Next
+EndProcedure
+
+Procedure action(action.s)
+  Protected program.s,params.s
+  Protected programEnd.l = FindString(action," ")
+  If programEnd
+    program = Left(action,programEnd-1)
+    params = Mid(action,programEnd+1)
+  Else
+    program = action
+  EndIf
+  RunProgram(program,params,"")
 EndProcedure
 
 Macro editingMode()

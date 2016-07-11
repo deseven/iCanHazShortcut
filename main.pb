@@ -3,7 +3,7 @@ IncludeFile "const.pb"
 
 EnableExplicit
 
-Define statusBar.i,statusItem.i
+Define statusBar.i,statusItem.i,i.l
 Define application.i = CocoaMessage(0,0,"NSApplication sharedApplication")
 Define editingState.b = #False
 
@@ -15,14 +15,15 @@ globalHK::Init()
 buildMenu()
 
 OpenWindow(#wnd,#PB_Ignore,#PB_Ignore,400,300,#myName,#PB_Window_SystemMenu|#PB_Window_ScreenCentered|#PB_Window_Invisible)
-CocoaMessage(0,CocoaMessage(0,WindowID(#wnd),"standardWindowButton:",1),"setHidden:",#YES)
-CocoaMessage(0,CocoaMessage(0,WindowID(#wnd),"standardWindowButton:",2),"setHidden:",#YES)
+CocoaMessage(0,CocoaMessage(0,WindowID(#wnd),"standardWindowButton:",#NSWindowButtonMinimize),"setHidden:",#YES)
+CocoaMessage(0,CocoaMessage(0,WindowID(#wnd),"standardWindowButton:",#NSWindowButtonMaximize),"setHidden:",#YES)
 PanelGadget(#gadTabs,5,0,390,300)
 CocoaMessage(0,GadgetID(#gadTabs),"setFocusRingType:",1)
 AddGadgetItem(#gadTabs,0,"Shortcuts")
 ListIconGadget(#gadShortcuts,5,0,360,220,"Shortcut",80)
+SetGadgetAttribute(#gadShortcuts,#PB_ListIcon_List,#True)
 CocoaMessage(0,GadgetID(#gadShortcuts),"setFocusRingType:",1)
-AddGadgetColumn(#gadShortcuts,1,"Action",270)
+AddGadgetColumn(#gadShortcuts,1,"Action",240)
 setListIconColumnJustification(#gadShortcuts,0,2)
 ButtonImageGadget(#gadAdd,296,222,36,34,ImageID(#resAdd))
 ButtonImageGadget(#gadDel,332,222,36,34,ImageID(#resDel))
@@ -44,16 +45,18 @@ CocoaMessage(0,application,"activateIgnoringOtherApps:",#YES)
 HideWindow(#wnd,#False)
 
 Repeat
-  Select WaitWindowEvent()
+  Define ev = WaitWindowEvent()
+  Select ev
     Case #PB_Event_Gadget
       Select EventGadget()
         Case #gadWebDeveloper
           RunProgram("open","http://deseven.info","")
         Case #gadAdd
           If editingState
-            If Len(GetGadgetText(#gadShortcutSelector)) > 1 And Len(GetGadgetText(#gadAction)) > 1
-              viewingMode()
+            If Len(GetGadgetText(#gadShortcutSelector)) > 0 And Len(GetGadgetText(#gadAction)) > 0
               AddGadgetItem(#gadShortcuts,-1,GetGadgetText(#gadShortcutSelector) + ~"\n" + GetGadgetText(#gadAction))
+              registerShortcuts()
+              viewingMode()
             Else
               MessageRequester(#myName,"Please define your hotkey and action first.")
             EndIf
@@ -64,12 +67,27 @@ Repeat
           If editingState
             viewingMode()
           Else
+            i = GetGadgetState(#gadShortcuts)
             RemoveGadgetItem(#gadShortcuts,GetGadgetState(#gadShortcuts))
+            registerShortcuts()
+            If CountGadgetItems(#gadShortcuts) > i
+              SetGadgetState(#gadShortcuts,i)
+            Else
+              SetGadgetState(#gadShortcuts,CountGadgetItems(#gadShortcuts)-1)
+            EndIf
           EndIf
       EndSelect
     Case #PB_Event_CloseWindow
       If editingState : viewingMode() : EndIf
       HideWindow(#wnd,#True)
+    Default
+      If ev >= #PB_Event_FirstCustomValue
+        Define shortcut.l = ev - #PB_Event_FirstCustomValue
+        If CountGadgetItems(#gadShortcuts) => shortcut+1
+          Debug "running " + GetGadgetItemText(#gadShortcuts,shortcut,1)
+          action(GetGadgetItemText(#gadShortcuts,shortcut,1))
+        EndIf
+      EndIf
   EndSelect
 ForEver
 ; IDE Options = PureBasic 5.42 LTS (MacOS X - x64)
