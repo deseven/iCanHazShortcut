@@ -186,38 +186,32 @@ Repeat
         RunProgram("open",#updateDownloadUrl,"")
         die()
       EndIf
-    Default
-      If ev >= #PB_Event_FirstCustomValue
-        Define shortcut.l = ev - #PB_Event_FirstCustomValue
-        If CountGadgetItems(#gadShortcuts) => shortcut+1
-          ;Debug "running " + GetGadgetItemText(#gadShortcuts,shortcut,1)
-          action(GetGadgetItemText(#gadShortcuts,shortcut,1))
-        EndIf
-      EndIf
   EndSelect
-  Define cocoaEv = CocoaMessage(0,application,"currentEvent")
-  If IsGadget(#gadShortcutSelector) And GetActiveGadget() = #gadShortcutSelector And cocoaEv
-    Define currentHtk.s = ""
-    Define haveMod.b = #False
-    Define type = CocoaMessage(0,cocoaEv,"type")
-    Define modifierFlags = CocoaMessage(0,cocoaEv,"modifierFlags")
-    If modifierFlags & #NSShiftKeyMask     : currentHtk + "⇧" : EndIf
-    If modifierFlags & #NSControlKeyMask   : currentHtk + "⌃" : EndIf
-    If modifierFlags & #NSAlternateKeyMask : currentHtk + "⌥" : EndIf
-    If modifierFlags & #NSCommandKeyMask   : currentHtk + "⌘" : EndIf
-    Define modLen.b = Len(currentHtk)
-    If modLen >= 1 : haveMod = #True : Else : haveMod = #False : EndIf
-    If type = #NSKeyDown
-      Define keyCode = CocoaMessage(0,cocoaEv,"keyCode")
-      If keyCode <= $FF
-        If Len(keys(keyCode))
-          currentHtk + keys(keyCode)
+  If IsGadget(#gadShortcutSelector) And GetActiveGadget() = #gadShortcutSelector
+    Define cocoaEv = CocoaMessage(0,application,"currentEvent")
+    If cocoaEv
+      Define currentHtk.s = ""
+      Define haveMod.b = #False
+      Define type = CocoaMessage(0,cocoaEv,"type")
+      Define modifierFlags = CocoaMessage(0,cocoaEv,"modifierFlags")
+      If modifierFlags & #NSShiftKeyMask     : currentHtk + "⇧" : EndIf
+      If modifierFlags & #NSControlKeyMask   : currentHtk + "⌃" : EndIf
+      If modifierFlags & #NSAlternateKeyMask : currentHtk + "⌥" : EndIf
+      If modifierFlags & #NSCommandKeyMask   : currentHtk + "⌘" : EndIf
+      Define modLen.b = Len(currentHtk)
+      If modLen >= 1 : haveMod = #True : Else : haveMod = #False : EndIf
+      If type = #NSKeyDown
+        Define keyCode = CocoaMessage(0,cocoaEv,"keyCode")
+        If keyCode <= $FF
+          If Len(keys(keyCode))
+            currentHtk + keys(keyCode)
+          EndIf
         EndIf
       EndIf
-    EndIf
-    If haveMod And Len(currentHtk) > modLen
-      SetGadgetText(#gadShortcutSelector,currentHtk)
-      SetActiveGadget(#gadShortcutSelectorCap)
+      If haveMod And Len(currentHtk) > modLen
+        SetGadgetText(#gadShortcutSelector,currentHtk)
+        SetActiveGadget(#gadShortcutSelectorCap)
+      EndIf
     EndIf
   EndIf
 ForEver

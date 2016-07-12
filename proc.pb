@@ -124,6 +124,30 @@ Procedure initResources()
   EndIf
 EndProcedure
 
+Procedure action(action.s)
+  Protected shell.s = GetGadgetText(#gadPrefShell)
+  If shell = "no shell"
+    Protected program.s,params.s
+    Protected programEnd.l = FindString(action," ")
+    If programEnd
+      program = Left(action,programEnd-1)
+      params = Mid(action,programEnd+1)
+    Else
+      program = action
+    EndIf
+    ;Debug "running '" + program + "' with '" + params + "'"
+    RunProgram(program,params,"")
+  Else
+    shell = "/bin/" + shell
+    ;Debug "running '" + shell + "' with '" + action + "'"
+    Protected pid = RunProgram(shell,"","",#PB_Program_Write|#PB_Program_Open)
+    If IsProgram(pid)
+      WriteProgramString(pid,action)
+    EndIf
+    CloseProgram(pid)
+  EndIf
+EndProcedure
+
 Procedure menuEvents()
   Shared application.i
   Select EventMenu()
@@ -148,6 +172,14 @@ Procedure menuEvents()
   EndSelect
 EndProcedure
 
+Procedure shortcutEvents()
+  If EventData() >= 0
+    If CountGadgetItems(#gadShortcuts) => EventData()+1
+      action(GetGadgetItemText(#gadShortcuts,EventData(),1))
+    EndIf
+  EndIf
+EndProcedure
+
 Procedure buildMenu()
   Shared statusBar.i,statusItem.i
   Protected itemLength.CGFloat = 32
@@ -159,7 +191,7 @@ Procedure buildMenu()
   If IsMenu(#menu) : FreeMenu(#menu) : EndIf
   CreatePopupMenu(#menu)
   If GetGadgetState(#gadPrefPopulateMenu) = #PB_Checkbox_Checked And CountGadgetItems(#gadShortcuts)
-    For i = 0 To CountGadgetItems(#gadShortcuts)-1
+    For i = 0 To CountGadgetItems(#gadShortcuts)-1 
       If GetGadgetState(#gadPrefShowHtk) = #PB_Checkbox_Checked
         MenuItem(#menuCustom+i,"[" + GetGadgetItemText(#gadShortcuts,i,0) + "] " + GetGadgetItemText(#gadShortcuts,i,1))
       Else
@@ -187,9 +219,13 @@ EndProcedure
 Procedure registerShortcuts()
   Protected i.l
   globalHK::remove("",0,#True) ; unregistering all to be on the safe side
+  For i = 0 To 1000            ; temporary solution
+    UnbindEvent(#PB_Event_FirstCustomValue+i,@shortcutEvents())
+  Next
   For i = 0 To CountGadgetItems(#gadShortcuts)-1
     Protected shortcut.s = GetGadgetItemText(#gadShortcuts,i,0)
-    If globalHK::add(shortcut,#PB_Event_FirstCustomValue + i)
+    If globalHK::add(shortcut,#PB_Event_FirstCustomValue + i,#PB_Ignore,#PB_Ignore,#PB_Ignore,i)
+      BindEvent(#PB_Event_FirstCustomValue + i,@shortcutEvents())
       AddGadgetItem(#gadShortcuts,i,GetGadgetItemText(#gadShortcuts,i,0) + ~"\n" + GetGadgetItemText(#gadShortcuts,i,1),ImageID(#resOk))
     Else
       AddGadgetItem(#gadShortcuts,i,GetGadgetItemText(#gadShortcuts,i,0) + ~"\n" + GetGadgetItemText(#gadShortcuts,i,1),ImageID(#resFailed))
@@ -197,30 +233,6 @@ Procedure registerShortcuts()
     RemoveGadgetItem(#gadShortcuts,i+1)
   Next
   buildMenu()
-EndProcedure
-
-Procedure action(action.s)
-  Protected shell.s = GetGadgetText(#gadPrefShell)
-  If shell = "no shell"
-    Protected program.s,params.s
-    Protected programEnd.l = FindString(action," ")
-    If programEnd
-      program = Left(action,programEnd-1)
-      params = Mid(action,programEnd+1)
-    Else
-      program = action
-    EndIf
-    Debug "running '" + program + "' with '" + params + "'"
-    RunProgram(program,params,"")
-  Else
-    shell = "/bin/" + shell
-    Debug "running '" + shell + "' with '" + action + "'"
-    Protected pid = RunProgram(shell,"","",#PB_Program_Write|#PB_Program_Open)
-    If IsProgram(pid)
-      WriteProgramString(pid,action)
-    EndIf
-    CloseProgram(pid)
-  EndIf
 EndProcedure
 
 Procedure checkUpdateAsync(interval.i)
