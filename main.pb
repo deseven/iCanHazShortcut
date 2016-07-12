@@ -12,7 +12,6 @@ IncludeFile "proc.pb"
 
 initResources()
 globalHK::Init()
-buildMenu()
 
 OpenWindow(#wnd,#PB_Ignore,#PB_Ignore,400,300,#myName,#PB_Window_SystemMenu|#PB_Window_ScreenCentered|#PB_Window_Invisible)
 CocoaMessage(0,CocoaMessage(0,WindowID(#wnd),"standardWindowButton:",#NSWindowButtonMinimize),"setHidden:",#YES)
@@ -39,7 +38,17 @@ CocoaMessage(0,GadgetID(#gadApply),"setFocusRingType:",1)
 CocoaMessage(0,GadgetID(#gadCancel),"setFocusRingType:",1)
 CocoaMessage(0,GadgetID(#gadUp),"setFocusRingType:",1)
 CocoaMessage(0,GadgetID(#gadDown),"setFocusRingType:",1)
-AddGadgetItem(#gadTabs,1,"About")
+AddGadgetItem(#gadTabs,1,"Preferences")
+TextGadget(#gadPrefShellCap,10,12,60,20,"Shell:")
+ComboBoxGadget(#gadPrefShell,70,10,110,20)
+buildShellList()
+CocoaMessage(0,GadgetID(#gadPrefShell),"setFocusRingType:",1)
+FrameGadget(#gadPrefFrame,180,0,180,250,"")
+CheckBoxGadget(#gadPrefPopulateMenu,190,10,160,20,"Show actions in menu")
+CocoaMessage(0,GadgetID(#gadPrefPopulateMenu),"setFocusRingType:",1)
+CheckBoxGadget(#gadPrefShowHtk,190,35,160,20,"Show hotkeys in menu")
+CocoaMessage(0,GadgetID(#gadPrefShowHtk),"setFocusRingType:",1)
+AddGadgetItem(#gadTabs,2,"About")
 ImageGadget(#gadLogo,25,0,64,64,ImageID(#resLogo))
 TextGadget(#gadNameVer,89,8,270,20,#myName + " " + #myVer,#PB_Text_Center)
 SetGadgetFont(#gadNameVer,FontID(#resBigFont))
@@ -66,29 +75,31 @@ If Not CountGadgetItems(#gadShortcuts)
 EndIf
 
 Repeat
-  Define ev = WaitWindowEvent()
+  Define ev = WaitWindowEvent(100)
   Select ev
     Case #PB_Event_Gadget
       Select EventGadget()
         Case #gadShortcuts
-          If EventType() = #PB_EventType_Change
-            If GetGadgetState(#gadShortcuts) <> -1
-              DisableGadget(#gadEdit,#False) : DisableGadget(#gadDel,#False)
-              recalcUpDown()
-            Else
-              DisableGadget(#gadEdit,#True) : DisableGadget(#gadDel,#True)
-              DisableGadget(#gadUp,#True) : DisableGadget(#gadDown,#True)
-            EndIf
-          EndIf
+          Select EventType() 
+            Case #PB_EventType_Change
+              If GetGadgetState(#gadShortcuts) <> -1
+                DisableGadget(#gadEdit,#False) : DisableGadget(#gadDel,#False)
+                recalcUpDown()
+              Else
+                DisableGadget(#gadEdit,#True) : DisableGadget(#gadDel,#True)
+                DisableGadget(#gadUp,#True) : DisableGadget(#gadDown,#True)
+              EndIf
+            Case #PB_EventType_LeftDoubleClick
+              If GetGadgetState(#gadShortcuts) <> -1
+                editingExistentMode()
+              EndIf
+          EndSelect
         Case #gadWebDeveloper
           RunProgram("open","http://deseven.info","")
         Case #gadAdd
           editingMode()
         Case #gadEdit
-          editExistent = #True
-          editingMode()
-          SetGadgetText(#gadShortcutSelector,GetGadgetItemText(#gadShortcuts,GetGadgetState(#gadShortcuts),0))
-          SetGadgetText(#gadAction,GetGadgetItemText(#gadShortcuts,GetGadgetState(#gadShortcuts),1))
+          editingExistentMode()
         Case #gadDel
           i = GetGadgetState(#gadShortcuts)
           RemoveGadgetItem(#gadShortcuts,i)
@@ -129,6 +140,21 @@ Repeat
           SetGadgetState(#gadShortcuts,GetGadgetState(#gadShortcuts)+1)
           registerShortcuts()
           settings(#True)
+        Case #gadShortcutSelector
+          If EventType() = #PB_EventType_Focus
+            SetGadgetText(#gadShortcutSelector,"")
+          EndIf
+        Case #gadPrefPopulateMenu
+          settings(#True) : registerShortcuts()
+          If GetGadgetState(#gadPrefPopulateMenu) = #PB_Checkbox_Checked
+            DisableGadget(#gadPrefShowHtk,#False)
+          Else
+            DisableGadget(#gadPrefShowHtk,#True)
+          EndIf
+        Case #gadPrefShowHtk
+          settings(#True) : registerShortcuts()
+        Case #gadPrefShell
+          If EventType() = #PB_EventType_Change : settings(#True) : EndIf
       EndSelect
     Case #PB_Event_CloseWindow
       If IsGadget(#gadShortcutSelectorCap)
@@ -144,6 +170,31 @@ Repeat
         EndIf
       EndIf
   EndSelect
+  Define cocoaEv = CocoaMessage(0,application,"currentEvent")
+  If IsGadget(#gadShortcutSelector) And GetActiveGadget() = #gadShortcutSelector And cocoaEv
+    Define currentHtk.s = ""
+    Define haveMod.b = #False
+    Define type = CocoaMessage(0,cocoaEv,"type")
+    Define modifierFlags = CocoaMessage(0,cocoaEv,"modifierFlags")
+    If modifierFlags & #NSShiftKeyMask     : currentHtk + "⇧" : EndIf
+    If modifierFlags & #NSControlKeyMask   : currentHtk + "⌃" : EndIf
+    If modifierFlags & #NSAlternateKeyMask : currentHtk + "⌥" : EndIf
+    If modifierFlags & #NSCommandKeyMask   : currentHtk + "⌘" : EndIf
+    Define modLen.b = Len(currentHtk)
+    If modLen >= 1 : haveMod = #True : Else : haveMod = #False : EndIf
+    If type = #NSKeyDown
+      Define keyCode = CocoaMessage(0,cocoaEv,"keyCode")
+      If keyCode <= $FF
+        If Len(keys(keyCode))
+          currentHtk + keys(keyCode)
+        EndIf
+      EndIf
+    EndIf
+    If haveMod And Len(currentHtk) > modLen
+      SetGadgetText(#gadShortcutSelector,currentHtk)
+      SetActiveGadget(#gadShortcutSelectorCap)
+    EndIf
+  EndIf
 ForEver
 ; IDE Options = PureBasic 5.42 LTS (MacOS X - x64)
 ; EnableUnicode

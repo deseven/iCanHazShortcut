@@ -13,6 +13,18 @@ Procedure settings(save.b = #False)
   Protected path.s = GetEnvironmentVariable("HOME") + "/.config/" + #myName + "/config.ini"
   If save
     CreatePreferences(path,#PB_Preference_GroupSeparator)
+    PreferenceGroup("main")
+    WritePreferenceString("shell",GetGadgetText(#gadPrefShell))
+    If GetGadgetState(#gadPrefPopulateMenu) = #PB_Checkbox_Checked
+      WritePreferenceString("populate_menu_with_actions","yes")
+    Else
+      WritePreferenceString("populate_menu_with_actions","no")
+    EndIf
+    If GetGadgetState(#gadPrefShowHtk) = #PB_Checkbox_Checked
+      WritePreferenceString("show_hotkeys_in_menu","yes")
+    Else
+      WritePreferenceString("show_hotkeys_in_menu","no")
+    EndIf
     For i = 0 To CountGadgetItems(#gadShortcuts)-1
       shortcut = GetGadgetItemText(#gadShortcuts,i,0)
       action = GetGadgetItemText(#gadShortcuts,i,1)
@@ -22,6 +34,20 @@ Procedure settings(save.b = #False)
     Next
   Else
     OpenPreferences(path,#PB_Preference_GroupSeparator)
+    PreferenceGroup("main")
+    SetGadgetText(#gadPrefShell,ReadPreferenceString("shell","bash"))
+    If ReadPreferenceString("populate_menu_with_actions","yes") = "yes"
+      SetGadgetState(#gadPrefPopulateMenu,#PB_Checkbox_Checked)
+      DisableGadget(#gadPrefShowHtk,#False)
+    Else
+      SetGadgetState(#gadPrefPopulateMenu,#PB_Checkbox_Unchecked)
+      DisableGadget(#gadPrefShowHtk,#True)
+    EndIf
+    If ReadPreferenceString("show_hotkeys_in_menu","yes") = "yes"
+      SetGadgetState(#gadPrefShowHtk,#PB_Checkbox_Checked)
+    Else
+      SetGadgetState(#gadPrefShowHtk,#PB_Checkbox_Unchecked)
+    EndIf
     ExaminePreferenceGroups()
     While NextPreferenceGroup()
       If FindString(PreferenceGroupName(),"shortcut") = 1
@@ -89,28 +115,48 @@ Procedure menuEvents()
   Select EventMenu()
     Case #menuAbout
       CocoaMessage(0,application,"activateIgnoringOtherApps:",#YES)
-      SetGadgetState(#gadTabs,1)
+      SetGadgetState(#gadTabs,2)
       SetActiveGadget(#gadCopyright)
       HideWindow(#wnd,#False)
-    Case #menuPrefs
+    Case #menuShortcuts
       CocoaMessage(0,application,"activateIgnoringOtherApps:",#YES)
       SetGadgetState(#gadTabs,0)
       SetActiveGadget(#gadShortcuts)
       HideWindow(#wnd,#False)
+    Case #menuPrefs
+      CocoaMessage(0,application,"activateIgnoringOtherApps:",#YES)
+      SetGadgetState(#gadTabs,1)
+      HideWindow(#wnd,#False)
     Case #menuQuit
       die()
+    Default
+      PostEvent(#PB_Event_FirstCustomValue+EventMenu()-#menuCustom)
   EndSelect
 EndProcedure
 
 Procedure buildMenu()
   Shared statusBar.i,statusItem.i
   Protected itemLength.CGFloat = 32
+  Protected i.l
   If Not (statusBar And statusItem)
     statusBar.i = CocoaMessage(0,0,"NSStatusBar systemStatusBar")
     statusItem.i = CocoaMessage(0,CocoaMessage(0,StatusBar,"statusItemWithLength:",#NSSquareStatusBarItemLength),"retain")
   EndIf
   If IsMenu(#menu) : FreeMenu(#menu) : EndIf
   CreatePopupMenu(#menu)
+  If GetGadgetState(#gadPrefPopulateMenu) = #PB_Checkbox_Checked And CountGadgetItems(#gadShortcuts)
+    For i = 0 To CountGadgetItems(#gadShortcuts)-1
+      If GetGadgetState(#gadPrefShowHtk) = #PB_Checkbox_Checked
+        MenuItem(#menuCustom+i,"[" + GetGadgetItemText(#gadShortcuts,i,0) + "] " + GetGadgetItemText(#gadShortcuts,i,1))
+      Else
+        MenuItem(#menuCustom+i,GetGadgetItemText(#gadShortcuts,i,1))
+      EndIf
+      BindMenuEvent(#menu,#menuCustom+i,@menuEvents())
+    Next
+    MenuBar()
+  EndIf
+  MenuItem(#menuShortcuts,"Shortcuts...")
+  BindMenuEvent(#menu,#menuShortcuts,@menuEvents())
   MenuItem(#menuPrefs,"Preferences...")
   BindMenuEvent(#menu,#menuPrefs,@menuEvents())
   MenuItem(#menuAbout,"About")
@@ -136,14 +182,31 @@ Procedure registerShortcuts()
     EndIf
     RemoveGadgetItem(#gadShortcuts,i+1)
   Next
+  buildMenu()
 EndProcedure
 
 Procedure action(action.s)
-  Protected pid = RunProgram("/bin/bash","","",#PB_Program_Write|#PB_Program_Open)
-  If IsProgram(pid)
-    WriteProgramString(pid,action)
+  Protected shell.s = GetGadgetText(#gadPrefShell)
+  If shell = "no shell"
+    Protected program.s,params.s
+    Protected programEnd.l = FindString(action," ")
+    If programEnd
+      program = Left(action,programEnd-1)
+      params = Mid(action,programEnd+1)
+    Else
+      program = action
+    EndIf
+    Debug "running '" + program + "' with '" + params + "'"
+    RunProgram(program,params,"")
+  Else
+    shell = "/bin/" + shell
+    Debug "running '" + shell + "' with '" + action + "'"
+    Protected pid = RunProgram(shell,"","",#PB_Program_Write|#PB_Program_Open)
+    If IsProgram(pid)
+      WriteProgramString(pid,action)
+    EndIf
+    CloseProgram(pid)
   EndIf
-  CloseProgram(pid)
 EndProcedure
 
 Macro editingMode()
@@ -157,7 +220,7 @@ Macro editingMode()
   TextGadget(#gadBg,0,0,400,300,"") ; dirty fix for a strange redraw behavior
   FreeGadget(#gadBg)
   TextGadget(#gadShortcutSelectorCap,10,12,60,20,"Shortcut:")
-  ShortcutGadget(#gadShortcutSelector,70,10,80,20,0)
+  StringGadget(#gadShortcutSelector,70,10,80,20,"")
   CocoaMessage(0,GadgetID(#gadShortcutSelector),"setFocusRingType:",1)
   CocoaMessage(0,GadgetID(#gadShortcutSelector),"setAlignment:",#NSCenterTextAlignment)
   Define placeholder.s = "press keys"
@@ -171,6 +234,13 @@ Macro editingMode()
   HideGadget(#gadApply,#False)
   HideGadget(#gadCancel,#False)
   CloseGadgetList()
+EndMacro
+
+Macro editingExistentMode()
+  editExistent = #True
+  editingMode()
+  SetGadgetText(#gadShortcutSelector,GetGadgetItemText(#gadShortcuts,GetGadgetState(#gadShortcuts),0))
+  SetGadgetText(#gadAction,GetGadgetItemText(#gadShortcuts,GetGadgetState(#gadShortcuts),1))
 EndMacro
 
 Macro viewingMode()
@@ -201,7 +271,16 @@ Macro recalcUpDown()
     DisableGadget(#gadDown,#False)
   EndIf
 EndMacro
+
+Macro buildShellList()
+  AddGadgetItem(#gadPrefShell,-1,"no shell")
+  ExamineDirectory(0,"/bin","*sh")
+  While NextDirectoryEntry(0)
+    AddGadgetItem(#gadPrefShell,-1,DirectoryEntryName(0))
+  Wend
+  FinishDirectory(0)
+EndMacro
 ; IDE Options = PureBasic 5.42 LTS (MacOS X - x64)
-; Folding = --
+; Folding = ---
 ; EnableUnicode
 ; EnableXP
