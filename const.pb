@@ -1,6 +1,11 @@
 ﻿; main
 #myName = "iCanHazShortcut"
-#myVer = "0.4.0"
+#myVer = "0.4.1"
+
+; update params
+#updateCheckUrl = "http://deseven.info/sys/ichs.ver"
+#updateDownloadUrl = "http://deseven.info/sys/ichs.zip"
+#updateCheckInterval = 1440
 
 ; enums
 Enumeration main
@@ -39,6 +44,7 @@ Enumeration gadgets
   #gadPrefPopulateMenu
   #gadPrefShowHtk
   #gadPrefFrame
+  #gadPrefCheckUpdate
 EndEnumeration
 
 Enumeration resources
@@ -55,6 +61,10 @@ Enumeration resources
   #resOk
   #resFailed
   #resFont
+EndEnumeration
+
+Enumeration globalEvents #PB_Event_FirstCustomValue + 10000
+  #evUpdateArrival
 EndEnumeration
 
 #NSSquareStatusBarItemLength = -2

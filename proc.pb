@@ -1,4 +1,8 @@
 ﻿Procedure die()
+  Shared updateCheckThread.i
+  If IsThread(updateCheckThread)
+    KillThread(updateCheckThread)
+  EndIf
   End 0
 EndProcedure
 
@@ -25,6 +29,11 @@ Procedure settings(save.b = #False)
     Else
       WritePreferenceString("show_hotkeys_in_menu","no")
     EndIf
+    If GetGadgetState(#gadPrefCheckUpdate) = #PB_Checkbox_Checked
+      WritePreferenceString("check_for_updates","yes")
+    Else
+      WritePreferenceString("check_for_updates","no")
+    EndIf
     For i = 0 To CountGadgetItems(#gadShortcuts)-1
       shortcut = GetGadgetItemText(#gadShortcuts,i,0)
       action = GetGadgetItemText(#gadShortcuts,i,1)
@@ -47,6 +56,11 @@ Procedure settings(save.b = #False)
       SetGadgetState(#gadPrefShowHtk,#PB_Checkbox_Checked)
     Else
       SetGadgetState(#gadPrefShowHtk,#PB_Checkbox_Unchecked)
+    EndIf
+    If ReadPreferenceString("check_for_updates","yes") = "yes"
+      SetGadgetState(#gadPrefCheckUpdate,#PB_Checkbox_Checked)
+    Else
+      SetGadgetState(#gadPrefCheckUpdate,#PB_Checkbox_Unchecked)
     EndIf
     ExaminePreferenceGroups()
     While NextPreferenceGroup()
@@ -207,6 +221,44 @@ Procedure action(action.s)
     EndIf
     CloseProgram(pid)
   EndIf
+EndProcedure
+
+Procedure checkUpdateAsync(interval.i)
+  Shared updateVer.s,updateDetails.s
+  Protected *buf,i,strCount
+  Protected Dim strings.s(1)
+  If Not InitNetwork() : ProcedureReturn : EndIf
+  Repeat
+    *buf = ReceiveHTTPMemory(#updateCheckUrl)
+    If *buf
+      Protected size.i = MemorySize(*buf)
+      Protected update.s = PeekS(*buf,size,#PB_UTF8)
+      FreeMemory(*buf)
+      strCount = CountString(update,Chr(10))
+      Protected Dim strings.s(strCount)
+      For i = 0 To strCount
+        strings(i) = StringField(update,i+1,Chr(10))
+      Next
+      For i = 0 To strCount
+        strings(i) = Trim(strings(i))
+      Next
+      If FindString(strings(0),#myName) = 1
+        Protected newVer.s = StringField(strings(0),2," ")
+        If newVer <> updateVer
+          updateVer = newVer
+          updateDetails = ""
+          For i = 1 To strCount
+            If Len(strings(i)) > 0
+              updateDetails + strings(i) + Chr(10)
+            EndIf
+          Next
+          FreeArray(strings())
+          PostEvent(#evUpdateArrival)
+        EndIf
+      EndIf
+    EndIf
+    If interval > 0 : Delay(interval) : Else : ProcedureReturn : EndIf
+  ForEver
 EndProcedure
 
 Macro editingMode()

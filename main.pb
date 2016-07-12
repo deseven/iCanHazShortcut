@@ -6,6 +6,9 @@ EnableExplicit
 Define statusBar.i,statusItem.i,i.l
 Define application.i = CocoaMessage(0,0,"NSApplication sharedApplication")
 Define editExistent.b = #False
+Define updateCheckThread.i
+Define updateVer.s = #myVer
+Define updateDetails.s = ""
 
 IncludeFile "helpers.pb"
 IncludeFile "proc.pb"
@@ -48,6 +51,8 @@ CheckBoxGadget(#gadPrefPopulateMenu,190,10,160,20,"Show actions in menu")
 CocoaMessage(0,GadgetID(#gadPrefPopulateMenu),"setFocusRingType:",1)
 CheckBoxGadget(#gadPrefShowHtk,190,35,160,20,"Show hotkeys in menu")
 CocoaMessage(0,GadgetID(#gadPrefShowHtk),"setFocusRingType:",1)
+CheckBoxGadget(#gadPrefCheckUpdate,190,60,160,20,"Check for updates")
+CocoaMessage(0,GadgetID(#gadPrefCheckUpdate),"setFocusRingType:",1)
 AddGadgetItem(#gadTabs,2,"About")
 ImageGadget(#gadLogo,25,0,64,64,ImageID(#resLogo))
 TextGadget(#gadNameVer,89,8,270,20,#myName + " " + #myVer,#PB_Text_Center)
@@ -72,6 +77,10 @@ registerShortcuts()
 If Not CountGadgetItems(#gadShortcuts)
   CocoaMessage(0,application,"activateIgnoringOtherApps:",#YES)
   HideWindow(#wnd,#False)
+EndIf
+
+If GetGadgetState(#gadPrefCheckUpdate) = #PB_Checkbox_Checked
+  updateCheckThread = CreateThread(@checkUpdateAsync(),#updateCheckInterval*60*1000)
 EndIf
 
 Repeat
@@ -155,12 +164,28 @@ Repeat
           settings(#True) : registerShortcuts()
         Case #gadPrefShell
           If EventType() = #PB_EventType_Change : settings(#True) : EndIf
+        Case #gadPrefCheckUpdate
+          settings(#True)
+          If GetGadgetState(#gadPrefCheckUpdate) = #PB_Checkbox_Checked
+            If Not IsThread(updateCheckThread)
+              updateCheckThread = CreateThread(@checkUpdateAsync(),#updateCheckInterval*60*1000)
+            EndIf
+          Else
+            If IsThread(updateCheckThread)
+              KillThread(updateCheckThread)
+            EndIf
+          EndIf
       EndSelect
     Case #PB_Event_CloseWindow
       If IsGadget(#gadShortcutSelectorCap)
         viewingMode()
       EndIf
       HideWindow(#wnd,#True)
+    Case #evUpdateArrival
+      If MessageRequester(#myName + ", new version is available!","Found new version " + updateVer + ~"\n\nChangelog:\n" + updateDetails + ~"\n\nDo you want to download it?",#PB_MessageRequester_YesNo) = #PB_MessageRequester_Yes
+        RunProgram("open",#updateDownloadUrl,"")
+        die()
+      EndIf
     Default
       If ev >= #PB_Event_FirstCustomValue
         Define shortcut.l = ev - #PB_Event_FirstCustomValue
@@ -196,6 +221,8 @@ Repeat
     EndIf
   EndIf
 ForEver
+
+die()
 ; IDE Options = PureBasic 5.42 LTS (MacOS X - x64)
 ; EnableUnicode
 ; EnableXP
