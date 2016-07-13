@@ -167,8 +167,6 @@ Procedure menuEvents()
       HideWindow(#wnd,#False)
     Case #menuQuit
       die()
-    Default
-      PostEvent(#PB_Event_FirstCustomValue+EventMenu()-#menuCustom)
   EndSelect
 EndProcedure
 
@@ -177,6 +175,12 @@ Procedure shortcutEvents()
     If CountGadgetItems(#gadShortcuts) => EventData()+1
       action(GetGadgetItemText(#gadShortcuts,EventData(),1))
     EndIf
+  EndIf
+EndProcedure
+
+Procedure shortcutMenuEvents()
+  If CountGadgetItems(#gadShortcuts) => EventMenu()-#menuCustom+1
+    action(GetGadgetItemText(#gadShortcuts,EventMenu()-#menuCustom,1))
   EndIf
 EndProcedure
 
@@ -197,7 +201,7 @@ Procedure buildMenu()
       Else
         MenuItem(#menuCustom+i,GetGadgetItemText(#gadShortcuts,i,1))
       EndIf
-      BindMenuEvent(#menu,#menuCustom+i,@menuEvents())
+      BindMenuEvent(#menu,#menuCustom+i,@shortcutMenuEvents())
     Next
     MenuBar()
   EndIf
