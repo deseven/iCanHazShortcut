@@ -37,8 +37,8 @@ if [ -f "$pb/compilers/pbcompiler" ]; then
 		zip -r9 "$shortName.zip" "$name.app" > /dev/null || die "failed to pack $shortName"
 		echo
 	else
-		echo -e $redColor"bundle not found"$noColor
+		die "bundle not found"
 	fi
 else
-	echo -e $redColor"can't find PB here: $pb"$noColor
+	die "can't find PB here: $pb"
 fi
