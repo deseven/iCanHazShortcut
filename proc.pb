@@ -80,7 +80,7 @@ Procedure initResources()
   Protected imageSize.NSSize
   Protected path.s = GetPathPart(ProgramFilename()) + "../Resources/"
   LoadFont(#resBigFont,"Courier",18,#PB_Font_Bold)
-  If LoadImageEx(#resLogo,path+"main.icns") And LoadImageEx(#resAdd,path+"add.png") And LoadImageEx(#resEdit,path+"edit.png") And LoadImageEx(#resDel,path+"del.png") And LoadImageEx(#resApply,path+"apply.png") And LoadImageEx(#resCancel,path+"cancel.png") And LoadImageEx(#resOk,path+"ok.png") And LoadImageEx(#resFailed,path+"failed.png") And LoadImageEx(#resUp,path+"up.png") And LoadImageEx(#resDown,path+"down.png")
+  If LoadImageEx(#resLogo,path+"main.icns") And LoadImageEx(#resAdd,path+"add.png") And LoadImageEx(#resEdit,path+"edit.png") And LoadImageEx(#resDel,path+"del.png") And LoadImageEx(#resApply,path+"apply.png") And LoadImageEx(#resCancel,path+"cancel.png") And LoadImageEx(#resOk,path+"ok.png") And LoadImageEx(#resDisabled,path+"disabled.png") And LoadImageEx(#resFailed,path+"failed.png") And LoadImageEx(#resUp,path+"up.png") And LoadImageEx(#resDown,path+"down.png")
     CopyImage(#resLogo,#resIcon)
     If getBackingScaleFactor() >= 2.0
       ResizeImage(#resIcon,36,36,#PB_Image_Smooth)
@@ -103,6 +103,7 @@ Procedure initResources()
       imageSize\width = 16
       imageSize\height = 16
       CocoaMessage(0,ImageID(#resOk),"setSize:@",@ImageSize)
+      CocoaMessage(0,ImageID(#resDisabled),"setSize:@",@ImageSize)
       CocoaMessage(0,ImageID(#resFailed),"setSize:@",@ImageSize)
     Else
       ResizeImage(#resLogo,64,64,#PB_Image_Smooth)
@@ -115,6 +116,7 @@ Procedure initResources()
       ResizeImage(#resUp,24,24,#PB_Image_Smooth)
       ResizeImage(#resDown,24,24,#PB_Image_Smooth)
       ResizeImage(#resOk,16,16,#PB_Image_Smooth)
+      ResizeImage(#resDisabled,16,16,#PB_Image_Smooth)
       ResizeImage(#resFailed,16,16,#PB_Image_Smooth)
     EndIf
     CocoaMessage(0,ImageID(#resIcon),"setTemplate:",#True)
@@ -195,13 +197,15 @@ Procedure buildMenu()
   If IsMenu(#menu) : FreeMenu(#menu) : EndIf
   CreatePopupMenu(#menu)
   If GetGadgetState(#gadPrefPopulateMenu) = #PB_Checkbox_Checked And CountGadgetItems(#gadShortcuts)
-    For i = 0 To CountGadgetItems(#gadShortcuts)-1 
-      If GetGadgetState(#gadPrefShowHtk) = #PB_Checkbox_Checked
-        MenuItem(#menuCustom+i,"[" + GetGadgetItemText(#gadShortcuts,i,0) + "] " + GetGadgetItemText(#gadShortcuts,i,1))
-      Else
-        MenuItem(#menuCustom+i,GetGadgetItemText(#gadShortcuts,i,1))
+    For i = 0 To CountGadgetItems(#gadShortcuts)-1
+      If GetGadgetItemState(#gadShortcuts,i) >= #PB_Checkbox_Checked + 1
+        If GetGadgetState(#gadPrefShowHtk) = #PB_Checkbox_Checked
+          MenuItem(#menuCustom+i,"[" + GetGadgetItemText(#gadShortcuts,i,0) + "] " + GetGadgetItemText(#gadShortcuts,i,1))
+        Else
+          MenuItem(#menuCustom+i,GetGadgetItemText(#gadShortcuts,i,1))
+        EndIf
+        BindMenuEvent(#menu,#menuCustom+i,@shortcutMenuEvents())
       EndIf
-      BindMenuEvent(#menu,#menuCustom+i,@shortcutMenuEvents())
     Next
     MenuBar()
   EndIf
@@ -228,15 +232,19 @@ Procedure registerShortcuts()
   Next
   For i = 0 To CountGadgetItems(#gadShortcuts)-1
     Protected shortcut.s = GetGadgetItemText(#gadShortcuts,i,0)
-    If globalHK::add(shortcut,#PB_Event_FirstCustomValue + i,#PB_Ignore,#PB_Ignore,#PB_Ignore,i)
-      BindEvent(#PB_Event_FirstCustomValue + i,@shortcutEvents())
-      AddGadgetItem(#gadShortcuts,i,GetGadgetItemText(#gadShortcuts,i,0) + ~"\n" + GetGadgetItemText(#gadShortcuts,i,1),ImageID(#resOk))
+    If GetGadgetItemState(#gadShortcuts,i) >= #PB_Checkbox_Checked + 1
+      If globalHK::add(shortcut,#PB_Event_FirstCustomValue + i,#PB_Ignore,#PB_Ignore,#PB_Ignore,i)
+        BindEvent(#PB_Event_FirstCustomValue + i,@shortcutEvents())
+        SetGadgetItemImage(#gadShortcuts,i,ImageID(#resOk))
+      Else
+        SetGadgetItemImage(#gadShortcuts,i,ImageID(#resFailed))
+      EndIf
     Else
-      AddGadgetItem(#gadShortcuts,i,GetGadgetItemText(#gadShortcuts,i,0) + ~"\n" + GetGadgetItemText(#gadShortcuts,i,1),ImageID(#resFailed))
+      SetGadgetItemImage(#gadShortcuts,i,ImageID(#resDisabled))
     EndIf
-    RemoveGadgetItem(#gadShortcuts,i+1)
   Next
   buildMenu()
+  CocoaMessage(0,GadgetID(#gadShortcuts),"sizeLastColumnToFit")
 EndProcedure
 
 Procedure checkUpdateAsync(interval.i)

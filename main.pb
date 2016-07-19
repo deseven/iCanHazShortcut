@@ -21,12 +21,15 @@ CocoaMessage(0,CocoaMessage(0,WindowID(#wnd),"standardWindowButton:",#NSWindowBu
 CocoaMessage(0,CocoaMessage(0,WindowID(#wnd),"standardWindowButton:",#NSWindowButtonMaximize),"setHidden:",#YES)
 PanelGadget(#gadTabs,5,0,390,300)
 CocoaMessage(0,GadgetID(#gadTabs),"setFocusRingType:",1)
+
 AddGadgetItem(#gadTabs,0,"Shortcuts")
-ListIconGadget(#gadShortcuts,5,0,360,220,"Shortcut",80)
+ListIconGadget(#gadShortcuts,5,0,360,220,"Shortcut",80,#PB_ListIcon_CheckBoxes)
 SetGadgetAttribute(#gadShortcuts,#PB_ListIcon_List,#True)
 CocoaMessage(0,GadgetID(#gadShortcuts),"setFocusRingType:",1)
-AddGadgetColumn(#gadShortcuts,1,"Action",240)
+AddGadgetColumn(#gadShortcuts,2,"Action",1)
 setListIconColumnJustification(#gadShortcuts,0,2)
+AddGadgetColumn(#gadShortcuts,3,"Workdir",1)
+ListIconGadgetHideColumn(#gadShortcuts,3,#True)
 ButtonImageGadget(#gadAdd,260,222,36,34,ImageID(#resAdd))
 ButtonImageGadget(#gadEdit,296,222,36,34,ImageID(#resEdit))
 ButtonImageGadget(#gadDel,332,222,36,34,ImageID(#resDel))
@@ -41,6 +44,7 @@ CocoaMessage(0,GadgetID(#gadApply),"setFocusRingType:",1)
 CocoaMessage(0,GadgetID(#gadCancel),"setFocusRingType:",1)
 CocoaMessage(0,GadgetID(#gadUp),"setFocusRingType:",1)
 CocoaMessage(0,GadgetID(#gadDown),"setFocusRingType:",1)
+
 AddGadgetItem(#gadTabs,1,"Preferences")
 TextGadget(#gadPrefShellCap,10,12,60,20,"Shell:")
 ComboBoxGadget(#gadPrefShell,70,10,110,20)
@@ -53,6 +57,7 @@ CheckBoxGadget(#gadPrefShowHtk,190,35,160,20,"Show hotkeys in menu")
 CocoaMessage(0,GadgetID(#gadPrefShowHtk),"setFocusRingType:",1)
 CheckBoxGadget(#gadPrefCheckUpdate,190,60,160,20,"Check for updates")
 CocoaMessage(0,GadgetID(#gadPrefCheckUpdate),"setFocusRingType:",1)
+
 AddGadgetItem(#gadTabs,2,"About")
 ImageGadget(#gadLogo,25,0,64,64,ImageID(#resLogo))
 TextGadget(#gadNameVer,89,8,270,20,#myName + " " + #myVer,#PB_Text_Center)
@@ -73,8 +78,8 @@ StickyWindow(#wnd,#True)
 settings()
 registerShortcuts()
 
-;If #True
-If Not CountGadgetItems(#gadShortcuts)
+If #True
+;If Not CountGadgetItems(#gadShortcuts)
   CocoaMessage(0,application,"activateIgnoringOtherApps:",#YES)
   HideWindow(#wnd,#False)
 EndIf
@@ -98,6 +103,7 @@ Repeat
                 DisableGadget(#gadEdit,#True) : DisableGadget(#gadDel,#True)
                 DisableGadget(#gadUp,#True) : DisableGadget(#gadDown,#True)
               EndIf
+              registerShortcuts()
             Case #PB_EventType_LeftDoubleClick
               If GetGadgetState(#gadShortcuts) <> -1
                 editingExistentMode()

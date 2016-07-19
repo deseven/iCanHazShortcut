@@ -35,6 +35,17 @@ Procedure loadImageEx(Image,Filename.s)
   ProcedureReturn Result
 EndProcedure
 
+; based on wilbert's code (http://www.purebasic.fr/english/viewtopic.php?p=469232#p469232)
+Procedure ListIconGadgetHideColumn(gadget.i,index.i,state.b)
+  Protected columns = CocoaMessage(0,GadgetID(gadget),"tableColumns")
+  Protected column = CocoaMessage(0,columns,"objectAtIndex:",index)
+  If state
+    CocoaMessage(0,column,"setHidden:",#YES)
+  Else
+    CocoaMessage(0,column,"setHidden:",#NO)
+  EndIf
+EndProcedure
+
 ; code by Shardik (http://www.purebasic.fr/english/viewtopic.php?p=393256#p393256)
 Procedure setListIconColumnJustification(ListIconID.I,ColumnIndex.I,Alignment.I)
   Protected ColumnHeaderCell.I

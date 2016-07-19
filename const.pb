@@ -59,6 +59,7 @@ Enumeration resources
   #resUp
   #resDown
   #resOk
+  #resDisabled
   #resFailed
   #resFont
 EndEnumeration
