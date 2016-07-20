@@ -1,6 +1,6 @@
 # iCanHazShortcut
 Simple shortcut manager for OS X 10.8 or higher.  
-![screenshot](https://eri.deseven.info/scr/MidfacialParliamentaryPeriphrasis.png)  
+![screenshot](https://eri.deseven.info/scr/PneographEpituberculousPreofficially.png)  
 
 ## binaries
 Latest binary release can be downloaded [here](https://deseven.info/sys/ichs.zip).  

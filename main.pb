@@ -9,6 +9,7 @@ Define editExistent.b = #False
 Define updateCheckThread.i
 Define updateVer.s = #myVer
 Define updateDetails.s = ""
+Define gadgetState.l
 
 IncludeFile "helpers.pb"
 IncludeFile "proc.pb"
@@ -27,7 +28,6 @@ ListIconGadget(#gadShortcuts,5,0,360,220,"Shortcut",80,#PB_ListIcon_CheckBoxes)
 SetGadgetAttribute(#gadShortcuts,#PB_ListIcon_List,#True)
 CocoaMessage(0,GadgetID(#gadShortcuts),"setFocusRingType:",1)
 AddGadgetColumn(#gadShortcuts,2,"Action",1)
-setListIconColumnJustification(#gadShortcuts,0,2)
 AddGadgetColumn(#gadShortcuts,3,"Workdir",1)
 ListIconGadgetHideColumn(#gadShortcuts,3,#True)
 ButtonImageGadget(#gadAdd,260,222,36,34,ImageID(#resAdd))
@@ -78,8 +78,8 @@ StickyWindow(#wnd,#True)
 settings()
 registerShortcuts()
 
-If #True
-;If Not CountGadgetItems(#gadShortcuts)
+;If #True
+If Not CountGadgetItems(#gadShortcuts)
   CocoaMessage(0,application,"activateIgnoringOtherApps:",#YES)
   HideWindow(#wnd,#False)
 EndIf
@@ -99,11 +99,12 @@ Repeat
               If GetGadgetState(#gadShortcuts) <> -1
                 DisableGadget(#gadEdit,#False) : DisableGadget(#gadDel,#False)
                 recalcUpDown()
+                registerShortcuts()
+                settings(#True)
               Else
                 DisableGadget(#gadEdit,#True) : DisableGadget(#gadDel,#True)
                 DisableGadget(#gadUp,#True) : DisableGadget(#gadDown,#True)
               EndIf
-              registerShortcuts()
             Case #PB_EventType_LeftDoubleClick
               If GetGadgetState(#gadShortcuts) <> -1
                 editingExistentMode()
@@ -129,11 +130,16 @@ Repeat
         Case #gadApply
           If Len(GetGadgetText(#gadShortcutSelector)) > 0 And Len(GetGadgetText(#gadAction)) > 0
             If editExistent
+              gadgetState = GetGadgetItemState(#gadShortcuts,GetGadgetState(#gadShortcuts)) - #PB_ListIcon_Selected
               AddGadgetItem(#gadShortcuts,GetGadgetState(#gadShortcuts),GetGadgetText(#gadShortcutSelector) + ~"\n" + GetGadgetText(#gadAction))
+              If gadgetState = #PB_ListIcon_Checked
+                SetGadgetItemState(#gadShortcuts,GetGadgetState(#gadShortcuts),gadgetState + #PB_ListIcon_Selected)
+              EndIf
               RemoveGadgetItem(#gadShortcuts,GetGadgetState(#gadShortcuts)+1)
-              editExistent = #False  
+              editExistent = #False
             Else
               AddGadgetItem(#gadShortcuts,-1,GetGadgetText(#gadShortcutSelector) + ~"\n" + GetGadgetText(#gadAction))
+              SetGadgetItemState(#gadShortcuts,CountGadgetItems(#gadShortcuts)-1,#PB_ListIcon_Checked)
             EndIf
             registerShortcuts()
             settings(#True)
@@ -144,15 +150,23 @@ Repeat
         Case #gadCancel
           viewingMode()
         Case #gadUp
+          gadgetState = GetGadgetItemState(#gadShortcuts,GetGadgetState(#gadShortcuts)) - #PB_ListIcon_Selected
           AddGadgetItem(#gadShortcuts,GetGadgetState(#gadShortcuts)-1,GetGadgetItemText(#gadShortcuts,GetGadgetState(#gadShortcuts),0) + ~"\n" + GetGadgetItemText(#gadShortcuts,GetGadgetState(#gadShortcuts),1))
           RemoveGadgetItem(#gadShortcuts,GetGadgetState(#gadShortcuts)+1)
           SetGadgetState(#gadShortcuts,GetGadgetState(#gadShortcuts)-1)
+          If gadgetState = #PB_ListIcon_Checked
+            SetGadgetItemState(#gadShortcuts,GetGadgetState(#gadShortcuts),#PB_ListIcon_Checked + #PB_ListIcon_Selected)
+          EndIf
           registerShortcuts()
           settings(#True)
         Case #gadDown
+          gadgetState = GetGadgetItemState(#gadShortcuts,GetGadgetState(#gadShortcuts)) - #PB_ListIcon_Selected
           AddGadgetItem(#gadShortcuts,GetGadgetState(#gadShortcuts)+2,GetGadgetItemText(#gadShortcuts,GetGadgetState(#gadShortcuts),0) + ~"\n" + GetGadgetItemText(#gadShortcuts,GetGadgetState(#gadShortcuts),1))
           RemoveGadgetItem(#gadShortcuts,GetGadgetState(#gadShortcuts))
           SetGadgetState(#gadShortcuts,GetGadgetState(#gadShortcuts)+1)
+          If gadgetState = #PB_ListIcon_Checked
+            SetGadgetItemState(#gadShortcuts,GetGadgetState(#gadShortcuts),#PB_ListIcon_Checked + #PB_ListIcon_Selected)
+          EndIf
           registerShortcuts()
           settings(#True)
         Case #gadShortcutSelector
@@ -217,6 +231,8 @@ Repeat
       If haveMod And Len(currentHtk) > modLen
         SetGadgetText(#gadShortcutSelector,currentHtk)
         SetActiveGadget(#gadShortcutSelectorCap)
+      Else
+        SetGadgetText(#gadShortcutSelector,"")
       EndIf
     EndIf
   EndIf

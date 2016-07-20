@@ -37,13 +37,24 @@ EndProcedure
 
 ; based on wilbert's code (http://www.purebasic.fr/english/viewtopic.php?p=469232#p469232)
 Procedure ListIconGadgetHideColumn(gadget.i,index.i,state.b)
-  Protected columns = CocoaMessage(0,GadgetID(gadget),"tableColumns")
-  Protected column = CocoaMessage(0,columns,"objectAtIndex:",index)
+  Protected column = CocoaMessage(0,CocoaMessage(0,GadgetID(gadget),"tableColumns"),"objectAtIndex:",index)
   If state
     CocoaMessage(0,column,"setHidden:",#YES)
   Else
     CocoaMessage(0,column,"setHidden:",#NO)
   EndIf
+EndProcedure
+
+Procedure ListIconGadgetColumnTitle(gadget.i,index.i,title.s)
+  Protected column = CocoaMessage(0,CocoaMessage(0,GadgetID(gadget),"tableColumns"),"objectAtIndex:",index)
+  CocoaMessage(0,column,"setTitle:$",@title)
+EndProcedure
+
+; based on Shardik's code (http://www.purebasic.fr/english/viewtopic.php?p=393304#p393304)
+Procedure ListIconGadgetColumnToolTip(gadget.i,index.i,toolTip.s)
+  Protected column.i
+  CocoaMessage(@column,CocoaMessage(0,GadgetID(gadget),"tableColumns"),"objectAtIndex:",index)
+  CocoaMessage(0,column,"setHeaderToolTip:$",@toolTip)
 EndProcedure
 
 ; code by Shardik (http://www.purebasic.fr/english/viewtopic.php?p=393256#p393256)
@@ -72,7 +83,21 @@ Procedure.f getBackingScaleFactor()
   EndIf
   ProcedureReturn backingScaleFactor
 EndProcedure
+
+Macro setListStyle()
+  ListIconGadgetColumnTitle(#gadShortcuts,0,"⚡")
+  ListIconGadgetColumnTitle(#gadShortcuts,1,"⚙")
+  setListIconColumnJustification(#gadShortcuts,0,2)
+  setListIconColumnJustification(#gadShortcuts,1,2)
+  setListIconColumnJustification(#gadShortcuts,2,2)
+  ListIconGadgetColumnToolTip(#gadShortcuts,0,"Enable/disable")
+  ListIconGadgetColumnToolTip(#gadShortcuts,1,"Shortcut status")
+  ListIconGadgetColumnToolTip(#gadShortcuts,2,"Shortcut")
+  ListIconGadgetColumnToolTip(#gadShortcuts,3,"Action to perform")
+  ;CocoaMessage(0,GadgetID(#gadShortcuts),"sizeToFit")
+  CocoaMessage(0,GadgetID(#gadShortcuts),"sizeLastColumnToFit")
+EndMacro
 ; IDE Options = PureBasic 5.42 LTS (MacOS X - x64)
-; Folding = -
+; Folding = --
 ; EnableUnicode
 ; EnableXP

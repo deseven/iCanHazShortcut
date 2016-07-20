@@ -40,6 +40,11 @@ Procedure settings(save.b = #False)
       PreferenceGroup("shortcut" + Str(i+1))
       WritePreferenceString("shortcut",shortcut)
       WritePreferenceString("action",action)
+      If GetGadgetItemState(#gadShortcuts,i) >= #PB_ListIcon_Checked
+        WritePreferenceString("enabled","yes")
+      Else
+        WritePreferenceString("enabled","no")
+      EndIf
     Next
   Else
     OpenPreferences(path,#PB_Preference_GroupSeparator)
@@ -63,13 +68,18 @@ Procedure settings(save.b = #False)
       SetGadgetState(#gadPrefCheckUpdate,#PB_Checkbox_Unchecked)
     EndIf
     ExaminePreferenceGroups()
+    i = 0
     While NextPreferenceGroup()
       If FindString(PreferenceGroupName(),"shortcut") = 1
         shortcut = ReadPreferenceString("shortcut","")
         action = ReadPreferenceString("action","")
         If Len(action) And Len(shortcut)
           AddGadgetItem(#gadShortcuts,-1,shortcut + ~"\n" + action)
+          If ReadPreferenceString("enabled","yes") = "yes"
+            SetGadgetItemState(#gadShortcuts,i,#PB_ListIcon_Checked)
+          EndIf
         EndIf
+        i + 1
       EndIf
     Wend
   EndIf
@@ -181,8 +191,10 @@ Procedure shortcutEvents()
 EndProcedure
 
 Procedure shortcutMenuEvents()
-  If CountGadgetItems(#gadShortcuts) => EventMenu()-#menuCustom+1
-    action(GetGadgetItemText(#gadShortcuts,EventMenu()-#menuCustom,1))
+  If EventType() = #PB_EventType_LeftClick
+    If CountGadgetItems(#gadShortcuts) => EventMenu()-#menuCustom+1
+      action(GetGadgetItemText(#gadShortcuts,EventMenu()-#menuCustom,1))
+    EndIf
   EndIf
 EndProcedure
 
@@ -196,9 +208,12 @@ Procedure buildMenu()
   EndIf
   If IsMenu(#menu) : FreeMenu(#menu) : EndIf
   CreatePopupMenu(#menu)
+  For i = 0 To 1000            ; temporary solution
+    UnbindMenuEvent(#menu,i,@shortcutMenuEvents())
+  Next
   If GetGadgetState(#gadPrefPopulateMenu) = #PB_Checkbox_Checked And CountGadgetItems(#gadShortcuts)
     For i = 0 To CountGadgetItems(#gadShortcuts)-1
-      If GetGadgetItemState(#gadShortcuts,i) >= #PB_Checkbox_Checked + 1
+      If GetGadgetItemState(#gadShortcuts,i) >= #PB_ListIcon_Checked
         If GetGadgetState(#gadPrefShowHtk) = #PB_Checkbox_Checked
           MenuItem(#menuCustom+i,"[" + GetGadgetItemText(#gadShortcuts,i,0) + "] " + GetGadgetItemText(#gadShortcuts,i,1))
         Else
@@ -232,7 +247,7 @@ Procedure registerShortcuts()
   Next
   For i = 0 To CountGadgetItems(#gadShortcuts)-1
     Protected shortcut.s = GetGadgetItemText(#gadShortcuts,i,0)
-    If GetGadgetItemState(#gadShortcuts,i) >= #PB_Checkbox_Checked + 1
+    If GetGadgetItemState(#gadShortcuts,i) >= #PB_ListIcon_Checked
       If globalHK::add(shortcut,#PB_Event_FirstCustomValue + i,#PB_Ignore,#PB_Ignore,#PB_Ignore,i)
         BindEvent(#PB_Event_FirstCustomValue + i,@shortcutEvents())
         SetGadgetItemImage(#gadShortcuts,i,ImageID(#resOk))
@@ -244,7 +259,7 @@ Procedure registerShortcuts()
     EndIf
   Next
   buildMenu()
-  CocoaMessage(0,GadgetID(#gadShortcuts),"sizeLastColumnToFit")
+  setListStyle()
 EndProcedure
 
 Procedure checkUpdateAsync(interval.i)
