@@ -1,5 +1,6 @@
 *.exe
 *.app
 *.zip
+*.dmg
 .DS_Store
 Thumbs.db

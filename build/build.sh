@@ -14,6 +14,7 @@ cd "$loc"
 export PUREBASIC_HOME="$pb"
 rm -rf "$loc/$name.app"
 rm -rf "$loc/$shortName.zip"
+rm -rf "$loc/$shortName.dmg"
 
 die() {
 	echo -e $redColor"\n$1"$noColor
@@ -35,6 +36,9 @@ if [ -f "$pb/compilers/pbcompiler" ]; then
 		echo -ne $greenColor"\npacking distro..."$noColor
 		cd "$loc"
 		zip -r9 "$shortName.zip" "$name.app" > /dev/null || die "failed to pack $shortName"
+		echo -ne $greenColor"\ncreating dmg..."$noColor
+		cd appdmg
+		appdmg "$name.json" "../$shortName.dmg" > /dev/null 2>&1 || die "failed to create dmg"
 		echo
 	else
 		die "bundle not found"

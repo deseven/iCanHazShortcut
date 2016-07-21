@@ -7,6 +7,7 @@ Latest binary release can be downloaded [here](https://deseven.info/sys/ichs.zip
 
 ## compiling from source
 iCHS created in [PB](http://purebasic.com) and depends on [pb-osx-globalhotkeys](https://github.com/deseven/pb-osx-globalhotkeys).  
+You also need [node-appdmg](https://github.com/LinusU/node-appdmg) if you want to build dmg.  
 1. Obtain the latest LTS version of pbcompiler, install it to ```/Applications```.  
 2. Install xcode command line tools by running ```xcode-select --install```.  
 3. Clone iCHS repo.  
