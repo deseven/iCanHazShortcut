@@ -84,9 +84,89 @@ Procedure.f getBackingScaleFactor()
   ProcedureReturn backingScaleFactor
 EndProcedure
 
+Macro viewingMode()
+  FreeGadget(#gadShortcutSelectorCap) : FreeGadget(#gadShortcutSelector)
+  FreeGadget(#gadActionCap) : FreeGadget(#gadAction) : FreeGadget(#gadActionHelp)
+  HideGadget(#gadCancel,#True)
+  HideGadget(#gadApply,#True)
+  TextGadget(#gadBg,0,0,400,300,"") ; dirty fix for a strange redraw behavior
+  FreeGadget(#gadBg)
+  HideGadget(#gadShortcuts,#False)
+  HideGadget(#gadAdd,#False)
+  HideGadget(#gadEdit,#False)
+  HideGadget(#gadDel,#False)
+  HideGadget(#gadUp,#False)
+  HideGadget(#gadDown,#False)
+  SetGadgetState(#gadShortcuts,-1)
+EndMacro
+
+Macro recalcUpDown()
+  If GetGadgetState(#gadShortcuts) = 0
+    DisableGadget(#gadUp,#True)
+    If CountGadgetItems(#gadShortcuts) > 1
+      DisableGadget(#gadDown,#False)
+    Else
+      DisableGadget(#gadDown,#True)
+    EndIf
+  ElseIf GetGadgetState(#gadShortcuts) + 1 = CountGadgetItems(#gadShortcuts)
+    DisableGadget(#gadUp,#False)
+    DisableGadget(#gadDown,#True)
+  Else
+    DisableGadget(#gadUp,#False)
+    DisableGadget(#gadDown,#False)
+  EndIf
+EndMacro
+
+Macro buildShellList()
+  AddGadgetItem(#gadPrefShell,-1,"no shell")
+  ExamineDirectory(0,"/bin","*sh")
+  While NextDirectoryEntry(0)
+    AddGadgetItem(#gadPrefShell,-1,DirectoryEntryName(0))
+  Wend
+  FinishDirectory(0)
+EndMacro
+
+Macro editingMode()
+  HideGadget(#gadShortcuts,#True)
+  HideGadget(#gadAdd,#True)
+  HideGadget(#gadEdit,#True)
+  HideGadget(#gadDel,#True)
+  HideGadget(#gadUp,#True)
+  HideGadget(#gadDown,#True)
+  OpenGadgetList(#gadTabs,0)
+  TextGadget(#gadBg,0,0,400,300,"") ; dirty fix for a strange redraw behavior
+  FreeGadget(#gadBg)
+  TextGadget(#gadShortcutSelectorCap,10,12,60,20,"Shortcut:")
+  StringGadget(#gadShortcutSelector,70,10,80,20,"")
+  CocoaMessage(0,GadgetID(#gadShortcutSelector),"setFocusRingType:",1)
+  CocoaMessage(0,GadgetID(#gadShortcutSelector),"setAlignment:",#NSCenterTextAlignment)
+  Define placeholder.s = "press keys"
+  CocoaMessage(0,CocoaMessage(0,GadgetID(#gadShortcutSelector),"cell"),"setPlaceholderString:$",@placeholder)
+  TextGadget(#gadActionCap,10,42,60,20,"Action:")
+  StringGadget(#gadAction,70,40,290,20,"")
+  CocoaMessage(0,GadgetID(#gadAction),"setFocusRingType:",1)
+  placeholder.s = "input command which will be executed"
+  CocoaMessage(0,CocoaMessage(0,GadgetID(#gadAction),"cell"),"setPlaceholderString:$",@placeholder)
+  TextGadget(#gadActionHelp,10,70,360,150,~"You can use any command that works in your terminal.\nTo launch specific app (for example, Automator) simply enter 'open -a Automator'.\nFor more info and usage options refer to the output of the 'open' command.")
+  HideGadget(#gadApply,#False)
+  HideGadget(#gadCancel,#False)
+  CloseGadgetList()
+EndMacro
+
+Macro editingExistentMode()
+  editExistent = #True
+  editingMode()
+  SetGadgetText(#gadShortcutSelector,GetGadgetItemText(#gadShortcuts,GetGadgetState(#gadShortcuts),0))
+  SetGadgetText(#gadAction,GetGadgetItemText(#gadShortcuts,GetGadgetState(#gadShortcuts),1))
+EndMacro
+
 Macro setListStyle()
-  ListIconGadgetColumnTitle(#gadShortcuts,0,"⚡")
-  ListIconGadgetColumnTitle(#gadShortcuts,1,"⚙")
+  If CountGadgetItems(#gadShortcuts)
+    ListIconGadgetColumnTitle(#gadShortcuts,0,"⚡")
+    ListIconGadgetColumnTitle(#gadShortcuts,1,"⚙")
+  Else
+    ListIconGadgetColumnTitle(#gadShortcuts,0,"⚡")
+  EndIf
   setListIconColumnJustification(#gadShortcuts,0,2)
   setListIconColumnJustification(#gadShortcuts,1,2)
   setListIconColumnJustification(#gadShortcuts,2,2)
@@ -98,6 +178,6 @@ Macro setListStyle()
   CocoaMessage(0,GadgetID(#gadShortcuts),"sizeLastColumnToFit")
 EndMacro
 ; IDE Options = PureBasic 5.42 LTS (MacOS X - x64)
-; Folding = --
+; Folding = ---
 ; EnableUnicode
 ; EnableXP

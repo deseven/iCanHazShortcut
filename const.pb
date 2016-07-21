@@ -1,10 +1,10 @@
 ﻿; main
 #myName = "iCanHazShortcut"
-#myVer = "0.5.0"
+#myVer = "0.5.1"
 
 ; update params
 #updateCheckUrl = "http://deseven.info/sys/ichs.ver"
-#updateDownloadUrl = "http://deseven.info/sys/ichs.zip"
+#updateDownloadUrl = "http://deseven.info/sys/ichs.dmg"
 #updateCheckInterval = 1440
 
 ; enums
