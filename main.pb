@@ -228,7 +228,10 @@ Repeat
           EndIf
         EndIf
       EndIf
-      If Len(currentHtk)
+      If haveMod And Len(currentHtk) > modLen
+        SetGadgetText(#gadShortcutSelector,currentHtk)
+        SetActiveGadget(#gadShortcutSelectorCap)
+      ElseIf (Not haveMod) And Len(currentHtk)
         SetGadgetText(#gadShortcutSelector,currentHtk)
         SetActiveGadget(#gadShortcutSelectorCap)
       Else
