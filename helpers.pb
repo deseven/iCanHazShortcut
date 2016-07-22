@@ -38,16 +38,20 @@ EndProcedure
 ; based on wilbert's code (http://www.purebasic.fr/english/viewtopic.php?p=469232#p469232)
 Procedure ListIconGadgetHideColumn(gadget.i,index.i,state.b)
   Protected column = CocoaMessage(0,CocoaMessage(0,GadgetID(gadget),"tableColumns"),"objectAtIndex:",index)
-  If state
-    CocoaMessage(0,column,"setHidden:",#YES)
-  Else
-    CocoaMessage(0,column,"setHidden:",#NO)
+  If column
+    If state
+      CocoaMessage(0,column,"setHidden:",#YES)
+    Else
+      CocoaMessage(0,column,"setHidden:",#NO)
+    EndIf
   EndIf
 EndProcedure
 
 Procedure ListIconGadgetColumnTitle(gadget.i,index.i,title.s)
   Protected column = CocoaMessage(0,CocoaMessage(0,GadgetID(gadget),"tableColumns"),"objectAtIndex:",index)
-  CocoaMessage(0,column,"setTitle:$",@title)
+  If column
+    CocoaMessage(0,column,"setTitle:$",@title)
+  EndIf
 EndProcedure
 
 ; based on Shardik's code (http://www.purebasic.fr/english/viewtopic.php?p=393304#p393304)
