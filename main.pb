@@ -17,7 +17,7 @@ IncludeFile "proc.pb"
 initResources()
 globalHK::Init()
 
-OpenWindow(#wnd,#PB_Ignore,#PB_Ignore,400,300,#myName,#PB_Window_SystemMenu|#PB_Window_ScreenCentered|#PB_Window_Invisible)
+OpenWindow(#wnd,#PB_Ignore,#PB_Ignore,0,0,#myName,#PB_Window_SystemMenu|#PB_Window_ScreenCentered)
 CocoaMessage(0,CocoaMessage(0,WindowID(#wnd),"standardWindowButton:",#NSWindowButtonMinimize),"setHidden:",#YES)
 CocoaMessage(0,CocoaMessage(0,WindowID(#wnd),"standardWindowButton:",#NSWindowButtonMaximize),"setHidden:",#YES)
 PanelGadget(#gadTabs,5,0,390,300)
@@ -51,20 +51,25 @@ ComboBoxGadget(#gadPrefShell,70,10,110,20)
 buildShellList()
 CocoaMessage(0,GadgetID(#gadPrefShell),"setFocusRingType:",1)
 FrameGadget(#gadPrefFrame,180,0,180,250,"")
-CheckBoxGadget(#gadPrefPopulateMenu,190,10,160,20,"Show actions in menu")
-CocoaMessage(0,GadgetID(#gadPrefPopulateMenu),"setFocusRingType:",1)
-CheckBoxGadget(#gadPrefShowHtk,190,35,160,20,"Show hotkeys in menu")
-CocoaMessage(0,GadgetID(#gadPrefShowHtk),"setFocusRingType:",1)
-CheckBoxGadget(#gadPrefCheckUpdate,190,60,160,20,"Check for updates")
+CheckBoxGadget(#gadPrefStatusBar,190,10,160,20,"Show icon in status bar")
+CocoaMessage(0,GadgetID(#gadPrefStatusBar),"setFocusRingType:",1)
+CheckBoxGadget(#gadPrefCheckUpdate,190,35,160,20,"Check for updates")
 CocoaMessage(0,GadgetID(#gadPrefCheckUpdate),"setFocusRingType:",1)
+CheckBoxGadget(#gadPrefPopulateMenu,190,60,160,20,"Show actions in menu")
+CocoaMessage(0,GadgetID(#gadPrefPopulateMenu),"setFocusRingType:",1)
+CheckBoxGadget(#gadPrefShowHtk,190,85,160,20,"Show hotkeys in menu")
+CocoaMessage(0,GadgetID(#gadPrefShowHtk),"setFocusRingType:",1)
 
 AddGadgetItem(#gadTabs,2,"About")
-ImageGadget(#gadLogo,25,0,64,64,ImageID(#resLogo))
+ImageGadget(#gadLogo,25,5,64,64,ImageID(#resLogo))
 TextGadget(#gadNameVer,89,8,270,20,#myName + " " + #myVer,#PB_Text_Center)
 SetGadgetFont(#gadNameVer,FontID(#resBigFont))
-TextGadget(#gadCopyright,89,28,270,20,"created by deseven, 2016",#PB_Text_Center)
-HyperLinkGadget(#gadWebDeveloper,180,43,100,20,"deseven.info",$770000)
+TextGadget(#gadCopyright,159,28,70,20,"created by")
+HyperLinkGadget(#gadWebDeveloper,219,30,100,20,"deseven",$770000)
+TextGadget(#gadCopyrightIcon,159,42,70,20,"icons by")
+HyperLinkGadget(#gadWebDesigner,206,44,100,20,"denboroda",$770000)
 SetGadgetColor(#gadWebDeveloper,#PB_Gadget_FrontColor,$bb0000)
+SetGadgetColor(#gadWebDesigner,#PB_Gadget_FrontColor,$bb0000)
 EditorGadget(#gadLicense,5,70,360,180,#PB_Editor_ReadOnly|#PB_Editor_WordWrap)
 AddGadgetItem(#gadLicense,-1,#LICENSE)
 SetActiveGadget(#gadShortcuts)
@@ -78,11 +83,14 @@ StickyWindow(#wnd,#True)
 settings()
 registerShortcuts()
 
-;If #True
-If Not CountGadgetItems(#gadShortcuts)
-  CocoaMessage(0,application,"activateIgnoringOtherApps:",#YES)
-  HideWindow(#wnd,#False)
+If #True
+;If Not CountGadgetItems(#gadShortcuts)
+  wndState(#show)
+Else
+  wndState(#hide)
 EndIf
+
+ResizeWindow(#wnd,WindowX(#wnd)-200,WindowY(#wnd),400,300)
 
 If GetGadgetState(#gadPrefCheckUpdate) = #PB_Checkbox_Checked
   updateCheckThread = CreateThread(@checkUpdateAsync(),#updateCheckInterval*60*1000)
@@ -112,6 +120,8 @@ Repeat
           EndSelect
         Case #gadWebDeveloper
           RunProgram("open","http://deseven.info","")
+        Case #gadWebDesigner
+          RunProgram("open","https://dribbble.com/denboroda","")
         Case #gadAdd
           editingMode()
         Case #gadEdit
@@ -195,12 +205,27 @@ Repeat
               KillThread(updateCheckThread)
             EndIf
           EndIf
+        Case #gadPrefStatusBar
+          settings(#True)
+          buildMenu()
+        Case #gadActionHelp1
+          SetGadgetText(#gadAction,~"open -a Finder")
+        Case #gadActionHelp2
+          SetGadgetText(#gadAction,~"screencapture -i -r -t png \"$HOME/screenshot.png\"")
+        Case #gadActionHelp3
+          SetGadgetText(#gadAction,~"say `date \"+Current date is %Y-%m-%d\"`")
+        Case #gadActionHelp4
+          SetGadgetText(#gadAction,~"pbpaste >> \"$HOME/clipboard.log\"")
+        Case #gadActionHelp5
+          SetGadgetText(#gadAction,~"echo \"test\" | pbcopy")
+        Case #gadActionHelp6
+          SetGadgetText(#gadAction,~"pmset displaysleepnow")
       EndSelect
     Case #PB_Event_CloseWindow
       If IsGadget(#gadShortcutSelectorCap)
         viewingMode()
       EndIf
-      HideWindow(#wnd,#True)
+      wndState(#hide)
     Case #evUpdateArrival
       If MessageRequester(#myName + ", new version is available!","Found new version " + updateVer + ~"\n\nChangelog:\n" + updateDetails + ~"\n\nDo you want to download it?",#PB_MessageRequester_YesNo) = #PB_MessageRequester_Yes
         RunProgram("open",#updateDownloadUrl,"")

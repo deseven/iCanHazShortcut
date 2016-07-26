@@ -50,7 +50,11 @@ EndProcedure
 Procedure ListIconGadgetColumnTitle(gadget.i,index.i,title.s)
   Protected column = CocoaMessage(0,CocoaMessage(0,GadgetID(gadget),"tableColumns"),"objectAtIndex:",index)
   If column
-    CocoaMessage(0,column,"setTitle:$",@title)
+    If OSVersion() >= #PB_OS_MacOSX_10_10
+      CocoaMessage(0,column,"setTitle:$",@title)
+    Else
+      CocoaMessage(0,CocoaMessage(0,column,"headerCell"),"setStringValue:$",@title)
+    EndIf
   EndIf
 EndProcedure
 
@@ -91,6 +95,8 @@ EndProcedure
 Macro viewingMode()
   FreeGadget(#gadShortcutSelectorCap) : FreeGadget(#gadShortcutSelector)
   FreeGadget(#gadActionCap) : FreeGadget(#gadAction) : FreeGadget(#gadActionHelp)
+  FreeGadget(#gadActionHelp1) : FreeGadget(#gadActionHelp2) : FreeGadget(#gadActionHelp3)
+  FreeGadget(#gadActionHelp4) : FreeGadget(#gadActionHelp5) : FreeGadget(#gadActionHelp6)
   HideGadget(#gadCancel,#True)
   HideGadget(#gadApply,#True)
   TextGadget(#gadBg,0,0,400,300,"") ; dirty fix for a strange redraw behavior
@@ -151,7 +157,19 @@ Macro editingMode()
   CocoaMessage(0,GadgetID(#gadAction),"setFocusRingType:",1)
   placeholder.s = "input command which will be executed"
   CocoaMessage(0,CocoaMessage(0,GadgetID(#gadAction),"cell"),"setPlaceholderString:$",@placeholder)
-  TextGadget(#gadActionHelp,10,70,360,150,~"You can use any command that works in your terminal.\nTo launch specific app (for example, Automator) simply enter 'open -a Automator'.\nFor more info and usage options refer to the output of the 'open' command.")
+  TextGadget(#gadActionHelp,10,70,360,40,~"You can use any command that works in your terminal.\nHere are some examples:")
+  HyperLinkGadget(#gadActionHelp1,10,110,120,20,"open an app",$770000)
+  SetGadgetColor(#gadActionHelp1,#PB_Gadget_FrontColor,$bb0000)
+  HyperLinkGadget(#gadActionHelp2,10,128,120,20,"make a screenshot",$770000)
+  SetGadgetColor(#gadActionHelp2,#PB_Gadget_FrontColor,$bb0000)
+  HyperLinkGadget(#gadActionHelp3,10,146,120,20,"say current date",$770000)
+  SetGadgetColor(#gadActionHelp3,#PB_Gadget_FrontColor,$bb0000)
+  HyperLinkGadget(#gadActionHelp4,10,164,160,20,"save clipboard contents",$770000)
+  SetGadgetColor(#gadActionHelp4,#PB_Gadget_FrontColor,$bb0000)
+  HyperLinkGadget(#gadActionHelp5,10,182,160,20,"set clipboard contents",$770000)
+  SetGadgetColor(#gadActionHelp5,#PB_Gadget_FrontColor,$bb0000)
+  HyperLinkGadget(#gadActionHelp6,10,200,120,20,"lock screen",$770000)
+  SetGadgetColor(#gadActionHelp6,#PB_Gadget_FrontColor,$bb0000)
   HideGadget(#gadApply,#False)
   HideGadget(#gadCancel,#False)
   CloseGadgetList()

@@ -6,6 +6,16 @@
   End 0
 EndProcedure
 
+Procedure wndState(show.b)
+  Shared application.i
+  If Not show
+    CocoaMessage(0,application,"hide:")
+  Else
+    HideWindow(#wnd,#False)
+    CocoaMessage(0,application,"activateIgnoringOtherApps:",#YES)
+  EndIf
+EndProcedure
+
 Procedure settings(save.b = #False)
   Protected shortcut.s,action.s,i.l
   If FileSize(GetEnvironmentVariable("HOME") + "/.config") = -1
@@ -33,6 +43,11 @@ Procedure settings(save.b = #False)
       WritePreferenceString("check_for_updates","yes")
     Else
       WritePreferenceString("check_for_updates","no")
+    EndIf
+    If GetGadgetState(#gadPrefStatusBar) = #PB_Checkbox_Checked
+      WritePreferenceString("show_icon_in_statusbar","yes")
+    Else
+      WritePreferenceString("show_icon_in_statusbar","no")
     EndIf
     For i = 0 To CountGadgetItems(#gadShortcuts)-1
       shortcut = GetGadgetItemText(#gadShortcuts,i,0)
@@ -67,6 +82,11 @@ Procedure settings(save.b = #False)
     Else
       SetGadgetState(#gadPrefCheckUpdate,#PB_Checkbox_Unchecked)
     EndIf
+    If ReadPreferenceString("show_icon_in_statusbar","yes") = "yes"
+      SetGadgetState(#gadPrefStatusBar,#PB_Checkbox_Checked)
+    Else
+      SetGadgetState(#gadPrefStatusBar,#PB_Checkbox_Unchecked)
+    EndIf
     ExaminePreferenceGroups()
     i = 0
     While NextPreferenceGroup()
@@ -90,12 +110,10 @@ Procedure initResources()
   Protected imageSize.NSSize
   Protected path.s = GetPathPart(ProgramFilename()) + "../Resources/"
   LoadFont(#resBigFont,"Courier",18,#PB_Font_Bold)
-  If LoadImageEx(#resLogo,path+"main.icns") And LoadImageEx(#resAdd,path+"add.png") And LoadImageEx(#resEdit,path+"edit.png") And LoadImageEx(#resDel,path+"del.png") And LoadImageEx(#resApply,path+"apply.png") And LoadImageEx(#resCancel,path+"cancel.png") And LoadImageEx(#resOk,path+"ok.png") And LoadImageEx(#resDisabled,path+"disabled.png") And LoadImageEx(#resFailed,path+"failed.png") And LoadImageEx(#resUp,path+"up.png") And LoadImageEx(#resDown,path+"down.png")
-    CopyImage(#resLogo,#resIcon)
+  If LoadImageEx(#resLogo,path+"main.icns") And LoadImageEx(#resIcon,path+"status_icon.png") And LoadImageEx(#resAdd,path+"add.png") And LoadImageEx(#resEdit,path+"edit.png") And LoadImageEx(#resDel,path+"del.png") And LoadImageEx(#resApply,path+"apply.png") And LoadImageEx(#resCancel,path+"cancel.png") And LoadImageEx(#resOk,path+"ok.png") And LoadImageEx(#resDisabled,path+"disabled.png") And LoadImageEx(#resFailed,path+"failed.png") And LoadImageEx(#resUp,path+"up.png") And LoadImageEx(#resDown,path+"down.png")
     If getBackingScaleFactor() >= 2.0
-      ResizeImage(#resIcon,36,36,#PB_Image_Smooth)
-      imageSize\width = 18
-      imageSize\height = 18
+      imageSize\width = 20
+      imageSize\height = 20
       CocoaMessage(0,ImageID(#resIcon),"setSize:@",@ImageSize)
       ResizeImage(#resLogo,128,128,#PB_Image_Smooth)
       imageSize\width = 64
@@ -117,7 +135,7 @@ Procedure initResources()
       CocoaMessage(0,ImageID(#resFailed),"setSize:@",@ImageSize)
     Else
       ResizeImage(#resLogo,64,64,#PB_Image_Smooth)
-      ResizeImage(#resIcon,18,18,#PB_Image_Smooth)
+      ResizeImage(#resIcon,20,20,#PB_Image_Smooth)
       ResizeImage(#resAdd,24,24,#PB_Image_Smooth)
       ResizeImage(#resEdit,24,24,#PB_Image_Smooth)
       ResizeImage(#resDel,24,24,#PB_Image_Smooth)
@@ -167,16 +185,16 @@ Procedure menuEvents()
       CocoaMessage(0,application,"activateIgnoringOtherApps:",#YES)
       SetGadgetState(#gadTabs,2)
       SetActiveGadget(#gadCopyright)
-      HideWindow(#wnd,#False)
+      wndState(#show)
     Case #menuShortcuts
       CocoaMessage(0,application,"activateIgnoringOtherApps:",#YES)
       SetGadgetState(#gadTabs,0)
       SetActiveGadget(#gadShortcuts)
-      HideWindow(#wnd,#False)
+      wndState(#show)
     Case #menuPrefs
       CocoaMessage(0,application,"activateIgnoringOtherApps:",#YES)
       SetGadgetState(#gadTabs,1)
-      HideWindow(#wnd,#False)
+      wndState(#show)
     Case #menuQuit
       die()
   EndSelect
@@ -200,43 +218,57 @@ EndProcedure
 
 Procedure buildMenu()
   Shared statusBar.i,statusItem.i
-  Protected itemLength.CGFloat = 32
+  Protected itemLength.CGFloat = 24
   Protected i.l
-  If Not (statusBar And statusItem)
-    statusBar.i = CocoaMessage(0,0,"NSStatusBar systemStatusBar")
-    statusItem.i = CocoaMessage(0,CocoaMessage(0,StatusBar,"statusItemWithLength:",#NSSquareStatusBarItemLength),"retain")
-  EndIf
-  If IsMenu(#menu) : FreeMenu(#menu) : EndIf
-  CreatePopupMenu(#menu)
-  For i = 0 To 1000            ; temporary solution
-    UnbindMenuEvent(#menu,i,@shortcutMenuEvents())
-  Next
-  If GetGadgetState(#gadPrefPopulateMenu) = #PB_Checkbox_Checked And CountGadgetItems(#gadShortcuts)
-    For i = 0 To CountGadgetItems(#gadShortcuts)-1
-      If GetGadgetItemState(#gadShortcuts,i) >= #PB_ListIcon_Checked
-        If GetGadgetState(#gadPrefShowHtk) = #PB_Checkbox_Checked
-          MenuItem(#menuCustom+i,"[" + GetGadgetItemText(#gadShortcuts,i,0) + "] " + GetGadgetItemText(#gadShortcuts,i,1))
-        Else
-          MenuItem(#menuCustom+i,GetGadgetItemText(#gadShortcuts,i,1))
-        EndIf
-        BindMenuEvent(#menu,#menuCustom+i,@shortcutMenuEvents())
-      EndIf
+  If GetGadgetState(#gadPrefStatusBar) = #PB_Checkbox_Checked
+    If Not statusBar
+      statusBar.i = CocoaMessage(0,0,"NSStatusBar systemStatusBar")
+    EndIf
+    If Not statusItem
+      statusItem.i = CocoaMessage(0,CocoaMessage(0,statusBar,"statusItemWithLength:",#NSSquareStatusBarItemLength),"retain")
+    EndIf
+    If IsMenu(#menu) : FreeMenu(#menu) : EndIf
+    CreatePopupMenu(#menu)
+    For i = 0 To 1000            ; temporary solution
+      UnbindMenuEvent(#menu,i,@shortcutMenuEvents())
     Next
+    If GetGadgetState(#gadPrefPopulateMenu) = #PB_Checkbox_Checked And CountGadgetItems(#gadShortcuts)
+      For i = 0 To CountGadgetItems(#gadShortcuts)-1
+        If GetGadgetItemState(#gadShortcuts,i) >= #PB_ListIcon_Checked
+          If GetGadgetState(#gadPrefShowHtk) = #PB_Checkbox_Checked
+            MenuItem(#menuCustom+i,"[" + GetGadgetItemText(#gadShortcuts,i,0) + "] " + GetGadgetItemText(#gadShortcuts,i,1))
+          Else
+            MenuItem(#menuCustom+i,GetGadgetItemText(#gadShortcuts,i,1))
+          EndIf
+          BindMenuEvent(#menu,#menuCustom+i,@shortcutMenuEvents())
+        EndIf
+      Next
+      MenuBar()
+    EndIf
+    MenuItem(#menuShortcuts,"Shortcuts...")
+    BindMenuEvent(#menu,#menuShortcuts,@menuEvents())
+    MenuItem(#menuPrefs,"Preferences...")
+    BindMenuEvent(#menu,#menuPrefs,@menuEvents())
+    MenuItem(#menuAbout,"About")
+    BindMenuEvent(#menu,#menuAbout,@menuEvents())
     MenuBar()
+    MenuItem(#menuQuit,"Quit")
+    BindMenuEvent(#menu,#menuQuit,@menuEvents())
+    CocoaMessage(0,statusItem,"setHighlightMode:",@"YES")
+    CocoaMessage(0,statusItem,"setLength:@",@itemLength)
+    CocoaMessage(0,statusItem,"setImage:",ImageID(#resIcon))
+    CocoaMessage(0,statusItem,"setMenu:",CocoaMessage(0,MenuID(#menu),"firstObject"))
+  Else
+    If IsMenu(#menu)
+      For i = 0 To 1000            ; temporary solution
+        UnbindMenuEvent(#menu,i,@shortcutMenuEvents())
+      Next
+      FreeMenu(#menu)
+    EndIf
+    If statusItem
+      CocoaMessage(0,statusBar,"removeStatusItem:",statusItem) : statusItem = 0
+    EndIf
   EndIf
-  MenuItem(#menuShortcuts,"Shortcuts...")
-  BindMenuEvent(#menu,#menuShortcuts,@menuEvents())
-  MenuItem(#menuPrefs,"Preferences...")
-  BindMenuEvent(#menu,#menuPrefs,@menuEvents())
-  MenuItem(#menuAbout,"About")
-  BindMenuEvent(#menu,#menuAbout,@menuEvents())
-  MenuBar()
-  MenuItem(#menuQuit,"Quit")
-  BindMenuEvent(#menu,#menuQuit,@menuEvents())
-  CocoaMessage(0,StatusItem,"setHighlightMode:",@"YES")
-  CocoaMessage(0,StatusItem,"setLength:@",@itemLength)
-  CocoaMessage(0,StatusItem,"setImage:",ImageID(#resIcon))
-  CocoaMessage(0,StatusItem,"setMenu:",CocoaMessage(0,MenuID(#menu),"firstObject"))
 EndProcedure
 
 Procedure registerShortcuts()
