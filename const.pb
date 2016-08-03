@@ -1,6 +1,6 @@
 ﻿; main
 #myName = "iCanHazShortcut"
-#myVer = "0.5.3"
+#myVer = "0.6.0"
 
 ; update params
 #updateCheckUrl = "http://deseven.info/sys/ichs.ver"

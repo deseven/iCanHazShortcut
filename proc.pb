@@ -110,8 +110,9 @@ Procedure initResources()
   Protected imageSize.NSSize
   Protected path.s = GetPathPart(ProgramFilename()) + "../Resources/"
   LoadFont(#resBigFont,"Courier",18,#PB_Font_Bold)
-  If LoadImageEx(#resLogo,path+"main.icns") And LoadImageEx(#resIcon,path+"status_icon.png") And LoadImageEx(#resAdd,path+"add.png") And LoadImageEx(#resEdit,path+"edit.png") And LoadImageEx(#resDel,path+"del.png") And LoadImageEx(#resApply,path+"apply.png") And LoadImageEx(#resCancel,path+"cancel.png") And LoadImageEx(#resOk,path+"ok.png") And LoadImageEx(#resDisabled,path+"disabled.png") And LoadImageEx(#resFailed,path+"failed.png") And LoadImageEx(#resUp,path+"up.png") And LoadImageEx(#resDown,path+"down.png")
+  If LoadImageEx(#resLogo,path+"main.icns") And LoadImageEx(#resAdd,path+"add.png") And LoadImageEx(#resEdit,path+"edit.png") And LoadImageEx(#resDel,path+"del.png") And LoadImageEx(#resApply,path+"apply.png") And LoadImageEx(#resCancel,path+"cancel.png") And LoadImageEx(#resOk,path+"ok.png") And LoadImageEx(#resDisabled,path+"disabled.png") And LoadImageEx(#resFailed,path+"failed.png") And LoadImageEx(#resUp,path+"up.png") And LoadImageEx(#resDown,path+"down.png")
     If getBackingScaleFactor() >= 2.0
+      If Not LoadImageEx(#resIcon,path+"status_icon@2x.png") : End 1 : EndIf
       imageSize\width = 20
       imageSize\height = 20
       CocoaMessage(0,ImageID(#resIcon),"setSize:@",@ImageSize)
@@ -134,8 +135,8 @@ Procedure initResources()
       CocoaMessage(0,ImageID(#resDisabled),"setSize:@",@ImageSize)
       CocoaMessage(0,ImageID(#resFailed),"setSize:@",@ImageSize)
     Else
+      If Not LoadImageEx(#resIcon,path+"status_icon.png") : End 1 : EndIf
       ResizeImage(#resLogo,64,64,#PB_Image_Smooth)
-      ResizeImage(#resIcon,20,20,#PB_Image_Smooth)
       ResizeImage(#resAdd,24,24,#PB_Image_Smooth)
       ResizeImage(#resEdit,24,24,#PB_Image_Smooth)
       ResizeImage(#resDel,24,24,#PB_Image_Smooth)

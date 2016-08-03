@@ -83,8 +83,8 @@ StickyWindow(#wnd,#True)
 settings()
 registerShortcuts()
 
-If #True
-;If Not CountGadgetItems(#gadShortcuts)
+;If #True
+If Not CountGadgetItems(#gadShortcuts)
   wndState(#show)
 Else
   wndState(#hide)
