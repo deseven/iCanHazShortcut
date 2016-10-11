@@ -14,6 +14,13 @@ Define gadgetState.l
 IncludeFile "helpers.pb"
 IncludeFile "proc.pb"
 
+Define subClass = objc_allocateClassPair_(objc_getClass_("NSScriptCommand"),"asEnableShortcut",0)
+class_addMethod_(subClass,sel_registerName_("performDefaultImplementation"),@asEnableShortcut(),"v@")
+objc_registerClassPair_(subClass)
+subClass = objc_allocateClassPair_(objc_getClass_("NSScriptCommand"),"asDisableShortcut",0)
+class_addMethod_(subClass,sel_registerName_("performDefaultImplementation"),@asDisableShortcut(),"v@")
+objc_registerClassPair_(subClass)
+
 initResources()
 globalHK::Init()
 
@@ -53,11 +60,13 @@ CocoaMessage(0,GadgetID(#gadPrefShell),"setFocusRingType:",1)
 FrameGadget(#gadPrefFrame,180,0,180,250,"")
 CheckBoxGadget(#gadPrefStatusBar,190,10,160,20,"Show icon in status bar")
 CocoaMessage(0,GadgetID(#gadPrefStatusBar),"setFocusRingType:",1)
-CheckBoxGadget(#gadPrefCheckUpdate,190,35,160,20,"Check for updates")
+CheckBoxGadget(#gadPrefAutostart,190,35,160,20,"Start on login")
+CocoaMessage(0,GadgetID(#gadPrefAutostart),"setFocusRingType:",1)
+CheckBoxGadget(#gadPrefCheckUpdate,190,60,160,20,"Check for updates")
 CocoaMessage(0,GadgetID(#gadPrefCheckUpdate),"setFocusRingType:",1)
-CheckBoxGadget(#gadPrefPopulateMenu,190,60,160,20,"Show actions in menu")
+CheckBoxGadget(#gadPrefPopulateMenu,190,85,160,20,"Show actions in menu")
 CocoaMessage(0,GadgetID(#gadPrefPopulateMenu),"setFocusRingType:",1)
-CheckBoxGadget(#gadPrefShowHtk,190,85,160,20,"Show hotkeys in menu")
+CheckBoxGadget(#gadPrefShowHtk,190,110,160,20,"Show hotkeys in menu")
 CocoaMessage(0,GadgetID(#gadPrefShowHtk),"setFocusRingType:",1)
 
 AddGadgetItem(#gadTabs,2,"About")
@@ -194,6 +203,22 @@ Repeat
           settings(#True) : registerShortcuts()
         Case #gadPrefShell
           If EventType() = #PB_EventType_Change : settings(#True) : EndIf
+        Case #gadPrefAutostart
+          If GetGadgetState(#gadPrefAutostart) = #PB_Checkbox_Checked
+            If Not enableLoginItem(#myID,#True)
+              SetGadgetState(#gadPrefAutostart,#PB_Checkbox_Unchecked)
+              MessageRequester(#myName,#errorMsg + "applying autostart")
+            Else
+              settings(#True)
+            EndIf
+          Else
+            If Not enableLoginItem(#myID,#False)
+              SetGadgetState(#gadPrefAutostart,#PB_Checkbox_Checked)
+              MessageRequester(#myName,#errorMsg + "disabling autostart")
+            Else
+              settings(#True)
+            EndIf
+          EndIf
         Case #gadPrefCheckUpdate
           settings(#True)
           If GetGadgetState(#gadPrefCheckUpdate) = #PB_Checkbox_Checked
@@ -230,6 +255,30 @@ Repeat
       If MessageRequester(#myName + ", new version is available!","Found new version " + updateVer + ~"\n\nChangelog:\n" + updateDetails + ~"\n\nDo you want to download it?",#PB_MessageRequester_YesNo) = #PB_MessageRequester_Yes
         RunProgram("open",#updateDownloadUrl,"")
         die()
+      EndIf
+    Case #evDisableShortcut
+      If EventData()
+        Define shortcut.s = PeekS(EventData())
+        For i = 0 To CountGadgetItems(#gadShortcuts)-1
+          If GetGadgetItemText(#gadShortcuts,i,0) = shortcut
+            SetGadgetItemState(#gadShortcuts,i,0)
+            registerShortcuts()
+            settings(#True)
+            Break
+          EndIf
+        Next
+      EndIf
+    Case #evEnableShortcut
+      If EventData()
+        Define shortcut.s = PeekS(EventData())
+        For i = 0 To CountGadgetItems(#gadShortcuts)-1
+          If GetGadgetItemText(#gadShortcuts,i,0) = shortcut
+            SetGadgetItemState(#gadShortcuts,i,#PB_ListIcon_Checked)
+            registerShortcuts()
+            settings(#True)
+            Break
+          EndIf
+        Next
       EndIf
   EndSelect
   If IsGadget(#gadShortcutSelector) And GetActiveGadget() = #gadShortcutSelector

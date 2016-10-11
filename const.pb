@@ -1,6 +1,7 @@
 ﻿; main
 #myName = "iCanHazShortcut"
-#myVer = "0.6.0"
+#myVer = "0.7.0"
+#myID = "info.deseven.icanhazshortcut"
 
 ; update params
 #updateCheckUrl = "http://deseven.info/sys/ichs.ver"
@@ -53,6 +54,7 @@ Enumeration gadgets
   #gadPrefPopulateMenu
   #gadPrefShowHtk
   #gadPrefFrame
+  #gadPrefAutostart
   #gadPrefCheckUpdate
 EndEnumeration
 
@@ -75,6 +77,8 @@ EndEnumeration
 
 Enumeration globalEvents #PB_Event_FirstCustomValue + 10000
   #evUpdateArrival
+  #evDisableShortcut
+  #evEnableShortcut
 EndEnumeration
 
 #NSSquareStatusBarItemLength = -2
@@ -89,6 +93,7 @@ EndEnumeration
 #hide = #False
 #show = #True
 
+#errorMsg = "Something went wrong, please try to reinstall this tool or contact the developer.\nStep: "
 #LICENSE = ~"This is free and unencumbered software released into the public domain.\n\nAnyone is free to copy, modify, publish, use, compile, sell, or distribute this software, either in source code form or as a compiled binary, for any purpose, commercial or non-commercial, and by any means.\n\nIn jurisdictions that recognize copyright laws, the author or authors of this software dedicate any and all copyright interest in the software to the public domain. We make this dedication for the benefit of the public at large and to the detriment of our heirs and successors. We intend this dedication to be an overt act of relinquishment in perpetuity of all present and future rights to this software under copyright law.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.\n\nFor more information, please refer to <http://unlicense.org>"
 
 Dim keys.s($FF)
@@ -170,6 +175,25 @@ keys($74) = "PgUp"
 keys($79) = "PgDown"
 keys($0A) = "§"
 keys($33) = "Del"
+
+#loginItemPlist = ~"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+~"<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n" +
+~"<plist version=\"1.0\">\n" +
+~"<dict>\n" +
+~"\t<key>Label</key>\n" +
+~"\t<string>{appid}</string>\n" +
+~"\t<key>ProgramArguments</key>\n" +
+~"\t<array>\n" +
+~"\t\t<string>/usr/bin/open</string>\n" +
+~"\t\t<string>{apppath}</string>\n" +
+~"\t</array>\n" +
+~"\t<key>RunAtLoad</key>\n" +
+~"\t<true/>\n" +
+~"\t<key>KeepAlive</key>\n" +
+~"\t<false/>\n" +
+~"\t<key>LimitLoadToSessionType</key>\n" +
+~"\t<string>Aqua</string></dict>\n" +
+~"</plist>"
 ; IDE Options = PureBasic 5.42 LTS (MacOS X - x64)
 ; EnableUnicode
 ; EnableXP

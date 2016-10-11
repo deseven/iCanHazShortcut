@@ -44,6 +44,11 @@ Procedure settings(save.b = #False)
     Else
       WritePreferenceString("check_for_updates","no")
     EndIf
+    If GetGadgetState(#gadPrefAutostart) = #PB_Checkbox_Checked
+      WritePreferenceString("start_on_login","yes")
+    Else
+      WritePreferenceString("start_on_login","no")
+    EndIf
     If GetGadgetState(#gadPrefStatusBar) = #PB_Checkbox_Checked
       WritePreferenceString("show_icon_in_statusbar","yes")
     Else
@@ -81,6 +86,11 @@ Procedure settings(save.b = #False)
       SetGadgetState(#gadPrefCheckUpdate,#PB_Checkbox_Checked)
     Else
       SetGadgetState(#gadPrefCheckUpdate,#PB_Checkbox_Unchecked)
+    EndIf
+    If ReadPreferenceString("start_on_login","no") = "yes"
+      SetGadgetState(#gadPrefAutostart,#PB_Checkbox_Checked)
+    Else
+      SetGadgetState(#gadPrefAutostart,#PB_Checkbox_Unchecked)
     EndIf
     If ReadPreferenceString("show_icon_in_statusbar","yes") = "yes"
       SetGadgetState(#gadPrefStatusBar,#PB_Checkbox_Checked)
@@ -332,7 +342,35 @@ Procedure checkUpdateAsync(interval.i)
     If interval > 0 : Delay(interval) : Else : ProcedureReturn : EndIf
   ForEver
 EndProcedure
+
+ProcedureC asEnableShortcut(command.i)
+  Static shortcut.s = ""
+  Protected argument.i = CocoaMessage(0,command,"evaluatedArguments")
+  If argument
+    Protected string = CocoaMessage(0,CocoaMessage(0,argument,"valueForKey:$",@""),"UTF8String")
+    If string
+      shortcut = PeekS(string,-1,#PB_UTF8)
+      If Len(shortcut)
+        PostEvent(#evEnableShortcut,0,0,0,@shortcut)
+      EndIf
+    EndIf
+  EndIf
+EndProcedure
+
+ProcedureC asDisableShortcut(command.i)
+  Static shortcut.s = ""
+  Protected argument.i = CocoaMessage(0,command,"evaluatedArguments")
+  If argument
+    Protected string = CocoaMessage(0,CocoaMessage(0,argument,"valueForKey:$",@""),"UTF8String")
+    If string
+      shortcut = PeekS(string,-1,#PB_UTF8)
+      If Len(shortcut)
+        PostEvent(#evDisableShortcut,0,0,0,@shortcut)
+      EndIf
+    EndIf
+  EndIf
+EndProcedure
 ; IDE Options = PureBasic 5.42 LTS (MacOS X - x64)
-; Folding = --
+; Folding = ---
 ; EnableUnicode
 ; EnableXP

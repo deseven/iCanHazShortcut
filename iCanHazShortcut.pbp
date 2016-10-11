@@ -7,7 +7,7 @@
   <section name="data">
     <explorer view="../../" pattern="0"/>
     <log show="1"/>
-    <lastopen date="2016-07-30 18:16" user="deseven" host="de7air.local"/>
+    <lastopen date="2016-10-11 22:56" user="deseven" host="de7air.local"/>
   </section>
   <section name="files">
     <file name="const.pb">
@@ -16,15 +16,15 @@
     </file>
     <file name="helpers.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
-      <fingerprint md5="9847195bcfab3b81f3ae741046b79581"/>
+      <fingerprint md5="874e8adc1f2bb1642f21bb2cfc609edd"/>
     </file>
     <file name="main.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
-      <fingerprint md5="28572b4f2b92a40f0f80c9a38c1b47f6"/>
+      <fingerprint md5="d11c402678e663be33a83ec6138ed578"/>
     </file>
     <file name="proc.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
-      <fingerprint md5="14745fb90a8fa202ff47e98e49f8d648"/>
+      <fingerprint md5="6bc6e493a7afbe9064c77e0fb7683b4b"/>
     </file>
   </section>
   <section name="targets">

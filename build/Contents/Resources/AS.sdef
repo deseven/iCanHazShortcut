@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE dictionary SYSTEM "file://localhost/System/Library/DTDs/sdef.dtd">
+
+<dictionary title="iCanHazShortcut">
+    <suite name="iCanHazShortcut Suite" code="iCHS" description="iCanHazShortcut Scripts">
+        <command name="enable" code="enablesc" description="Enable defined shortcut">
+            <cocoa class="asEnableShortcut"/>
+            <direct-parameter description="shortcut">
+                <type type="text"/>
+            </direct-parameter>
+        </command>
+        <command name="disable" code="disablsc" description="Disable defined shortcut">
+            <cocoa class="asDisableShortcut"/>
+            <direct-parameter description="shortcut">
+                <type type="text"/>
+            </direct-parameter>
+        </command>
+    </suite>
+</dictionary>

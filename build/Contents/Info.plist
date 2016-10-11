@@ -17,7 +17,7 @@
 	<key>CFBundleSignature</key>
 	<string>PURE</string>
 	<key>CFBundleVersion</key>
-	<string>0.4.3</string>
+	<string>0.7.0</string>
 	<key>CFBundleName</key>
 	<string>iCanHazShortcut</string>
 	<key>CSResourcesFileMapped</key>
@@ -31,6 +31,8 @@
 	<key>LSMinimumSystemVersion</key>
 	<string>10.8</string>
 	<key>NSAppleScriptEnabled</key>
-	<false/>
+	<true/>
+	<key>OSAScriptingDefinition</key>
+	<string>AS.sdef</string>
 </dict>
 </plist>
