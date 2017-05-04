@@ -5,6 +5,11 @@ Simple shortcut manager for OS X 10.8 or higher.
 ## binaries
 Latest binary release can be downloaded [here](https://github.com/deseven/icanhazshortcut/releases).  
 
+## applescript support
+Right now only basic applescript support is available, you can enable or disable shortcuts like that:  
+`tell application "iCanHazShortcut" to enable "⌥D"`  
+`tell application "iCanHazShortcut" to disable "⌥D"`  
+
 ## compiling from source
 iCHS created in [PB](http://purebasic.com) and depends on [pb-osx-globalhotkeys](https://github.com/deseven/pb-osx-globalhotkeys).  
 You also need [node-appdmg](https://github.com/LinusU/node-appdmg) if you want to build dmg.  
