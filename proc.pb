@@ -12,12 +12,14 @@ Procedure wndState(show.b)
     CocoaMessage(0,application,"hide:")
   Else
     HideWindow(#wnd,#False)
+    CocoaMessage(0,GadgetID(#gadShortcuts),"sizeLastColumnToFit")
     CocoaMessage(0,application,"activateIgnoringOtherApps:",#YES)
   EndIf
 EndProcedure
 
 Procedure settings(save.b = #False)
   Protected shortcut.s,action.s,i.l
+  Shared updateVer.s
   If FileSize(GetEnvironmentVariable("HOME") + "/.config") = -1
     CreateDirectory(GetEnvironmentVariable("HOME") + "/.config")
   EndIf
@@ -28,6 +30,9 @@ Procedure settings(save.b = #False)
   If save
     CreatePreferences(path,#PB_Preference_GroupSeparator)
     PreferenceGroup("main")
+    If updateVer <> #myVer
+      WritePreferenceString("skip update",updateVer)
+    EndIf
     WritePreferenceString("shell",GetGadgetText(#gadPrefShell))
     If GetGadgetState(#gadPrefPopulateMenu) = #PB_Checkbox_Checked
       WritePreferenceString("populate_menu_with_actions","yes")
@@ -69,6 +74,7 @@ Procedure settings(save.b = #False)
   Else
     OpenPreferences(path,#PB_Preference_GroupSeparator)
     PreferenceGroup("main")
+    updateVer = ReadPreferenceString("skip update",#myVer)
     SetGadgetText(#gadPrefShell,ReadPreferenceString("shell","bash"))
     If ReadPreferenceString("populate_menu_with_actions","yes") = "yes"
       SetGadgetState(#gadPrefPopulateMenu,#PB_Checkbox_Checked)
@@ -120,7 +126,18 @@ Procedure initResources()
   Protected imageSize.NSSize
   Protected path.s = GetPathPart(ProgramFilename()) + "../Resources/"
   LoadFont(#resBigFont,"Courier",18,#PB_Font_Bold)
-  If LoadImageEx(#resLogo,path+"main.icns") And LoadImageEx(#resAdd,path+"add.png") And LoadImageEx(#resEdit,path+"edit.png") And LoadImageEx(#resDel,path+"del.png") And LoadImageEx(#resApply,path+"apply.png") And LoadImageEx(#resCancel,path+"cancel.png") And LoadImageEx(#resOk,path+"ok.png") And LoadImageEx(#resDisabled,path+"disabled.png") And LoadImageEx(#resFailed,path+"failed.png") And LoadImageEx(#resUp,path+"up.png") And LoadImageEx(#resDown,path+"down.png")
+  If LoadImageEx(#resLogo,path+"main.icns") And
+     LoadImageEx(#resAdd,path+"add.png") And
+     LoadImageEx(#resEdit,path+"edit.png") And
+     LoadImageEx(#resDel,path+"del.png") And
+     LoadImageEx(#resTest,path+"test.png") And
+     LoadImageEx(#resApply,path+"apply.png") And
+     LoadImageEx(#resCancel,path+"cancel.png") And
+     LoadImageEx(#resOk,path+"ok.png") And
+     LoadImageEx(#resDisabled,path+"disabled.png") And
+     LoadImageEx(#resFailed,path+"failed.png") And
+     LoadImageEx(#resUp,path+"up.png") And
+     LoadImageEx(#resDown,path+"down.png")
     If getBackingScaleFactor() >= 2.0
       If Not LoadImageEx(#resIcon,path+"status_icon@2x.png") : End 1 : EndIf
       imageSize\width = 20
@@ -139,6 +156,7 @@ Procedure initResources()
       CocoaMessage(0,ImageID(#resCancel),"setSize:@",@ImageSize)
       CocoaMessage(0,ImageID(#resUp),"setSize:@",@ImageSize)
       CocoaMessage(0,ImageID(#resDown),"setSize:@",@ImageSize)
+      CocoaMessage(0,ImageID(#resTest),"setSize:@",@ImageSize)
       imageSize\width = 16
       imageSize\height = 16
       CocoaMessage(0,ImageID(#resOk),"setSize:@",@ImageSize)
@@ -154,6 +172,7 @@ Procedure initResources()
       ResizeImage(#resCancel,24,24,#PB_Image_Smooth)
       ResizeImage(#resUp,24,24,#PB_Image_Smooth)
       ResizeImage(#resDown,24,24,#PB_Image_Smooth)
+      ResizeImage(#resTest,24,24,#PB_Image_Smooth)
       ResizeImage(#resOk,16,16,#PB_Image_Smooth)
       ResizeImage(#resDisabled,16,16,#PB_Image_Smooth)
       ResizeImage(#resFailed,16,16,#PB_Image_Smooth)
@@ -189,6 +208,89 @@ Procedure action(action.s)
   EndIf
 EndProcedure
 
+Procedure testRun(action.s)
+  Protected tool.i,out.s,error.s,errString.s
+  Protected bytes,oldBytes
+  Protected *buf
+  Protected activeTime = ElapsedMilliseconds()
+  Shared testRunResult.testRunResults
+  testRunResult\timeouted = #False
+  testRunResult\exitCode = 0
+  Protected shell.s = GetGadgetText(#gadPrefShell)
+  If shell = "no shell"
+    Protected program.s,params.s
+    Protected programEnd.l = FindString(action," ")
+    If programEnd
+      program = Left(action,programEnd-1)
+      params = Mid(action,programEnd+1)
+    Else
+      program = action
+    EndIf
+    tool = RunProgram(program,params,"",#PB_Program_Open|#PB_Program_Read|#PB_Program_Error|#PB_Program_Hide)
+  Else
+    shell = "/bin/" + shell
+    tool = RunProgram(shell,"","",#PB_Program_Open|#PB_Program_Read|#PB_Program_Write|#PB_Program_Error|#PB_Program_Hide)
+  EndIf
+  If tool
+    If shell <> "no shell"
+      WriteProgramString(tool,action)
+      WriteProgramData(tool,#PB_Program_Eof,0)
+    EndIf
+    While ProgramRunning(tool)
+      bytes = AvailableProgramOutput(tool)
+      If bytes
+        If Not *buf
+          *buf = AllocateMemory(bytes)
+        Else
+          *buf = ReAllocateMemory(*buf,oldBytes+bytes)
+        EndIf
+        ReadProgramData(tool,*buf+oldBytes,bytes)
+        oldBytes = MemorySize(*buf)
+        activeTime = ElapsedMilliseconds()
+      EndIf
+      Repeat
+        errString.s = ReadProgramError(tool)
+        If Len(errString)
+          error + errString + ~"\n"
+        Else
+          Break
+        EndIf
+      ForEver
+      Delay(10)
+      If ElapsedMilliseconds() - activeTime >= 5000
+        testRunResult\timeouted = #True
+        testRunResult\exitCode = -1
+        KillProgram(tool)
+        Break
+      EndIf
+    Wend
+    Repeat
+      Protected i.i
+      errString.s = ReadProgramError(tool)
+      If Len(errString)
+        error + errString + ~"\n"
+      Else
+        i + 1
+        If i >= 1000
+          Break
+        EndIf
+      EndIf
+    ForEver
+    If *buf
+      out = PeekS(*buf,MemorySize(*buf),#PB_UTF8|#PB_ByteLength)
+      FreeMemory(*buf)
+    EndIf
+    If Not testRunResult\timeouted
+      testRunResult\exitCode = ProgramExitCode(tool)
+    EndIf
+    CloseProgram(tool)
+  Else
+    testRunResult\exitCode = -1
+  EndIf
+  testRunResult\stderr = error
+  testRunResult\stdout = out
+EndProcedure
+
 Procedure menuEvents()
   Shared application.i
   Select EventMenu()
@@ -202,6 +304,7 @@ Procedure menuEvents()
       SetGadgetState(#gadTabs,0)
       SetActiveGadget(#gadShortcuts)
       wndState(#show)
+      setListStyle()
     Case #menuPrefs
       CocoaMessage(0,application,"activateIgnoringOtherApps:",#YES)
       SetGadgetState(#gadTabs,1)
@@ -310,6 +413,7 @@ Procedure checkUpdateAsync(interval.i)
   Protected *buf,i,strCount
   Protected Dim strings.s(1)
   If Not InitNetwork() : ProcedureReturn : EndIf
+  CompilerIf Not #PB_Compiler_Debugger :  Delay(interval) : CompilerEndIf
   Repeat
     *buf = ReceiveHTTPMemory(#updateCheckUrl)
     If *buf
@@ -370,7 +474,49 @@ ProcedureC asDisableShortcut(command.i)
     EndIf
   EndIf
 EndProcedure
-; IDE Options = PureBasic 5.42 LTS (MacOS X - x64)
+
+ProcedureC keyHandler(sender,sel,event)
+  Shared activeSelector
+  Shared previousHotkey
+  Shared keys()
+  Protected result = #YES  
+  Protected currentHtk.s
+  Static currentMod.s
+  If event
+    Select CocoaMessage(0,event,"type")
+      Case #NSKeyDown
+        Define keyCode = CocoaMessage(0,event,"keyCode")
+        If keyCode <= $FF
+          If Len(keys(keyCode))
+            currentHtk + keys(keyCode)
+          EndIf
+        EndIf
+      Case #NSFlagsChanged
+        currentMod = ""
+        Protected modifierFlags = CocoaMessage(0, event, "modifierFlags")
+        If modifierFlags & #NSShiftKeyMask     : currentMod + "⇧" : EndIf
+        If modifierFlags & #NSControlKeyMask   : currentMod + "⌃" : EndIf
+        If modifierFlags & #NSAlternateKeyMask : currentMod + "⌥" : EndIf
+        If modifierFlags & #NSCommandKeyMask   : currentMod + "⌘" : EndIf
+    EndSelect
+    If activeSelector <> -1 And IsGadget(#gadShortcutSelector)
+      If Len(currentMod) = 0 And currentHtk = "⎋"
+        deactivateSelector()
+      ElseIf Len(currentMod) And Len(currentHtk)
+        deactivateSelector(currentMod + currentHtk)
+      ElseIf Len(currentMod)
+        SetGadgetText(#gadShortcutSelector,currentMod + currentHtk)
+      Else
+        deactivateSelector()
+        SetGadgetText(#gadShortcutSelector,#pressInvite)
+      EndIf
+    Else
+      result = #NO
+    EndIf
+  EndIf
+  ProcedureReturn result
+EndProcedure
+; IDE Options = PureBasic 5.60 (MacOS X - x86)
 ; Folding = ---
-; EnableUnicode
 ; EnableXP
+; EnableUnicode

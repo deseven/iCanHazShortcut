@@ -3,7 +3,7 @@ Simple shortcut manager for OS X 10.8 or higher.
 ![screenshot](https://eri.deseven.info/scr/PneographEpituberculousPreofficially.png)  
 
 ## binaries
-Latest binary release can be downloaded [here](https://deseven.info/sys/ichs.dmg).  
+Latest binary release can be downloaded [here](https://github.com/deseven/icanhazshortcut/releases).  
 
 ## compiling from source
 iCHS created in [PB](http://purebasic.com) and depends on [pb-osx-globalhotkeys](https://github.com/deseven/pb-osx-globalhotkeys).  

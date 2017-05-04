@@ -5,11 +5,15 @@ EnableExplicit
 
 Define statusBar.i,statusItem.i,i.l
 Define application.i = CocoaMessage(0,0,"NSApplication sharedApplication")
+Define workspace.i = CocoaMessage(0,0,"NSWorkspace sharedWorkspace")
 Define editExistent.b = #False
 Define updateCheckThread.i
 Define updateVer.s = #myVer
 Define updateDetails.s = ""
 Define gadgetState.l
+Define testRunResult.testRunResults
+Define activeSelector.i = -1
+Define previousHotkey.s
 
 IncludeFile "helpers.pb"
 IncludeFile "proc.pb"
@@ -37,13 +41,16 @@ CocoaMessage(0,GadgetID(#gadShortcuts),"setFocusRingType:",1)
 AddGadgetColumn(#gadShortcuts,2,"Action",1)
 AddGadgetColumn(#gadShortcuts,3,"Workdir",1)
 ListIconGadgetHideColumn(#gadShortcuts,3,#True)
+CocoaMessage(0,GadgetID(#gadShortcuts),"sizeLastColumnToFit")
 ButtonImageGadget(#gadAdd,260,222,36,34,ImageID(#resAdd))
 ButtonImageGadget(#gadEdit,296,222,36,34,ImageID(#resEdit))
 ButtonImageGadget(#gadDel,332,222,36,34,ImageID(#resDel))
+ButtonImageGadget(#gadTest,260,222,36,34,ImageID(#resTest))
 ButtonImageGadget(#gadApply,296,222,36,34,ImageID(#resApply))
 ButtonImageGadget(#gadCancel,332,222,36,34,ImageID(#resCancel))
 ButtonImageGadget(#gadUp,2,222,36,34,ImageID(#resUp))
 ButtonImageGadget(#gadDown,38,222,36,34,ImageID(#resDown))
+TextGadget(#gadTestNote,10,230,244,20,"Don't forget to do a test run -->",#PB_Text_Right)
 CocoaMessage(0,GadgetID(#gadAdd),"setFocusRingType:",1)
 CocoaMessage(0,GadgetID(#gadEdit),"setFocusRingType:",1)
 CocoaMessage(0,GadgetID(#gadDel),"setFocusRingType:",1)
@@ -56,6 +63,7 @@ AddGadgetItem(#gadTabs,1,"Preferences")
 TextGadget(#gadPrefShellCap,10,12,60,20,"Shell:")
 ComboBoxGadget(#gadPrefShell,70,10,110,20)
 buildShellList()
+TextGadget(#gadPrefShellNote,10,45,170,200,~"Keep in mind that you have to set a correct $PATH variable in your shell config (~/.bashrc or ~/.zshrc, etc).\n\nYou can use the test run functionality when you create new shortcut to check if everything works fine.")
 CocoaMessage(0,GadgetID(#gadPrefShell),"setFocusRingType:",1)
 FrameGadget(#gadPrefFrame,180,0,180,250,"")
 CheckBoxGadget(#gadPrefStatusBar,190,10,160,20,"Show icon in status bar")
@@ -84,7 +92,16 @@ AddGadgetItem(#gadLicense,-1,#LICENSE)
 SetActiveGadget(#gadShortcuts)
 DisableGadget(#gadEdit,#True) : DisableGadget(#gadDel,#True)
 DisableGadget(#gadUp,#True) : DisableGadget(#gadDown,#True)
-HideGadget(#gadApply,#True) : HideGadget(#gadCancel,#True)
+HideGadget(#gadTest,#True) : HideGadget(#gadApply,#True) : HideGadget(#gadCancel,#True) : HideGadget(#gadTestNote,#True)
+
+GadgetToolTip(#gadAdd,"Add new shortcut")
+GadgetToolTip(#gadEdit,"Edit selected shortcut")
+GadgetToolTip(#gadDel,"Delete selected shortcut")
+GadgetToolTip(#gadApply,"Apply changes")
+GadgetToolTip(#gadCancel,"Cancel")
+GadgetToolTip(#gadTest,"Perform a test run")
+GadgetToolTip(#gadUp,"Move selected gadget up")
+GadgetToolTip(#gadDown,"Move selected gadget down")
 
 CloseGadgetList()
 StickyWindow(#wnd,#True)
@@ -104,6 +121,12 @@ ResizeWindow(#wnd,WindowX(#wnd)-200,WindowY(#wnd),400,300)
 If GetGadgetState(#gadPrefCheckUpdate) = #PB_Checkbox_Checked
   updateCheckThread = CreateThread(@checkUpdateAsync(),#updateCheckInterval*60*1000)
 EndIf
+
+Define class = CocoaMessage(0,WindowID(#wnd),"class")
+Define selector = sel_registerName_("performKeyEquivalent:") 
+class_addMethod_(class,selector,@keyHandler(),"v@:@")
+selector = sel_registerName_("flagsChanged:") 
+class_addMethod_(class,selector,@keyHandler(),"v@:@")
 
 Repeat
   Define ev = WaitWindowEvent(100)
@@ -146,8 +169,31 @@ Repeat
             SetGadgetState(#gadShortcuts,CountGadgetItems(#gadShortcuts)-1)
           EndIf
           recalcUpDown()
+        Case #gadTest
+          If Len(GetGadgetText(#gadAction))
+            testRun(GetGadgetText(#gadAction))
+            Define testRunMessage.s = "Action: " + GetGadgetText(#gadAction) + ~"\n" +
+                                      "Shell: " + GetGadgetText(#gadPrefShell) + ~"\n" + 
+                                      "Exit code: " + Str(testRunResult\exitCode) + ~"\n\n"
+            If Len(testRunResult\stdout)
+              testRunMessage + ~"[stdout]\n" + testRunResult\stdout + ~"\n\n"
+            EndIf
+            If Len(testRunResult\stderr)
+              testRunMessage + ~"[stderr]\n" + testRunResult\stderr + ~"\n\n"
+            EndIf
+            If testRunResult\timeouted
+              testRunMessage + ~"There were no output for at least 5 seconds so the program has been killed!\nIf that's intended just ignore it."
+            ElseIf testRunResult\exitCode = -1
+              testRunMessage + "Failed to run!"
+            Else
+              testRunMessage + "Action executed successfully!"
+            EndIf
+            MessageRequester(#myName + " - test run",testRunMessage)
+          Else
+            MessageRequester(#myName,"Please define your action first.")
+          EndIf
         Case #gadApply
-          If Len(GetGadgetText(#gadShortcutSelector)) > 0 And Len(GetGadgetText(#gadAction)) > 0
+          If Len(GetGadgetText(#gadShortcutSelector)) > 0 And Len(GetGadgetText(#gadAction)) > 0 And GetGadgetText(#gadShortcutSelector) <> #pressInvite And GetGadgetText(#gadShortcutSelector) <> #enterInvite
             If editExistent
               gadgetState = GetGadgetItemState(#gadShortcuts,GetGadgetState(#gadShortcuts)) - #PB_ListIcon_Selected
               AddGadgetItem(#gadShortcuts,GetGadgetState(#gadShortcuts),GetGadgetText(#gadShortcutSelector) + ~"\n" + GetGadgetText(#gadAction))
@@ -189,9 +235,7 @@ Repeat
           registerShortcuts()
           settings(#True)
         Case #gadShortcutSelector
-          If EventType() = #PB_EventType_Focus
-            SetGadgetText(#gadShortcutSelector,"")
-          EndIf
+          activateSelector(#gadShortcutSelector)
         Case #gadPrefPopulateMenu
           settings(#True) : registerShortcuts()
           If GetGadgetState(#gadPrefPopulateMenu) = #PB_Checkbox_Checked
@@ -246,16 +290,25 @@ Repeat
         Case #gadActionHelp6
           SetGadgetText(#gadAction,~"pmset displaysleepnow")
       EndSelect
+    Case #PB_Event_LeftClick
+      deactivateSelector()
     Case #PB_Event_CloseWindow
       If IsGadget(#gadShortcutSelectorCap)
         viewingMode()
       EndIf
       wndState(#hide)
     Case #evUpdateArrival
-      If MessageRequester(#myName + ", new version is available!","Found new version " + updateVer + ~"\n\nChangelog:\n" + updateDetails + ~"\n\nDo you want to download it?",#PB_MessageRequester_YesNo) = #PB_MessageRequester_Yes
-        RunProgram("open",#updateDownloadUrl,"")
-        die()
-      EndIf
+      wndState(#True)
+      Select MessageRequesterEx(#myName + ", new version is available!","Found new version " + updateVer + ~"\n\nChangelog:\n" + updateDetails + ~"\n\nDo you want to download it?","note",1,"Download new version","Remind me later","Skip this version")
+        Case 1
+          RunProgram("open",#updateDownloadUrl,"")
+          die()
+        Case 2
+          Debug "Remind later"
+          updateVer = #myVer
+      EndSelect
+      wndState(#False)
+      settings(#True)
     Case #evDisableShortcut
       If EventData()
         Define shortcut.s = PeekS(EventData())
@@ -281,41 +334,9 @@ Repeat
         Next
       EndIf
   EndSelect
-  If IsGadget(#gadShortcutSelector) And GetActiveGadget() = #gadShortcutSelector
-    Define cocoaEv = CocoaMessage(0,application,"currentEvent")
-    If cocoaEv
-      Define currentHtk.s = ""
-      Define haveMod.b = #False
-      Define type = CocoaMessage(0,cocoaEv,"type")
-      Define modifierFlags = CocoaMessage(0,cocoaEv,"modifierFlags")
-      If modifierFlags & #NSShiftKeyMask     : currentHtk + "⇧" : EndIf
-      If modifierFlags & #NSControlKeyMask   : currentHtk + "⌃" : EndIf
-      If modifierFlags & #NSAlternateKeyMask : currentHtk + "⌥" : EndIf
-      If modifierFlags & #NSCommandKeyMask   : currentHtk + "⌘" : EndIf
-      Define modLen.b = Len(currentHtk)
-      If modLen >= 1 : haveMod = #True : Else : haveMod = #False : EndIf
-      If type = #NSKeyDown
-        Define keyCode = CocoaMessage(0,cocoaEv,"keyCode")
-        If keyCode <= $FF
-          If Len(keys(keyCode))
-            currentHtk + keys(keyCode)
-          EndIf
-        EndIf
-      EndIf
-      If haveMod And Len(currentHtk) > modLen
-        SetGadgetText(#gadShortcutSelector,currentHtk)
-        SetActiveGadget(#gadShortcutSelectorCap)
-      ElseIf (Not haveMod) And Len(currentHtk)
-        SetGadgetText(#gadShortcutSelector,currentHtk)
-        SetActiveGadget(#gadShortcutSelectorCap)
-      Else
-        SetGadgetText(#gadShortcutSelector,"")
-      EndIf
-    EndIf
-  EndIf
 ForEver
 
 die()
-; IDE Options = PureBasic 5.42 LTS (MacOS X - x64)
-; EnableUnicode
+; IDE Options = PureBasic 5.60 (MacOS X - x86)
 ; EnableXP
+; EnableUnicode

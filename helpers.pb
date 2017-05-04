@@ -129,6 +129,39 @@ Procedure.f getBackingScaleFactor()
   ProcedureReturn backingScaleFactor
 EndProcedure
 
+Procedure MessageRequesterEx(Title.s, Info.s,type.s="'note'",defaultbutton=1,buttonone.s="Ok",buttontwo.s="",buttonthree.s="",buttonfour.s="",buttonfive.s="") ; max 5 buttons
+  Protected.i Alert, Frame.NSRect,numberbuttons=0,button
+  Shared workspace,application
+  ;If FindString("'APPL''caut''note''stop'",type,1)=0 : Debug "no type":EndIf
+  Frame\size\width = 300
+  Frame\size\height = 24
+  Alert = CocoaMessage(0, CocoaMessage(0, 0, "NSAlert new"), "autorelease")
+  CocoaMessage(0, Alert, "setMessageText:$", @Title)
+  CocoaMessage(0, Alert, "setInformativeText:$", @Info)
+  CocoaMessage(0, Alert, "setIcon:", ImageID(#resLogo))
+  
+  If buttonfive
+    CocoaMessage(0, Alert, "addButtonWithTitle:$", @buttonfive) 
+    numberbuttons+1
+  EndIf
+  If buttonfour
+    CocoaMessage(0, Alert, "addButtonWithTitle:$", @buttonfour)
+    numberbuttons+1
+  EndIf
+  If buttonthree
+    CocoaMessage(0, Alert, "addButtonWithTitle:$", @buttonthree)
+    numberbuttons+1
+  EndIf
+  If buttontwo
+    CocoaMessage(0, Alert, "addButtonWithTitle:$", @buttontwo) 
+    numberbuttons+1
+  EndIf
+  CocoaMessage(0, Alert, "addButtonWithTitle:$", @buttonone)
+  Button = CocoaMessage(0, CocoaMessage(0, Alert, "buttons"), "objectAtIndex:",numberbuttons-defaultbutton+1)
+  CocoaMessage(0, CocoaMessage(0, Alert, "window"), "setDefaultButtonCell:", CocoaMessage(0, Button ,"cell"))
+  ProcedureReturn 1001+numberbuttons-CocoaMessage(0, Alert, "runModal")
+EndProcedure
+
 Macro viewingMode()
   FreeGadget(#gadShortcutSelectorCap) : FreeGadget(#gadShortcutSelector)
   FreeGadget(#gadActionCap) : FreeGadget(#gadAction) : FreeGadget(#gadActionHelp)
@@ -136,6 +169,8 @@ Macro viewingMode()
   FreeGadget(#gadActionHelp4) : FreeGadget(#gadActionHelp5) : FreeGadget(#gadActionHelp6)
   HideGadget(#gadCancel,#True)
   HideGadget(#gadApply,#True)
+  HideGadget(#gadTest,#True)
+  HideGadget(#gadTestNote,#True)
   TextGadget(#gadBg,0,0,400,300,"") ; dirty fix for a strange redraw behavior
   FreeGadget(#gadBg)
   HideGadget(#gadShortcuts,#False)
@@ -184,15 +219,13 @@ Macro editingMode()
   TextGadget(#gadBg,0,0,400,300,"") ; dirty fix for a strange redraw behavior
   FreeGadget(#gadBg)
   TextGadget(#gadShortcutSelectorCap,10,12,60,20,"Shortcut:")
-  StringGadget(#gadShortcutSelector,70,10,80,20,"")
+  ButtonGadget(#gadShortcutSelector,70,10,80,20,#pressInvite)
+  CocoaMessage(0,GadgetID(#gadShortcutSelector),"setBezelStyle:",10)
   CocoaMessage(0,GadgetID(#gadShortcutSelector),"setFocusRingType:",1)
-  CocoaMessage(0,GadgetID(#gadShortcutSelector),"setAlignment:",#NSCenterTextAlignment)
-  Define placeholder.s = "press keys"
-  CocoaMessage(0,CocoaMessage(0,GadgetID(#gadShortcutSelector),"cell"),"setPlaceholderString:$",@placeholder)
   TextGadget(#gadActionCap,10,42,60,20,"Action:")
   StringGadget(#gadAction,70,40,290,20,"")
   CocoaMessage(0,GadgetID(#gadAction),"setFocusRingType:",1)
-  placeholder.s = "input command which will be executed"
+  Define placeholder.s = "input command which will be executed"
   CocoaMessage(0,CocoaMessage(0,GadgetID(#gadAction),"cell"),"setPlaceholderString:$",@placeholder)
   TextGadget(#gadActionHelp,10,70,360,40,~"You can use any command that works in your terminal.\nHere are some examples:")
   HyperLinkGadget(#gadActionHelp1,10,110,120,20,"open an app",$770000)
@@ -207,6 +240,8 @@ Macro editingMode()
   SetGadgetColor(#gadActionHelp5,#PB_Gadget_FrontColor,$bb0000)
   HyperLinkGadget(#gadActionHelp6,10,200,120,20,"lock screen",$770000)
   SetGadgetColor(#gadActionHelp6,#PB_Gadget_FrontColor,$bb0000)
+  HideGadget(#gadTest,#False)
+  HideGadget(#gadTestNote,#False)
   HideGadget(#gadApply,#False)
   HideGadget(#gadCancel,#False)
   CloseGadgetList()
@@ -236,7 +271,31 @@ Macro setListStyle()
   ;CocoaMessage(0,GadgetID(#gadShortcuts),"sizeToFit")
   CocoaMessage(0,GadgetID(#gadShortcuts),"sizeLastColumnToFit")
 EndMacro
-; IDE Options = PureBasic 5.42 LTS (MacOS X - x64)
+
+Macro activateSelector(gadget)
+  activeSelector = gadget
+  If GetGadgetText(activeSelector) <> #pressInvite
+    previousHotkey = GetGadgetText(activeSelector)
+  EndIf
+  CocoaMessage(0,GadgetID(activeSelector),"highlight:",1)
+  SetGadgetText(activeSelector,#enterInvite)
+EndMacro
+
+Macro deactivateSelector(hotkey = "")
+  If activeSelector <> -1
+    CocoaMessage(0,GadgetID(activeSelector),"highlight:",0)
+    If Len(hotkey)
+      SetGadgetText(activeSelector,hotkey)
+    ElseIf Len(previousHotkey)
+      SetGadgetText(activeSelector,previousHotkey)
+    Else
+      SetGadgetText(activeSelector,#pressInvite)
+    EndIf
+    activeSelector = -1
+    previousHotkey = ""
+  EndIf
+EndMacro
+; IDE Options = PureBasic 5.60 (MacOS X - x86)
 ; Folding = ---
-; EnableUnicode
 ; EnableXP
+; EnableUnicode

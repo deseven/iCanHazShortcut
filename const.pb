@@ -1,12 +1,23 @@
 ﻿; main
 #myName = "iCanHazShortcut"
-#myVer = "0.7.0"
+#myVer = "0.8.0"
 #myID = "info.deseven.icanhazshortcut"
 
 ; update params
 #updateCheckUrl = "http://deseven.info/sys/ichs.ver"
 #updateDownloadUrl = "http://deseven.info/sys/ichs.dmg"
 #updateCheckInterval = 1440
+
+#pressInvite = "press to set"
+#enterInvite = "enter keys"
+
+; structures
+Structure testRunResults
+  timeouted.b
+  exitCode.i
+  stdout.s
+  stderr.s
+EndStructure
 
 ; enums
 Enumeration main
@@ -25,6 +36,8 @@ Enumeration gadgets
   #gadAdd
   #gadEdit
   #gadDel
+  #gadTest
+  #gadTestNote
   #gadApply
   #gadCancel
   #gadUp
@@ -50,6 +63,7 @@ Enumeration gadgets
   #gadActionHelp6
   #gadPrefShell
   #gadPrefShellCap
+  #gadPrefShellNote
   #gadPrefStatusBar
   #gadPrefPopulateMenu
   #gadPrefShowHtk
@@ -65,6 +79,7 @@ Enumeration resources
   #resAdd
   #resEdit
   #resDel
+  #resTest
   #resApply
   #resCancel
   #resUp
@@ -194,6 +209,6 @@ keys($33) = "Del"
 ~"\t<key>LimitLoadToSessionType</key>\n" +
 ~"\t<string>Aqua</string></dict>\n" +
 ~"</plist>"
-; IDE Options = PureBasic 5.42 LTS (MacOS X - x64)
-; EnableUnicode
+; IDE Options = PureBasic 5.60 (MacOS X - x86)
 ; EnableXP
+; EnableUnicode
