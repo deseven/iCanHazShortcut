@@ -6,9 +6,13 @@ Simple shortcut manager for OS X 10.8 or higher.
 Latest binary release can be downloaded [here](https://github.com/deseven/icanhazshortcut/releases).  
 
 ## applescript support
-Right now only basic applescript support is available, you can enable or disable shortcuts like that:  
-`tell application "iCanHazShortcut" to enable "⌥D"`  
-`tell application "iCanHazShortcut" to disable "⌥D"`  
+Use `list` command to get the full TSV list of shortcuts and their states.  
+Use `enable`, `disable`, `toggle` commands to control state of shortcuts by their names.  
+Use `enableID`,  `disableID`, `toggleID` commands to control state of shortcuts by their IDs.  
+Here are some examples:  
+`tell application "iCanHazShortcut" to list`  
+`tell application "iCanHazShortcut" to enable "⇧⌘L"`  
+`tell application "iCanHazShortcut" to toggleID 6`  
 
 ## compiling from source
 iCHS created in [PB](http://purebasic.com) and depends on [pb-osx-globalhotkeys](https://github.com/deseven/pb-osx-globalhotkeys).  
