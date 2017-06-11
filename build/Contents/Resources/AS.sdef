@@ -3,17 +3,45 @@
 
 <dictionary title="iCanHazShortcut">
     <suite name="iCanHazShortcut Suite" code="iCHS" description="iCanHazShortcut Scripts">
+        <command name="enableID" code="enablesi" description="Enable defined shortcut by ID">
+            <cocoa class="asEnableShortcutID"/>
+            <direct-parameter description="Shortcut ID">
+                <type type="integer"/>
+            </direct-parameter>
+        </command>
+        <command name="disableID" code="disablsi" description="Disable defined shortcut by ID">
+            <cocoa class="asDisableShortcutID"/>
+            <direct-parameter description="Shortcut ID">
+                <type type="integer"/>
+            </direct-parameter>
+        </command>
+        <command name="toggleID" code="togglesi" description="Toggle defined shortcut by ID">
+            <cocoa class="asToggleShortcutID"/>
+            <direct-parameter description="Shortcut ID">
+                <type type="integer"/>
+            </direct-parameter>
+        </command>
         <command name="enable" code="enablesc" description="Enable defined shortcut">
             <cocoa class="asEnableShortcut"/>
-            <direct-parameter description="shortcut">
+            <direct-parameter description="Shortcut">
                 <type type="text"/>
             </direct-parameter>
         </command>
         <command name="disable" code="disablsc" description="Disable defined shortcut">
             <cocoa class="asDisableShortcut"/>
-            <direct-parameter description="shortcut">
+            <direct-parameter description="Shortcut">
                 <type type="text"/>
             </direct-parameter>
+        </command>
+        <command name="toggle" code="togglesc" description="Toggle defined shortcut">
+            <cocoa class="asToggleShortcut"/>
+            <direct-parameter description="Shortcut">
+                <type type="text"/>
+            </direct-parameter>
+        </command>
+        <command name="list" code="listscts" description="List all shortcuts">
+            <cocoa class="asListShortcuts"/>
+            <result type="text" description="TSV list of shortcuts (id,state,shortcut,action)"/>
         </command>
     </suite>
 </dictionary>

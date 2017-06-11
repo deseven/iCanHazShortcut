@@ -24,6 +24,21 @@ objc_registerClassPair_(subClass)
 subClass = objc_allocateClassPair_(objc_getClass_("NSScriptCommand"),"asDisableShortcut",0)
 class_addMethod_(subClass,sel_registerName_("performDefaultImplementation"),@asDisableShortcut(),"v@")
 objc_registerClassPair_(subClass)
+subClass = objc_allocateClassPair_(objc_getClass_("NSScriptCommand"),"asToggleShortcut",0)
+class_addMethod_(subClass,sel_registerName_("performDefaultImplementation"),@asToggleShortcut(),"v@")
+objc_registerClassPair_(subClass)
+subClass = objc_allocateClassPair_(objc_getClass_("NSScriptCommand"),"asEnableShortcutID",0)
+class_addMethod_(subClass,sel_registerName_("performDefaultImplementation"),@asEnableShortcutID(),"v@")
+objc_registerClassPair_(subClass)
+subClass = objc_allocateClassPair_(objc_getClass_("NSScriptCommand"),"asDisableShortcutID",0)
+class_addMethod_(subClass,sel_registerName_("performDefaultImplementation"),@asDisableShortcutID(),"v@")
+objc_registerClassPair_(subClass)
+subClass = objc_allocateClassPair_(objc_getClass_("NSScriptCommand"),"asToggleShortcutID",0)
+class_addMethod_(subClass,sel_registerName_("performDefaultImplementation"),@asToggleShortcutID(),"v@")
+objc_registerClassPair_(subClass)
+subClass = objc_allocateClassPair_(objc_getClass_("NSScriptCommand"),"asListShortcuts",0)
+class_addMethod_(subClass,sel_registerName_("performDefaultImplementation"),@asListShortcuts(),"v@")
+objc_registerClassPair_(subClass)
 
 initResources()
 globalHK::Init()
@@ -129,7 +144,7 @@ selector = sel_registerName_("flagsChanged:")
 class_addMethod_(class,selector,@keyHandler(),"v@:@")
 
 Repeat
-  Define ev = WaitWindowEvent(100)
+  Define ev = WaitWindowEvent(200)
   Select ev
     Case #PB_Event_Gadget
       Select EventGadget()
@@ -304,7 +319,6 @@ Repeat
           RunProgram("open",#updateDownloadUrl,"")
           die()
         Case 2
-          Debug "Remind later"
           updateVer = #myVer
       EndSelect
       wndState(#False)
@@ -333,10 +347,44 @@ Repeat
           EndIf
         Next
       EndIf
+    Case #evToggleShortcut
+      If EventData()
+        Define shortcut.s = PeekS(EventData())
+        For i = 0 To CountGadgetItems(#gadShortcuts)-1
+          If GetGadgetItemText(#gadShortcuts,i,0) = shortcut
+            If GetGadgetItemState(#gadShortcuts,i) >= #PB_ListIcon_Checked
+              PostEvent(#evDisableShortcutID,0,0,0,i+1)
+            Else
+              PostEvent(#evEnableShortcutID,0,0,0,i+1)
+            EndIf
+            Break
+          EndIf
+        Next
+      EndIf
+    Case #evDisableShortcutID
+      If EventData() And CountGadgetItems(#gadShortcuts) >= EventData()
+        SetGadgetItemState(#gadShortcuts,EventData()-1,0)
+        registerShortcuts()
+        settings(#True)
+      EndIf
+    Case #evEnableShortcutID
+      If EventData() And CountGadgetItems(#gadShortcuts) >= EventData()
+        SetGadgetItemState(#gadShortcuts,EventData()-1,#PB_ListIcon_Checked)
+        registerShortcuts()
+        settings(#True)
+      EndIf
+    Case #evToggleShortcutID
+      If EventData() And CountGadgetItems(#gadShortcuts) >= EventData()
+        If GetGadgetItemState(#gadShortcuts,EventData()-1) >= #PB_ListIcon_Checked
+          PostEvent(#evDisableShortcutID,0,0,0,EventData())
+        Else
+          PostEvent(#evEnableShortcutID,0,0,0,EventData())
+        EndIf
+      EndIf
   EndSelect
 ForEver
 
 die()
-; IDE Options = PureBasic 5.60 (MacOS X - x86)
-; EnableXP
+; IDE Options = PureBasic 5.44 LTS (MacOS X - x86)
 ; EnableUnicode
+; EnableXP

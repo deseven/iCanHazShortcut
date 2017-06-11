@@ -430,7 +430,7 @@ Procedure checkUpdateAsync(interval.i)
       Next
       If FindString(strings(0),#myName) = 1
         Protected newVer.s = StringField(strings(0),2," ")
-        If newVer <> updateVer
+        If newVer <> updateVer And newVer <> #myVer
           updateVer = newVer
           updateDetails = ""
           For i = 1 To strCount
@@ -445,6 +445,54 @@ Procedure checkUpdateAsync(interval.i)
     EndIf
     If interval > 0 : Delay(interval) : Else : ProcedureReturn : EndIf
   ForEver
+EndProcedure
+
+ProcedureC asListShortcuts(command.i)
+  Protected i
+  Protected answerString.s
+  For i = 0 To CountGadgetItems(#gadShortcuts)-1
+    Protected shortcut.s = GetGadgetItemText(#gadShortcuts,i,0)
+    Protected state.s
+    If GetGadgetItemState(#gadShortcuts,i) >= #PB_ListIcon_Checked
+      state = "1"
+    Else
+      state = "0"
+    EndIf
+    Protected action.s = GetGadgetItemText(#gadShortcuts,i,1)
+    answerString + Str(i+1) + ~"\t" + state + ~"\t" + shortcut + ~"\t" + action + ~"\n"
+  Next
+  Protected answer = CocoaMessage(0,0,"NSString stringWithString:$",@answerString)
+  ProcedureReturn answer
+EndProcedure
+
+ProcedureC asEnableShortcutID(command.i)
+  Protected argument.i = CocoaMessage(0,command,"evaluatedArguments")
+  If argument
+    Protected number = CocoaMessage(0,CocoaMessage(0,argument,"valueForKey:$",@""),"intValue")
+    If number
+      PostEvent(#evEnableShortcutID,0,0,0,number)
+    EndIf
+  EndIf
+EndProcedure
+
+ProcedureC asDisableShortcutID(command.i)
+  Protected argument.i = CocoaMessage(0,command,"evaluatedArguments")
+  If argument
+    Protected number = CocoaMessage(0,CocoaMessage(0,argument,"valueForKey:$",@""),"intValue")
+    If number
+      PostEvent(#evDisableShortcutID,0,0,0,number)
+    EndIf
+  EndIf
+EndProcedure
+
+ProcedureC asToggleShortcutID(command.i)
+  Protected argument.i = CocoaMessage(0,command,"evaluatedArguments")
+  If argument
+    Protected number = CocoaMessage(0,CocoaMessage(0,argument,"valueForKey:$",@""),"intValue")
+    If number
+      PostEvent(#evToggleShortcutID,0,0,0,number)
+    EndIf
+  EndIf
 EndProcedure
 
 ProcedureC asEnableShortcut(command.i)
@@ -470,6 +518,20 @@ ProcedureC asDisableShortcut(command.i)
       shortcut = PeekS(string,-1,#PB_UTF8)
       If Len(shortcut)
         PostEvent(#evDisableShortcut,0,0,0,@shortcut)
+      EndIf
+    EndIf
+  EndIf
+EndProcedure
+
+ProcedureC asToggleShortcut(command.i)
+  Static shortcut.s = ""
+  Protected argument.i = CocoaMessage(0,command,"evaluatedArguments")
+  If argument
+    Protected string = CocoaMessage(0,CocoaMessage(0,argument,"valueForKey:$",@""),"UTF8String")
+    If string
+      shortcut = PeekS(string,-1,#PB_UTF8)
+      If Len(shortcut)
+        PostEvent(#evToggleShortcut,0,0,0,@shortcut)
       EndIf
     EndIf
   EndIf
@@ -516,7 +578,7 @@ ProcedureC keyHandler(sender,sel,event)
   EndIf
   ProcedureReturn result
 EndProcedure
-; IDE Options = PureBasic 5.60 (MacOS X - x86)
-; Folding = ---
-; EnableXP
+; IDE Options = PureBasic 5.44 LTS (MacOS X - x86)
+; Folding = ----
 ; EnableUnicode
+; EnableXP

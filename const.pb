@@ -1,6 +1,6 @@
 ﻿; main
 #myName = "iCanHazShortcut"
-#myVer = "0.8.0"
+#myVer = "0.8.1"
 #myID = "info.deseven.icanhazshortcut"
 
 ; update params
@@ -94,6 +94,10 @@ Enumeration globalEvents #PB_Event_FirstCustomValue + 10000
   #evUpdateArrival
   #evDisableShortcut
   #evEnableShortcut
+  #evToggleShortcut
+  #evDisableShortcutID
+  #evEnableShortcutID
+  #evToggleShortcutID
 EndEnumeration
 
 #NSSquareStatusBarItemLength = -2
@@ -209,6 +213,6 @@ keys($33) = "Del"
 ~"\t<key>LimitLoadToSessionType</key>\n" +
 ~"\t<string>Aqua</string></dict>\n" +
 ~"</plist>"
-; IDE Options = PureBasic 5.60 (MacOS X - x86)
-; EnableXP
+; IDE Options = PureBasic 5.44 LTS (MacOS X - x86)
 ; EnableUnicode
+; EnableXP
