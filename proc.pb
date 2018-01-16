@@ -564,6 +564,8 @@ ProcedureC keyHandler(sender,sel,event)
     If activeSelector <> -1 And IsGadget(#gadShortcutSelector)
       If Len(currentMod) = 0 And currentHtk = "⎋"
         deactivateSelector()
+      ElseIf Len(currentMod) = 0 And Len(currentHtk) >= 2 And Left(currentHtk,1) = "F"
+        deactivateSelector(currentHtk)
       ElseIf Len(currentMod) And Len(currentHtk)
         deactivateSelector(currentMod + currentHtk)
       ElseIf Len(currentMod)
@@ -578,7 +580,7 @@ ProcedureC keyHandler(sender,sel,event)
   EndIf
   ProcedureReturn result
 EndProcedure
-; IDE Options = PureBasic 5.44 LTS (MacOS X - x86)
+; IDE Options = PureBasic 5.61 (MacOS X - x64)
 ; Folding = ----
-; EnableUnicode
 ; EnableXP
+; EnableUnicode

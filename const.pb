@@ -1,6 +1,6 @@
 ﻿; main
 #myName = "iCanHazShortcut"
-#myVer = "0.8.1"
+#myVer = "0.8.2"
 #myID = "info.deseven.icanhazshortcut"
 
 ; update params
@@ -213,6 +213,6 @@ keys($33) = "Del"
 ~"\t<key>LimitLoadToSessionType</key>\n" +
 ~"\t<string>Aqua</string></dict>\n" +
 ~"</plist>"
-; IDE Options = PureBasic 5.44 LTS (MacOS X - x86)
-; EnableUnicode
+; IDE Options = PureBasic 5.61 (MacOS X - x64)
 ; EnableXP
+; EnableUnicode

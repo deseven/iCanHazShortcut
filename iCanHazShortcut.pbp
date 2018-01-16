@@ -7,12 +7,12 @@
   <section name="data">
     <explorer view="../../" pattern="0"/>
     <log show="1"/>
-    <lastopen date="2017-06-03 19:53" user="deseven" host="de7air.local"/>
+    <lastopen date="2017-06-12 21:26" user="deseven" host="de7air.local"/>
   </section>
   <section name="files">
     <file name="const.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
-      <fingerprint md5="a52b8064d132fb452f02bfdb84fc5ba5"/>
+      <fingerprint md5="35db764685b55cfd42efcf5fe2a70ec4"/>
     </file>
     <file name="helpers.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
@@ -20,11 +20,11 @@
     </file>
     <file name="main.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
-      <fingerprint md5="b31ee434d7e1339c8d21576370e46965"/>
+      <fingerprint md5="c2f41f3be0b9f5be083bbee515c20878"/>
     </file>
     <file name="proc.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
-      <fingerprint md5="6c4bd912d9a1a1d0a79765d79ed6ec4d"/>
+      <fingerprint md5="5eeb6738393250fa0c3481c4b1696d43"/>
     </file>
   </section>
   <section name="targets">
