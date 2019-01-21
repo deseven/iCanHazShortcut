@@ -1,30 +1,30 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<project xmlns="http://www.purebasic.com/namespace" version="1.0" creator="PureBasic 5.44 LTS (MacOS X - x86)">
+<project xmlns="http://www.purebasic.com/namespace" version="1.0" creator="PureBasic 5.70 LTS (MacOS X - x64)">
   <section name="config">
     <options closefiles="1" openmode="0" name="iCanHazShortcut"/>
   </section>
   <section name="data">
     <explorer view="../../" pattern="0"/>
     <log show="1"/>
-    <lastopen date="2017-06-12 21:26" user="deseven" host="de7air.local"/>
+    <lastopen date="2019-01-21 18:56" user="deseven" host="de7mac.local"/>
   </section>
   <section name="files">
     <file name="const.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
-      <fingerprint md5="35db764685b55cfd42efcf5fe2a70ec4"/>
+      <fingerprint md5="1f51b74b87f234d5bd454c490a564d63"/>
     </file>
     <file name="helpers.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
-      <fingerprint md5="93ce60fa18a68034e2ee68416dac79f6"/>
+      <fingerprint md5="0aec717a374e184a925ddb1d0477e0bf"/>
     </file>
     <file name="main.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
-      <fingerprint md5="c2f41f3be0b9f5be083bbee515c20878"/>
+      <fingerprint md5="fdc2c760249dd0d88a021256dbbf3ddd"/>
     </file>
     <file name="proc.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
-      <fingerprint md5="5eeb6738393250fa0c3481c4b1696d43"/>
+      <fingerprint md5="81e92e29d45af6a82400c70528bfcaa7"/>
     </file>
   </section>
   <section name="targets">

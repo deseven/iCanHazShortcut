@@ -1,6 +1,6 @@
 ﻿; main
 #myName = "iCanHazShortcut"
-#myVer = "0.8.2"
+#myVer = "1.0.0"
 #myID = "info.deseven.icanhazshortcut"
 
 ; update params
@@ -10,6 +10,9 @@
 
 #pressInvite = "press to set"
 #enterInvite = "enter keys"
+
+#linkColor = $ff8000
+#linkColorHighlighted = $ba520f
 
 ; structures
 Structure testRunResults
@@ -213,6 +216,7 @@ keys($33) = "Del"
 ~"\t<key>LimitLoadToSessionType</key>\n" +
 ~"\t<string>Aqua</string></dict>\n" +
 ~"</plist>"
-; IDE Options = PureBasic 5.61 (MacOS X - x64)
+; IDE Options = PureBasic 5.70 LTS (MacOS X - x64)
+; CursorPosition = 2
 ; EnableXP
 ; EnableUnicode

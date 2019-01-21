@@ -14,6 +14,7 @@ Define gadgetState.l
 Define testRunResult.testRunResults
 Define activeSelector.i = -1
 Define previousHotkey.s
+Define cur.NSPoint
 
 IncludeFile "helpers.pb"
 IncludeFile "proc.pb"
@@ -56,6 +57,7 @@ CocoaMessage(0,GadgetID(#gadShortcuts),"setFocusRingType:",1)
 AddGadgetColumn(#gadShortcuts,2,"Action",1)
 AddGadgetColumn(#gadShortcuts,3,"Workdir",1)
 ListIconGadgetHideColumn(#gadShortcuts,3,#True)
+ListIconGadgetHideColumn(#gadShortcuts,0,#True)
 CocoaMessage(0,GadgetID(#gadShortcuts),"sizeLastColumnToFit")
 ButtonImageGadget(#gadAdd,260,222,36,34,ImageID(#resAdd))
 ButtonImageGadget(#gadEdit,296,222,36,34,ImageID(#resEdit))
@@ -73,6 +75,14 @@ CocoaMessage(0,GadgetID(#gadApply),"setFocusRingType:",1)
 CocoaMessage(0,GadgetID(#gadCancel),"setFocusRingType:",1)
 CocoaMessage(0,GadgetID(#gadUp),"setFocusRingType:",1)
 CocoaMessage(0,GadgetID(#gadDown),"setFocusRingType:",1)
+CocoaMessage(0,GadgetID(#gadAdd),"setBordered:",0)
+CocoaMessage(0,GadgetID(#gadEdit),"setBordered:",0)
+CocoaMessage(0,GadgetID(#gadDel),"setBordered:",0)
+CocoaMessage(0,GadgetID(#gadTest),"setBordered:",0)
+CocoaMessage(0,GadgetID(#gadApply),"setBordered:",0)
+CocoaMessage(0,GadgetID(#gadCancel),"setBordered:",0)
+CocoaMessage(0,GadgetID(#gadUp),"setBordered:",0)
+CocoaMessage(0,GadgetID(#gadDown),"setBordered:",0)
 
 AddGadgetItem(#gadTabs,1,"Preferences")
 TextGadget(#gadPrefShellCap,10,12,60,20,"Shell:")
@@ -97,11 +107,11 @@ ImageGadget(#gadLogo,25,5,64,64,ImageID(#resLogo))
 TextGadget(#gadNameVer,89,8,270,20,#myName + " " + #myVer,#PB_Text_Center)
 SetGadgetFont(#gadNameVer,FontID(#resBigFont))
 TextGadget(#gadCopyright,159,28,70,20,"created by")
-HyperLinkGadget(#gadWebDeveloper,219,30,100,20,"deseven",$770000)
+HyperLinkGadget(#gadWebDeveloper,219,30,100,20,"deseven",#linkColorHighlighted)
 TextGadget(#gadCopyrightIcon,159,42,70,20,"icons by")
-HyperLinkGadget(#gadWebDesigner,206,44,100,20,"denboroda",$770000)
-SetGadgetColor(#gadWebDeveloper,#PB_Gadget_FrontColor,$bb0000)
-SetGadgetColor(#gadWebDesigner,#PB_Gadget_FrontColor,$bb0000)
+HyperLinkGadget(#gadWebDesigner,206,44,100,20,"denboroda",#linkColorHighlighted)
+SetGadgetColor(#gadWebDeveloper,#PB_Gadget_FrontColor,#linkColor)
+SetGadgetColor(#gadWebDesigner,#PB_Gadget_FrontColor,#linkColor)
 EditorGadget(#gadLicense,5,70,360,180,#PB_Editor_ReadOnly|#PB_Editor_WordWrap)
 AddGadgetItem(#gadLicense,-1,#LICENSE)
 SetActiveGadget(#gadShortcuts)
@@ -159,6 +169,20 @@ Repeat
               Else
                 DisableGadget(#gadEdit,#True) : DisableGadget(#gadDel,#True)
                 DisableGadget(#gadUp,#True) : DisableGadget(#gadDown,#True)
+              EndIf
+            Case #PB_EventType_LeftClick
+              cur\x = WindowMouseX(#wnd)
+              cur\y = WindowHeight(#wnd) - WindowMouseY(#wnd)
+              CocoaMessage(@cur,GadgetID(#gadShortcuts),"convertPoint:@",@cur,"fromView:",0)
+              Define selectedColumn.i = CocoaMessage(0,GadgetID(#gadShortcuts),"columnAtPoint:@",@cur)
+              If selectedColumn = 1
+                If GetGadgetItemState(#gadShortcuts,GetGadgetState(#gadShortcuts)) = #PB_ListIcon_Checked|#PB_ListIcon_Selected
+                  SetGadgetItemState(#gadShortcuts,GetGadgetState(#gadShortcuts),#PB_ListIcon_Selected)
+                Else
+                  SetGadgetItemState(#gadShortcuts,GetGadgetState(#gadShortcuts),#PB_ListIcon_Selected|#PB_ListIcon_Checked)
+                EndIf
+                PostEvent(#PB_Event_Gadget,#wnd,#gadShortcuts,#PB_EventType_Change)
+                ;Debug "Selected column: " + Str(selectedColumn)
               EndIf
             Case #PB_EventType_LeftDoubleClick
               If GetGadgetState(#gadShortcuts) <> -1
@@ -385,6 +409,6 @@ Repeat
 ForEver
 
 die()
-; IDE Options = PureBasic 5.44 LTS (MacOS X - x86)
-; EnableUnicode
+; IDE Options = PureBasic 5.70 LTS (MacOS X - x64)
 ; EnableXP
+; EnableUnicode

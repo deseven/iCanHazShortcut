@@ -228,18 +228,18 @@ Macro editingMode()
   Define placeholder.s = "input command which will be executed"
   CocoaMessage(0,CocoaMessage(0,GadgetID(#gadAction),"cell"),"setPlaceholderString:$",@placeholder)
   TextGadget(#gadActionHelp,10,70,360,40,~"You can use any command that works in your terminal.\nHere are some examples:")
-  HyperLinkGadget(#gadActionHelp1,10,110,120,20,"open an app",$770000)
-  SetGadgetColor(#gadActionHelp1,#PB_Gadget_FrontColor,$bb0000)
-  HyperLinkGadget(#gadActionHelp2,10,128,120,20,"make a screenshot",$770000)
-  SetGadgetColor(#gadActionHelp2,#PB_Gadget_FrontColor,$bb0000)
-  HyperLinkGadget(#gadActionHelp3,10,146,120,20,"say current date",$770000)
-  SetGadgetColor(#gadActionHelp3,#PB_Gadget_FrontColor,$bb0000)
-  HyperLinkGadget(#gadActionHelp4,10,164,160,20,"save clipboard contents",$770000)
-  SetGadgetColor(#gadActionHelp4,#PB_Gadget_FrontColor,$bb0000)
-  HyperLinkGadget(#gadActionHelp5,10,182,160,20,"set clipboard contents",$770000)
-  SetGadgetColor(#gadActionHelp5,#PB_Gadget_FrontColor,$bb0000)
-  HyperLinkGadget(#gadActionHelp6,10,200,120,20,"lock screen",$770000)
-  SetGadgetColor(#gadActionHelp6,#PB_Gadget_FrontColor,$bb0000)
+  HyperLinkGadget(#gadActionHelp1,10,110,120,20,"open an app",#linkColorHighlighted)
+  SetGadgetColor(#gadActionHelp1,#PB_Gadget_FrontColor,#linkColor)
+  HyperLinkGadget(#gadActionHelp2,10,128,120,20,"make a screenshot",#linkColorHighlighted)
+  SetGadgetColor(#gadActionHelp2,#PB_Gadget_FrontColor,#linkColor)
+  HyperLinkGadget(#gadActionHelp3,10,146,120,20,"say current date",#linkColorHighlighted)
+  SetGadgetColor(#gadActionHelp3,#PB_Gadget_FrontColor,#linkColor)
+  HyperLinkGadget(#gadActionHelp4,10,164,160,20,"save clipboard contents",#linkColorHighlighted)
+  SetGadgetColor(#gadActionHelp4,#PB_Gadget_FrontColor,#linkColor)
+  HyperLinkGadget(#gadActionHelp5,10,182,160,20,"set clipboard contents",#linkColorHighlighted)
+  SetGadgetColor(#gadActionHelp5,#PB_Gadget_FrontColor,#linkColor)
+  HyperLinkGadget(#gadActionHelp6,10,200,120,20,"lock screen",#linkColorHighlighted)
+  SetGadgetColor(#gadActionHelp6,#PB_Gadget_FrontColor,#linkColor)
   HideGadget(#gadTest,#False)
   HideGadget(#gadTestNote,#False)
   HideGadget(#gadApply,#False)
@@ -255,12 +255,6 @@ Macro editingExistentMode()
 EndMacro
 
 Macro setListStyle()
-  If CountGadgetItems(#gadShortcuts)
-    ListIconGadgetColumnTitle(#gadShortcuts,0,"⚡")
-    ListIconGadgetColumnTitle(#gadShortcuts,1,"⚙")
-  Else
-    ListIconGadgetColumnTitle(#gadShortcuts,0,"⚡")
-  EndIf
   setListIconColumnJustification(#gadShortcuts,0,2)
   setListIconColumnJustification(#gadShortcuts,1,2)
   setListIconColumnJustification(#gadShortcuts,2,2)
@@ -295,7 +289,9 @@ Macro deactivateSelector(hotkey = "")
     previousHotkey = ""
   EndIf
 EndMacro
-; IDE Options = PureBasic 5.60 (MacOS X - x86)
+; IDE Options = PureBasic 5.70 LTS (MacOS X - x64)
+; CursorPosition = 86
+; FirstLine = 72
 ; Folding = ---
 ; EnableXP
 ; EnableUnicode

@@ -127,17 +127,17 @@ Procedure initResources()
   Protected path.s = GetPathPart(ProgramFilename()) + "../Resources/"
   LoadFont(#resBigFont,"Courier",18,#PB_Font_Bold)
   If LoadImageEx(#resLogo,path+"main.icns") And
-     LoadImageEx(#resAdd,path+"add.png") And
-     LoadImageEx(#resEdit,path+"edit.png") And
-     LoadImageEx(#resDel,path+"del.png") And
-     LoadImageEx(#resTest,path+"test.png") And
-     LoadImageEx(#resApply,path+"apply.png") And
-     LoadImageEx(#resCancel,path+"cancel.png") And
-     LoadImageEx(#resOk,path+"ok.png") And
-     LoadImageEx(#resDisabled,path+"disabled.png") And
-     LoadImageEx(#resFailed,path+"failed.png") And
-     LoadImageEx(#resUp,path+"up.png") And
-     LoadImageEx(#resDown,path+"down.png")
+     LoadImageEx(#resAdd,path+"plus-circle.png") And
+     LoadImageEx(#resEdit,path+"edit-circle.png") And
+     LoadImageEx(#resDel,path+"minus-circle.png") And
+     LoadImageEx(#resTest,path+"test-circle.png") And
+     LoadImageEx(#resApply,path+"apply-circle.png") And
+     LoadImageEx(#resCancel,path+"cancel-circle.png") And
+     LoadImageEx(#resOk,path+"on.png") And
+     LoadImageEx(#resDisabled,path+"off.png") And
+     LoadImageEx(#resFailed,path+"on.png") And
+     LoadImageEx(#resUp,path+"arrow-up-circle.png") And
+     LoadImageEx(#resDown,path+"arrow-down-circle.png")
     If getBackingScaleFactor() >= 2.0
       If Not LoadImageEx(#resIcon,path+"status_icon@2x.png") : End 1 : EndIf
       imageSize\width = 20
@@ -178,6 +178,17 @@ Procedure initResources()
       ResizeImage(#resFailed,16,16,#PB_Image_Smooth)
     EndIf
     CocoaMessage(0,ImageID(#resIcon),"setTemplate:",#True)
+    CocoaMessage(0,ImageID(#resAdd),"setTemplate:",#True)
+    CocoaMessage(0,ImageID(#resEdit),"setTemplate:",#True)
+    CocoaMessage(0,ImageID(#resDel),"setTemplate:",#True)
+    CocoaMessage(0,ImageID(#resApply),"setTemplate:",#True)
+    CocoaMessage(0,ImageID(#resCancel),"setTemplate:",#True)
+    CocoaMessage(0,ImageID(#resUp),"setTemplate:",#True)
+    CocoaMessage(0,ImageID(#resDown),"setTemplate:",#True)
+    CocoaMessage(0,ImageID(#resTest),"setTemplate:",#True)
+    CocoaMessage(0,ImageID(#resOk),"setTemplate:",#True)
+    CocoaMessage(0,ImageID(#resDisabled),"setTemplate:",#True)
+    CocoaMessage(0,ImageID(#resFailed),"setTemplate:",#True)
   Else
     Debug "failed to load image"
     End 1
@@ -580,7 +591,9 @@ ProcedureC keyHandler(sender,sel,event)
   EndIf
   ProcedureReturn result
 EndProcedure
-; IDE Options = PureBasic 5.61 (MacOS X - x64)
+; IDE Options = PureBasic 5.70 LTS (MacOS X - x64)
+; CursorPosition = 112
+; FirstLine = 109
 ; Folding = ----
 ; EnableXP
 ; EnableUnicode
