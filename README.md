@@ -1,6 +1,6 @@
 # iCanHazShortcut
 Simple shortcut manager for OS X 10.8 or higher.  
-![screenshot](https://eri.deseven.info/scr/PneographEpituberculousPreofficially.png)  
+![screenshot](https://d7.wtf/CytoclasticHuelessnessWiglike.png)  
 
 ## binaries
 Latest binary release can be downloaded [here](https://github.com/deseven/icanhazshortcut/releases).  
