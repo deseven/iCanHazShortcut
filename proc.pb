@@ -135,7 +135,7 @@ Procedure initResources()
      LoadImageEx(#resCancel,path+"cancel-circle.png") And
      LoadImageEx(#resOk,path+"on.png") And
      LoadImageEx(#resDisabled,path+"off.png") And
-     LoadImageEx(#resFailed,path+"on.png") And
+     LoadImageEx(#resFailed,path+"on-failed.png") And
      LoadImageEx(#resUp,path+"arrow-up-circle.png") And
      LoadImageEx(#resDown,path+"arrow-down-circle.png")
     If getBackingScaleFactor() >= 2.0
@@ -592,8 +592,8 @@ ProcedureC keyHandler(sender,sel,event)
   ProcedureReturn result
 EndProcedure
 ; IDE Options = PureBasic 5.70 LTS (MacOS X - x64)
-; CursorPosition = 112
-; FirstLine = 109
+; CursorPosition = 139
+; FirstLine = 123
 ; Folding = ----
 ; EnableXP
 ; EnableUnicode

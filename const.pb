@@ -1,6 +1,6 @@
 ﻿; main
 #myName = "iCanHazShortcut"
-#myVer = "1.0.0"
+#myVer = "1.0.1"
 #myID = "info.deseven.icanhazshortcut"
 
 ; update params
