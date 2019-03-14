@@ -199,15 +199,6 @@ Macro recalcUpDown()
   EndIf
 EndMacro
 
-Macro buildShellList()
-  AddGadgetItem(#gadPrefShell,-1,"no shell")
-  ExamineDirectory(0,"/bin","*sh")
-  While NextDirectoryEntry(0)
-    AddGadgetItem(#gadPrefShell,-1,DirectoryEntryName(0))
-  Wend
-  FinishDirectory(0)
-EndMacro
-
 Macro editingMode()
   HideGadget(#gadShortcuts,#True)
   HideGadget(#gadAdd,#True)
@@ -290,8 +281,8 @@ Macro deactivateSelector(hotkey = "")
   EndIf
 EndMacro
 ; IDE Options = PureBasic 5.70 LTS (MacOS X - x64)
-; CursorPosition = 86
-; FirstLine = 72
+; CursorPosition = 201
+; FirstLine = 195
 ; Folding = ---
 ; EnableXP
 ; EnableUnicode

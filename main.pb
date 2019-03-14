@@ -85,10 +85,9 @@ CocoaMessage(0,GadgetID(#gadUp),"setBordered:",0)
 CocoaMessage(0,GadgetID(#gadDown),"setBordered:",0)
 
 AddGadgetItem(#gadTabs,1,"Preferences")
-TextGadget(#gadPrefShellCap,10,12,60,20,"Shell:")
-ComboBoxGadget(#gadPrefShell,70,10,110,20)
-buildShellList()
-TextGadget(#gadPrefShellNote,10,45,170,200,~"Keep in mind that you have to set a correct $PATH variable in your shell config (~/.bashrc or ~/.zshrc, etc).\n\nYou can use the test run functionality when you create new shortcut to check if everything works fine.")
+TextGadget(#gadPrefShellCap,10,12,45,20,"Shell:")
+StringGadget(#gadPrefShell,55,10,120,20,"")
+TextGadget(#gadPrefShellNote,10,45,170,200,~"Keep in mind that you have to set a correct $PATH variable in your shell config (~/.bash_profile or ~/.zshrc, etc).\n\nYou can use the test run functionality when you create new shortcut to check if everything works fine.")
 CocoaMessage(0,GadgetID(#gadPrefShell),"setFocusRingType:",1)
 FrameGadget(#gadPrefFrame,180,0,180,250,"")
 CheckBoxGadget(#gadPrefStatusBar,190,10,160,20,"Show icon in status bar")
@@ -154,7 +153,7 @@ selector = sel_registerName_("flagsChanged:")
 class_addMethod_(class,selector,@keyHandler(),"v@:@")
 
 Repeat
-  Define ev = WaitWindowEvent(200)
+  Define ev = WaitWindowEvent(1000)
   Select ev
     Case #PB_Event_Gadget
       Select EventGadget()
@@ -410,5 +409,7 @@ ForEver
 
 die()
 ; IDE Options = PureBasic 5.70 LTS (MacOS X - x64)
+; CursorPosition = 155
+; FirstLine = 136
 ; EnableXP
 ; EnableUnicode

@@ -75,7 +75,15 @@ Procedure settings(save.b = #False)
     OpenPreferences(path,#PB_Preference_GroupSeparator)
     PreferenceGroup("main")
     updateVer = ReadPreferenceString("skip update",#myVer)
-    SetGadgetText(#gadPrefShell,ReadPreferenceString("shell","bash"))
+    Protected legacyShell.s = ReadPreferenceString("shell","/bin/bash -l")
+    ; compatibility with older configs
+    Select legacyShell
+      Case "sh","csh","tcsh","bash","zsh","ksh"
+        legacyShell = "/bin/" + legacyShell + " -l"
+      Case "no shell"
+        legacyShell = ""
+    EndSelect
+    SetGadgetText(#gadPrefShell,legacyShell)
     If ReadPreferenceString("populate_menu_with_actions","yes") = "yes"
       SetGadgetState(#gadPrefPopulateMenu,#PB_Checkbox_Checked)
       DisableGadget(#gadPrefShowHtk,#False)
@@ -197,8 +205,8 @@ EndProcedure
 
 Procedure action(action.s)
   Protected shell.s = GetGadgetText(#gadPrefShell)
-  If shell = "no shell"
-    Protected program.s,params.s
+  Protected program.s,params.s
+  If shell = ""
     Protected programEnd.l = FindString(action," ")
     If programEnd
       program = Left(action,programEnd-1)
@@ -209,9 +217,13 @@ Procedure action(action.s)
     ;Debug "running '" + program + "' with '" + params + "'"
     RunProgram(program,params,"")
   Else
-    shell = "/bin/" + shell
+    Protected shellEnd.l = FindString(shell," ")
+    If shellEnd
+      params = Mid(shell,shellEnd+1)
+      shell = Left(shell,shellEnd-1)
+    EndIf
     ;Debug "running '" + shell + "' with '" + action + "'"
-    Protected pid = RunProgram(shell,"","",#PB_Program_Write|#PB_Program_Open)
+    Protected pid = RunProgram(shell,params,"",#PB_Program_Write|#PB_Program_Open)
     If IsProgram(pid)
       WriteProgramString(pid,action)
     EndIf
@@ -228,8 +240,8 @@ Procedure testRun(action.s)
   testRunResult\timeouted = #False
   testRunResult\exitCode = 0
   Protected shell.s = GetGadgetText(#gadPrefShell)
-  If shell = "no shell"
-    Protected program.s,params.s
+  Protected program.s,params.s
+  If shell = ""
     Protected programEnd.l = FindString(action," ")
     If programEnd
       program = Left(action,programEnd-1)
@@ -239,11 +251,15 @@ Procedure testRun(action.s)
     EndIf
     tool = RunProgram(program,params,"",#PB_Program_Open|#PB_Program_Read|#PB_Program_Error|#PB_Program_Hide)
   Else
-    shell = "/bin/" + shell
-    tool = RunProgram(shell,"","",#PB_Program_Open|#PB_Program_Read|#PB_Program_Write|#PB_Program_Error|#PB_Program_Hide)
+    Protected shellEnd.l = FindString(shell," ")
+    If shellEnd
+      params = Mid(shell,shellEnd+1)
+      shell = Left(shell,shellEnd-1)
+    EndIf
+    tool = RunProgram(shell,params,"",#PB_Program_Open|#PB_Program_Read|#PB_Program_Write|#PB_Program_Error|#PB_Program_Hide)
   EndIf
   If tool
-    If shell <> "no shell"
+    If shell
       WriteProgramString(tool,action)
       WriteProgramData(tool,#PB_Program_Eof,0)
     EndIf
@@ -592,8 +608,8 @@ ProcedureC keyHandler(sender,sel,event)
   ProcedureReturn result
 EndProcedure
 ; IDE Options = PureBasic 5.70 LTS (MacOS X - x64)
-; CursorPosition = 139
-; FirstLine = 123
+; CursorPosition = 29
+; FirstLine = 22
 ; Folding = ----
 ; EnableXP
 ; EnableUnicode
