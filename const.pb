@@ -76,6 +76,7 @@ Enumeration gadgets
 EndEnumeration
 
 Enumeration resources
+  #resNormalFont
   #resBigFont
   #resIcon
   #resLogo
@@ -111,6 +112,7 @@ EndEnumeration
 #NSControlKeyMask    = 1 << 18
 #NSAlternateKeyMask  = 1 << 19
 #NSCommandKeyMask    = 1 << 20
+;#NSFunctionKeyMask   = 1 << 24
 
 #hide = #False
 #show = #True
@@ -217,6 +219,7 @@ keys($33) = "Del"
 ~"\t<string>Aqua</string></dict>\n" +
 ~"</plist>"
 ; IDE Options = PureBasic 5.70 LTS (MacOS X - x64)
-; CursorPosition = 2
+; CursorPosition = 78
+; FirstLine = 68
 ; EnableXP
 ; EnableUnicode

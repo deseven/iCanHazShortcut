@@ -133,6 +133,7 @@ EndProcedure
 Procedure initResources()
   Protected imageSize.NSSize
   Protected path.s = GetPathPart(ProgramFilename()) + "../Resources/"
+  LoadFont(#resNormalFont,"Calibri",14)
   LoadFont(#resBigFont,"Courier",18,#PB_Font_Bold)
   If LoadImageEx(#resLogo,path+"main.icns") And
      LoadImageEx(#resAdd,path+"plus-circle.png") And
@@ -571,6 +572,7 @@ ProcedureC keyHandler(sender,sel,event)
   Protected result = #YES  
   Protected currentHtk.s
   Static currentMod.s
+  Protected fnPressed.b
   If event
     Select CocoaMessage(0,event,"type")
       Case #NSKeyDown
@@ -587,6 +589,7 @@ ProcedureC keyHandler(sender,sel,event)
         If modifierFlags & #NSControlKeyMask   : currentMod + "⌃" : EndIf
         If modifierFlags & #NSAlternateKeyMask : currentMod + "⌥" : EndIf
         If modifierFlags & #NSCommandKeyMask   : currentMod + "⌘" : EndIf
+        If modifierFlags & #NSFunctionKeyMask  : fnPressed = #True : EndIf
     EndSelect
     If activeSelector <> -1 And IsGadget(#gadShortcutSelector)
       If Len(currentMod) = 0 And currentHtk = "⎋"
@@ -597,6 +600,8 @@ ProcedureC keyHandler(sender,sel,event)
         deactivateSelector(currentMod + currentHtk)
       ElseIf Len(currentMod)
         SetGadgetText(#gadShortcutSelector,currentMod + currentHtk)
+      ElseIf fnPressed
+        ; do nothing and wait for full hotkey
       Else
         deactivateSelector()
         SetGadgetText(#gadShortcutSelector,#pressInvite)
@@ -608,8 +613,8 @@ ProcedureC keyHandler(sender,sel,event)
   ProcedureReturn result
 EndProcedure
 ; IDE Options = PureBasic 5.70 LTS (MacOS X - x64)
-; CursorPosition = 29
-; FirstLine = 22
+; CursorPosition = 603
+; FirstLine = 580
 ; Folding = ----
 ; EnableXP
 ; EnableUnicode
