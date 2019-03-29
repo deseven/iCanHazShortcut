@@ -65,6 +65,7 @@ Enumeration gadgets
   #gadActionHelp5
   #gadActionHelp6
   #gadPrefShell
+  #gadPrefShellDefault
   #gadPrefShellCap
   #gadPrefShellNote
   #gadPrefStatusBar
@@ -219,7 +220,7 @@ keys($33) = "Del"
 ~"\t<string>Aqua</string></dict>\n" +
 ~"</plist>"
 ; IDE Options = PureBasic 5.70 LTS (MacOS X - x64)
-; CursorPosition = 78
-; FirstLine = 68
+; CursorPosition = 67
+; FirstLine = 51
 ; EnableXP
 ; EnableUnicode

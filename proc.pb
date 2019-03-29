@@ -613,8 +613,8 @@ ProcedureC keyHandler(sender,sel,event)
   ProcedureReturn result
 EndProcedure
 ; IDE Options = PureBasic 5.70 LTS (MacOS X - x64)
-; CursorPosition = 603
-; FirstLine = 580
+; CursorPosition = 29
+; FirstLine = 22
 ; Folding = ----
 ; EnableXP
 ; EnableUnicode
