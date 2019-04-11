@@ -285,7 +285,7 @@ Procedure testRun(action.s)
         EndIf
       ForEver
       Delay(10)
-      If ElapsedMilliseconds() - activeTime >= 5000
+      If ElapsedMilliseconds() - activeTime >= 10000
         testRunResult\timeouted = #True
         testRunResult\exitCode = -1
         KillProgram(tool)
@@ -613,8 +613,8 @@ ProcedureC keyHandler(sender,sel,event)
   ProcedureReturn result
 EndProcedure
 ; IDE Options = PureBasic 5.70 LTS (MacOS X - x64)
-; CursorPosition = 29
-; FirstLine = 22
+; CursorPosition = 287
+; FirstLine = 264
 ; Folding = ----
 ; EnableXP
 ; EnableUnicode

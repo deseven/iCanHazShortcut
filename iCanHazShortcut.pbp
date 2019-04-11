@@ -7,7 +7,7 @@
   <section name="data">
     <explorer view="../../" pattern="0"/>
     <log show="1"/>
-    <lastopen date="2019-03-25 17:57" user="deseven" host="de7mac.local"/>
+    <lastopen date="2019-04-03 22:30" user="deseven" host="de7mac.local"/>
   </section>
   <section name="files">
     <file name="const.pb">
@@ -24,7 +24,7 @@
     </file>
     <file name="proc.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
-      <fingerprint md5="22104e6d0fa71ccdf051b24a3a92a599"/>
+      <fingerprint md5="afc9fd271f120d9264150195ae380902"/>
     </file>
   </section>
   <section name="targets">
