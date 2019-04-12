@@ -54,9 +54,10 @@ AddGadgetItem(#gadTabs,0,"Shortcuts")
 ListIconGadget(#gadShortcuts,5,0,560,220,"Shortcut",80,#PB_ListIcon_CheckBoxes)
 SetGadgetAttribute(#gadShortcuts,#PB_ListIcon_List,#True)
 CocoaMessage(0,GadgetID(#gadShortcuts),"setFocusRingType:",1)
-AddGadgetColumn(#gadShortcuts,2,"Action",1)
-AddGadgetColumn(#gadShortcuts,3,"Workdir",1)
-ListIconGadgetHideColumn(#gadShortcuts,3,#True)
+AddGadgetColumn(#gadShortcuts,2,"Action",120)
+AddGadgetColumn(#gadShortcuts,3,"Command",1)
+AddGadgetColumn(#gadShortcuts,4,"Workdir",1)
+ListIconGadgetHideColumn(#gadShortcuts,4,#True)
 ListIconGadgetHideColumn(#gadShortcuts,0,#True)
 CocoaMessage(0,GadgetID(#gadShortcuts),"sizeLastColumnToFit")
 ButtonImageGadget(#gadAdd,460,222,36,34,ImageID(#resAdd))
@@ -214,9 +215,9 @@ Repeat
           EndIf
           recalcUpDown()
         Case #gadTest
-          If Len(GetGadgetText(#gadAction))
-            testRun(GetGadgetText(#gadAction))
-            Define testRunMessage.s = "Action: " + GetGadgetText(#gadAction) + ~"\n" +
+          If Len(GetGadgetText(#gadCommand))
+            testRun(GetGadgetText(#gadCommand),GetGadgetText(#gadWorkdir))
+            Define testRunMessage.s = "Command: " + GetGadgetText(#gadCommand) + ~"\n" +
                                       "Shell: " + GetGadgetText(#gadPrefShell) + ~"\n" + 
                                       "Exit code: " + Str(testRunResult\exitCode) + ~"\n\n"
             If Len(testRunResult\stdout)
@@ -226,7 +227,7 @@ Repeat
               testRunMessage + ~"[stderr]\n" + testRunResult\stderr + ~"\n\n"
             EndIf
             If testRunResult\timeouted
-              testRunMessage + ~"There were no output for at least 5 seconds so the program has been killed!\nIf that's intended just ignore it."
+              testRunMessage + ~"There were no output for at least 10 seconds so the program has been killed!\nIf that's intended just ignore it."
             ElseIf testRunResult\exitCode = -1
               testRunMessage + "Failed to run!"
             Else
@@ -234,33 +235,42 @@ Repeat
             EndIf
             MessageRequester(#myName + " - test run",testRunMessage)
           Else
-            MessageRequester(#myName,"Please define your action first.")
+            MessageRequester(#myName,"Please define your command first.")
           EndIf
         Case #gadApply
-          If Len(GetGadgetText(#gadShortcutSelector)) > 0 And Len(GetGadgetText(#gadAction)) > 0 And GetGadgetText(#gadShortcutSelector) <> #pressInvite And GetGadgetText(#gadShortcutSelector) <> #enterInvite
+          If Len(GetGadgetText(#gadShortcutSelector)) > 0 And Len(GetGadgetText(#gadCommand)) > 0 And GetGadgetText(#gadShortcutSelector) <> #pressInvite And GetGadgetText(#gadShortcutSelector) <> #enterInvite
             If editExistent
               gadgetState = GetGadgetItemState(#gadShortcuts,GetGadgetState(#gadShortcuts)) - #PB_ListIcon_Selected
-              AddGadgetItem(#gadShortcuts,GetGadgetState(#gadShortcuts),GetGadgetText(#gadShortcutSelector) + ~"\n" + GetGadgetText(#gadAction))
+              AddGadgetItem(#gadShortcuts,GetGadgetState(#gadShortcuts),GetGadgetText(#gadShortcutSelector) + ~"\n" + 
+                                                                        GetGadgetText(#gadAction) + ~"\n" +
+                                                                        GetGadgetText(#gadCommand) + ~"\n" +
+                                                                        GetGadgetText(#gadWorkdir))
               If gadgetState = #PB_ListIcon_Checked
                 SetGadgetItemState(#gadShortcuts,GetGadgetState(#gadShortcuts),gadgetState + #PB_ListIcon_Selected)
               EndIf
               RemoveGadgetItem(#gadShortcuts,GetGadgetState(#gadShortcuts)+1)
               editExistent = #False
             Else
-              AddGadgetItem(#gadShortcuts,-1,GetGadgetText(#gadShortcutSelector) + ~"\n" + GetGadgetText(#gadAction))
+              AddGadgetItem(#gadShortcuts,-1,GetGadgetText(#gadShortcutSelector) + ~"\n" + 
+                                             GetGadgetText(#gadAction) + ~"\n" +
+                                             GetGadgetText(#gadCommand) + ~"\n" +
+                                             GetGadgetText(#gadWorkdir))
               SetGadgetItemState(#gadShortcuts,CountGadgetItems(#gadShortcuts)-1,#PB_ListIcon_Checked)
             EndIf
             registerShortcuts()
             settings(#True)
             viewingMode()
           Else
-            MessageRequester(#myName,"Please define your hotkey and action first.")
+            MessageRequester(#myName,"Please define your shortcut and command first.")
           EndIf
         Case #gadCancel
           viewingMode()
         Case #gadUp
           gadgetState = GetGadgetItemState(#gadShortcuts,GetGadgetState(#gadShortcuts)) - #PB_ListIcon_Selected
-          AddGadgetItem(#gadShortcuts,GetGadgetState(#gadShortcuts)-1,GetGadgetItemText(#gadShortcuts,GetGadgetState(#gadShortcuts),0) + ~"\n" + GetGadgetItemText(#gadShortcuts,GetGadgetState(#gadShortcuts),1))
+          AddGadgetItem(#gadShortcuts,GetGadgetState(#gadShortcuts)-1,GetGadgetItemText(#gadShortcuts,GetGadgetState(#gadShortcuts),0) + ~"\n" +
+                                                                      GetGadgetItemText(#gadShortcuts,GetGadgetState(#gadShortcuts),1) + ~"\n" + 
+                                                                      GetGadgetItemText(#gadShortcuts,GetGadgetState(#gadShortcuts),2) + ~"\n" + 
+                                                                      GetGadgetItemText(#gadShortcuts,GetGadgetState(#gadShortcuts),3))
           RemoveGadgetItem(#gadShortcuts,GetGadgetState(#gadShortcuts)+1)
           SetGadgetState(#gadShortcuts,GetGadgetState(#gadShortcuts)-1)
           If gadgetState = #PB_ListIcon_Checked
@@ -270,7 +280,10 @@ Repeat
           settings(#True)
         Case #gadDown
           gadgetState = GetGadgetItemState(#gadShortcuts,GetGadgetState(#gadShortcuts)) - #PB_ListIcon_Selected
-          AddGadgetItem(#gadShortcuts,GetGadgetState(#gadShortcuts)+2,GetGadgetItemText(#gadShortcuts,GetGadgetState(#gadShortcuts),0) + ~"\n" + GetGadgetItemText(#gadShortcuts,GetGadgetState(#gadShortcuts),1))
+          AddGadgetItem(#gadShortcuts,GetGadgetState(#gadShortcuts)+2,GetGadgetItemText(#gadShortcuts,GetGadgetState(#gadShortcuts),0) + ~"\n" + 
+                                                                      GetGadgetItemText(#gadShortcuts,GetGadgetState(#gadShortcuts),1) + ~"\n" + 
+                                                                      GetGadgetItemText(#gadShortcuts,GetGadgetState(#gadShortcuts),2) + ~"\n" + 
+                                                                      GetGadgetItemText(#gadShortcuts,GetGadgetState(#gadShortcuts),3))
           RemoveGadgetItem(#gadShortcuts,GetGadgetState(#gadShortcuts))
           SetGadgetState(#gadShortcuts,GetGadgetState(#gadShortcuts)+1)
           If gadgetState = #PB_ListIcon_Checked
@@ -325,17 +338,23 @@ Repeat
           SetGadgetText(#gadPrefShell,"/bin/bash -l")
           PostEvent(#PB_Event_Gadget,#wnd,#gadPrefShell,#PB_EventType_Change)
         Case #gadActionHelp1
-          SetGadgetText(#gadAction,~"open -a Finder")
+          SetGadgetText(#gadAction,~"open Finder")
+          SetGadgetText(#gadCommand,~"open -a Finder")
         Case #gadActionHelp2
-          SetGadgetText(#gadAction,~"screencapture -i -r -t png \"$HOME/screenshot.png\"")
+          SetGadgetText(#gadAction,~"make a screenshot")
+          SetGadgetText(#gadCommand,~"screencapture -i -r -t png \"$HOME/screenshot.png\"")
         Case #gadActionHelp3
-          SetGadgetText(#gadAction,~"say `date \"+Current date is %Y-%m-%d\"`")
+          SetGadgetText(#gadAction,~"say current date")
+          SetGadgetText(#gadCommand,~"say `date \"+Current date is %Y-%m-%d\"`")
         Case #gadActionHelp4
-          SetGadgetText(#gadAction,~"pbpaste >> \"$HOME/clipboard.log\"")
+          SetGadgetText(#gadAction,~"save clipboard contents")
+          SetGadgetText(#gadCommand,~"pbpaste >> \"$HOME/clipboard.log\"")
         Case #gadActionHelp5
-          SetGadgetText(#gadAction,~"echo \"test\" | pbcopy")
+          SetGadgetText(#gadAction,~"set clipboard contents")
+          SetGadgetText(#gadCommand,~"echo \"test\" | pbcopy")
         Case #gadActionHelp6
-          SetGadgetText(#gadAction,~"pmset displaysleepnow")
+          SetGadgetText(#gadAction,~"lock screen")
+          SetGadgetText(#gadCommand,~"pmset displaysleepnow")
       EndSelect
     Case #PB_Event_LeftClick
       deactivateSelector()
@@ -413,12 +432,14 @@ Repeat
           PostEvent(#evEnableShortcutID,0,0,0,EventData())
         EndIf
       EndIf
+    Case #evUpdateConfig
+      settings(#True)
   EndSelect
 ForEver
 
 die()
 ; IDE Options = PureBasic 5.70 LTS (MacOS X - x64)
-; CursorPosition = 325
-; FirstLine = 306
+; CursorPosition = 142
+; FirstLine = 126
 ; EnableXP
 ; EnableUnicode

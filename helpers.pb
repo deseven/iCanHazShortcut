@@ -164,14 +164,17 @@ EndProcedure
 
 Macro viewingMode()
   FreeGadget(#gadShortcutSelectorCap) : FreeGadget(#gadShortcutSelector)
-  FreeGadget(#gadActionCap) : FreeGadget(#gadAction) : FreeGadget(#gadActionHelp)
+  FreeGadget(#gadCommandCap) : FreeGadget(#gadCommand)
+  FreeGadget(#gadWorkdirCap) : FreeGadget(#gadWorkdir)
+  FreeGadget(#gadActionCap) : FreeGadget(#gadAction)
+  FreeGadget(#gadActionHelpFrame) : FreeGadget(#gadActionHelp)
   FreeGadget(#gadActionHelp1) : FreeGadget(#gadActionHelp2) : FreeGadget(#gadActionHelp3)
   FreeGadget(#gadActionHelp4) : FreeGadget(#gadActionHelp5) : FreeGadget(#gadActionHelp6)
   HideGadget(#gadCancel,#True)
   HideGadget(#gadApply,#True)
   HideGadget(#gadTest,#True)
   HideGadget(#gadTestNote,#True)
-  TextGadget(#gadBg,0,0,400,300,"") ; dirty fix for a strange redraw behavior
+  TextGadget(#gadBg,0,0,590,300,"") ; dirty fix for a strange redraw behavior
   FreeGadget(#gadBg)
   HideGadget(#gadShortcuts,#False)
   HideGadget(#gadAdd,#False)
@@ -207,29 +210,40 @@ Macro editingMode()
   HideGadget(#gadUp,#True)
   HideGadget(#gadDown,#True)
   OpenGadgetList(#gadTabs,0)
-  TextGadget(#gadBg,0,0,400,300,"") ; dirty fix for a strange redraw behavior
+  TextGadget(#gadBg,0,0,590,300,"") ; dirty fix for a strange redraw behavior
   FreeGadget(#gadBg)
-  TextGadget(#gadShortcutSelectorCap,10,12,60,20,"Shortcut:")
-  ButtonGadget(#gadShortcutSelector,70,10,80,20,#pressInvite)
+  TextGadget(#gadShortcutSelectorCap,10,12,70,20,"Shortcut:")
+  ButtonGadget(#gadShortcutSelector,80,10,80,20,#pressInvite)
   CocoaMessage(0,GadgetID(#gadShortcutSelector),"setBezelStyle:",10)
   CocoaMessage(0,GadgetID(#gadShortcutSelector),"setFocusRingType:",1)
-  TextGadget(#gadActionCap,10,42,60,20,"Action:")
-  StringGadget(#gadAction,70,40,290,20,"")
+  TextGadget(#gadActionCap,10,42,70,20,"Action:")
+  StringGadget(#gadAction,80,40,210,20,"")
   CocoaMessage(0,GadgetID(#gadAction),"setFocusRingType:",1)
-  Define placeholder.s = "input command which will be executed"
-  CocoaMessage(0,CocoaMessage(0,GadgetID(#gadAction),"cell"),"setPlaceholderString:$",@placeholder)
-  TextGadget(#gadActionHelp,10,70,360,40,~"You can use any command that works in your terminal.\nHere are some examples:")
-  HyperLinkGadget(#gadActionHelp1,10,110,120,20,"open an app",#linkColorHighlighted)
+  TextGadget(#gadCommandCap,10,72,70,20,"Command:")
+  StringGadget(#gadCommand,80,70,210,20,"")
+  CocoaMessage(0,GadgetID(#gadCommand),"setFocusRingType:",1)
+  TextGadget(#gadWorkdirCap,10,102,70,20,"Workdir:")
+  StringGadget(#gadWorkdir,80,100,210,20,"")
+  CocoaMessage(0,GadgetID(#gadWorkdir),"setFocusRingType:",1)
+  Define placeholderAction.s = "human-friendly name (optional)"
+  CocoaMessage(0,CocoaMessage(0,GadgetID(#gadAction),"cell"),"setPlaceholderString:$",@placeholderAction)
+  Define placeholderCommand.s = "command to execute"
+  CocoaMessage(0,CocoaMessage(0,GadgetID(#gadCommand),"cell"),"setPlaceholderString:$",@placeholderCommand)
+  Define placeholderWorkdir.s = "working directory (optional)"
+  CocoaMessage(0,CocoaMessage(0,GadgetID(#gadWorkdir),"cell"),"setPlaceholderString:$",@placeholderWorkdir)
+  FrameGadget(#gadActionHelpFrame,300,0,260,220,"")
+  TextGadget(#gadActionHelp,310,10,250,40,~"You can use any command that works in your terminal. Here are some examples:")
+  HyperLinkGadget(#gadActionHelp1,310,50,120,20,"open an app",#linkColorHighlighted)
   SetGadgetColor(#gadActionHelp1,#PB_Gadget_FrontColor,#linkColor)
-  HyperLinkGadget(#gadActionHelp2,10,128,120,20,"make a screenshot",#linkColorHighlighted)
+  HyperLinkGadget(#gadActionHelp2,310,68,120,20,"make a screenshot",#linkColorHighlighted)
   SetGadgetColor(#gadActionHelp2,#PB_Gadget_FrontColor,#linkColor)
-  HyperLinkGadget(#gadActionHelp3,10,146,120,20,"say current date",#linkColorHighlighted)
+  HyperLinkGadget(#gadActionHelp3,310,86,120,20,"say current date",#linkColorHighlighted)
   SetGadgetColor(#gadActionHelp3,#PB_Gadget_FrontColor,#linkColor)
-  HyperLinkGadget(#gadActionHelp4,10,164,160,20,"save clipboard contents",#linkColorHighlighted)
+  HyperLinkGadget(#gadActionHelp4,310,104,160,20,"save clipboard contents",#linkColorHighlighted)
   SetGadgetColor(#gadActionHelp4,#PB_Gadget_FrontColor,#linkColor)
-  HyperLinkGadget(#gadActionHelp5,10,182,160,20,"set clipboard contents",#linkColorHighlighted)
+  HyperLinkGadget(#gadActionHelp5,310,122,160,20,"set clipboard contents",#linkColorHighlighted)
   SetGadgetColor(#gadActionHelp5,#PB_Gadget_FrontColor,#linkColor)
-  HyperLinkGadget(#gadActionHelp6,10,200,120,20,"lock screen",#linkColorHighlighted)
+  HyperLinkGadget(#gadActionHelp6,310,140,120,20,"lock screen",#linkColorHighlighted)
   SetGadgetColor(#gadActionHelp6,#PB_Gadget_FrontColor,#linkColor)
   HideGadget(#gadTest,#False)
   HideGadget(#gadTestNote,#False)
@@ -243,6 +257,8 @@ Macro editingExistentMode()
   editingMode()
   SetGadgetText(#gadShortcutSelector,GetGadgetItemText(#gadShortcuts,GetGadgetState(#gadShortcuts),0))
   SetGadgetText(#gadAction,GetGadgetItemText(#gadShortcuts,GetGadgetState(#gadShortcuts),1))
+  SetGadgetText(#gadCommand,GetGadgetItemText(#gadShortcuts,GetGadgetState(#gadShortcuts),2))
+  SetGadgetText(#gadWorkdir,GetGadgetItemText(#gadShortcuts,GetGadgetState(#gadShortcuts),3))
 EndMacro
 
 Macro setListStyle()
@@ -252,9 +268,10 @@ Macro setListStyle()
   ListIconGadgetColumnToolTip(#gadShortcuts,0,"Enable/disable")
   ListIconGadgetColumnToolTip(#gadShortcuts,1,"Shortcut status")
   ListIconGadgetColumnToolTip(#gadShortcuts,2,"Shortcut")
-  ListIconGadgetColumnToolTip(#gadShortcuts,3,"Action to perform")
+  ListIconGadgetColumnToolTip(#gadShortcuts,3,"Action name")
+  ListIconGadgetColumnToolTip(#gadShortcuts,4,"Command to execute")
   ;CocoaMessage(0,GadgetID(#gadShortcuts),"sizeToFit")
-  CocoaMessage(0,GadgetID(#gadShortcuts),"sizeLastColumnToFit")
+  ;CocoaMessage(0,GadgetID(#gadShortcuts),"sizeLastColumnToFit")
 EndMacro
 
 Macro activateSelector(gadget)
@@ -281,8 +298,8 @@ Macro deactivateSelector(hotkey = "")
   EndIf
 EndMacro
 ; IDE Options = PureBasic 5.70 LTS (MacOS X - x64)
-; CursorPosition = 201
-; FirstLine = 195
+; CursorPosition = 168
+; FirstLine = 164
 ; Folding = ---
 ; EnableXP
 ; EnableUnicode

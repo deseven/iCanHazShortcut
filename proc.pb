@@ -18,7 +18,7 @@ Procedure wndState(show.b)
 EndProcedure
 
 Procedure settings(save.b = #False)
-  Protected shortcut.s,action.s,i.l
+  Protected shortcut.s,action.s,command.s,workdir.s,i.l
   Shared updateVer.s
   If FileSize(GetEnvironmentVariable("HOME") + "/.config") = -1
     CreateDirectory(GetEnvironmentVariable("HOME") + "/.config")
@@ -30,6 +30,7 @@ Procedure settings(save.b = #False)
   If save
     CreatePreferences(path,#PB_Preference_GroupSeparator)
     PreferenceGroup("main")
+    WritePreferenceString("config version",#cfgVer)
     If updateVer <> #myVer
       WritePreferenceString("skip update",updateVer)
     EndIf
@@ -62,9 +63,13 @@ Procedure settings(save.b = #False)
     For i = 0 To CountGadgetItems(#gadShortcuts)-1
       shortcut = GetGadgetItemText(#gadShortcuts,i,0)
       action = GetGadgetItemText(#gadShortcuts,i,1)
+      command = GetGadgetItemText(#gadShortcuts,i,2)
+      workdir = GetGadgetItemText(#gadShortcuts,i,3)
       PreferenceGroup("shortcut" + Str(i+1))
       WritePreferenceString("shortcut",shortcut)
       WritePreferenceString("action",action)
+      WritePreferenceString("command",command)
+      WritePreferenceString("workdir",workdir)
       If GetGadgetItemState(#gadShortcuts,i) >= #PB_ListIcon_Checked
         WritePreferenceString("enabled","yes")
       Else
@@ -74,6 +79,12 @@ Procedure settings(save.b = #False)
   Else
     OpenPreferences(path,#PB_Preference_GroupSeparator)
     PreferenceGroup("main")
+    If FileSize(path) > 0 And ReadPreferenceString("config version","unknown") <> #cfgVer
+      If CopyFile(path,path + ".bak")
+        MessageRequester(#myName,#backupMsg + path + ".bak")
+        PostEvent(#evUpdateConfig)
+      EndIf
+    EndIf
     updateVer = ReadPreferenceString("skip update",#myVer)
     Protected legacyShell.s = ReadPreferenceString("shell","/bin/bash -l")
     ; compatibility with older configs
@@ -117,8 +128,14 @@ Procedure settings(save.b = #False)
       If FindString(PreferenceGroupName(),"shortcut") = 1
         shortcut = ReadPreferenceString("shortcut","")
         action = ReadPreferenceString("action","")
-        If Len(action) And Len(shortcut)
-          AddGadgetItem(#gadShortcuts,-1,shortcut + ~"\n" + action)
+        command = ReadPreferenceString("command","")
+        workdir = ReadPreferenceString("workdir","")
+        If Not Len(command) And Len(action)
+          command = action
+          action = ""
+        EndIf
+        If Len(command) And Len(shortcut)
+          AddGadgetItem(#gadShortcuts,-1,shortcut + ~"\n" + action + ~"\n" + command + ~"\n" + workdir)
           If ReadPreferenceString("enabled","yes") = "yes"
             SetGadgetItemState(#gadShortcuts,i,#PB_ListIcon_Checked)
           EndIf
@@ -204,16 +221,16 @@ Procedure initResources()
   EndIf
 EndProcedure
 
-Procedure action(action.s)
+Procedure action(command.s,workdir.s)
   Protected shell.s = GetGadgetText(#gadPrefShell)
   Protected program.s,params.s
   If shell = ""
-    Protected programEnd.l = FindString(action," ")
+    Protected programEnd.l = FindString(command," ")
     If programEnd
-      program = Left(action,programEnd-1)
-      params = Mid(action,programEnd+1)
+      program = Left(command,programEnd-1)
+      params = Mid(command,programEnd+1)
     Else
-      program = action
+      program = command
     EndIf
     ;Debug "running '" + program + "' with '" + params + "'"
     RunProgram(program,params,"")
@@ -223,16 +240,16 @@ Procedure action(action.s)
       params = Mid(shell,shellEnd+1)
       shell = Left(shell,shellEnd-1)
     EndIf
-    ;Debug "running '" + shell + "' with '" + action + "'"
+    ;Debug "running '" + shell + "' with '" + command + "'"
     Protected pid = RunProgram(shell,params,"",#PB_Program_Write|#PB_Program_Open)
     If IsProgram(pid)
-      WriteProgramString(pid,action)
+      WriteProgramString(pid,command)
     EndIf
     CloseProgram(pid)
   EndIf
 EndProcedure
 
-Procedure testRun(action.s)
+Procedure testRun(command.s,workdir.s)
   Protected tool.i,out.s,error.s,errString.s
   Protected bytes,oldBytes
   Protected *buf
@@ -243,25 +260,25 @@ Procedure testRun(action.s)
   Protected shell.s = GetGadgetText(#gadPrefShell)
   Protected program.s,params.s
   If shell = ""
-    Protected programEnd.l = FindString(action," ")
+    Protected programEnd.l = FindString(command," ")
     If programEnd
-      program = Left(action,programEnd-1)
-      params = Mid(action,programEnd+1)
+      program = Left(command,programEnd-1)
+      params = Mid(command,programEnd+1)
     Else
-      program = action
+      program = command
     EndIf
-    tool = RunProgram(program,params,"",#PB_Program_Open|#PB_Program_Read|#PB_Program_Error|#PB_Program_Hide)
+    tool = RunProgram(program,params,workdir,#PB_Program_Open|#PB_Program_Read|#PB_Program_Error|#PB_Program_Hide)
   Else
     Protected shellEnd.l = FindString(shell," ")
     If shellEnd
       params = Mid(shell,shellEnd+1)
       shell = Left(shell,shellEnd-1)
     EndIf
-    tool = RunProgram(shell,params,"",#PB_Program_Open|#PB_Program_Read|#PB_Program_Write|#PB_Program_Error|#PB_Program_Hide)
+    tool = RunProgram(shell,params,workdir,#PB_Program_Open|#PB_Program_Read|#PB_Program_Write|#PB_Program_Error|#PB_Program_Hide)
   EndIf
   If tool
     If shell
-      WriteProgramString(tool,action)
+      WriteProgramString(tool,command)
       WriteProgramData(tool,#PB_Program_Eof,0)
     EndIf
     While ProgramRunning(tool)
@@ -323,18 +340,15 @@ Procedure menuEvents()
   Shared application.i
   Select EventMenu()
     Case #menuAbout
-      CocoaMessage(0,application,"activateIgnoringOtherApps:",#YES)
       SetGadgetState(#gadTabs,2)
       SetActiveGadget(#gadCopyright)
       wndState(#show)
     Case #menuShortcuts
-      CocoaMessage(0,application,"activateIgnoringOtherApps:",#YES)
       SetGadgetState(#gadTabs,0)
       SetActiveGadget(#gadShortcuts)
       wndState(#show)
       setListStyle()
     Case #menuPrefs
-      CocoaMessage(0,application,"activateIgnoringOtherApps:",#YES)
       SetGadgetState(#gadTabs,1)
       wndState(#show)
     Case #menuQuit
@@ -345,7 +359,7 @@ EndProcedure
 Procedure shortcutEvents()
   If EventData() >= 0
     If CountGadgetItems(#gadShortcuts) => EventData()+1
-      action(GetGadgetItemText(#gadShortcuts,EventData(),1))
+      action(GetGadgetItemText(#gadShortcuts,EventData(),2),GetGadgetItemText(#gadShortcuts,EventData(),3))
     EndIf
   EndIf
 EndProcedure
@@ -353,7 +367,7 @@ EndProcedure
 Procedure shortcutMenuEvents()
   If EventType() = #PB_EventType_LeftClick
     If CountGadgetItems(#gadShortcuts) => EventMenu()-#menuCustom+1
-      action(GetGadgetItemText(#gadShortcuts,EventMenu()-#menuCustom,1))
+      action(GetGadgetItemText(#gadShortcuts,EventMenu()-#menuCustom,2),GetGadgetItemText(#gadShortcuts,EventMenu()-#menuCustom,3))
     EndIf
   EndIf
 EndProcedure
@@ -378,9 +392,17 @@ Procedure buildMenu()
       For i = 0 To CountGadgetItems(#gadShortcuts)-1
         If GetGadgetItemState(#gadShortcuts,i) >= #PB_ListIcon_Checked
           If GetGadgetState(#gadPrefShowHtk) = #PB_Checkbox_Checked
-            MenuItem(#menuCustom+i,"[" + GetGadgetItemText(#gadShortcuts,i,0) + "] " + GetGadgetItemText(#gadShortcuts,i,1))
+            If Len(GetGadgetItemText(#gadShortcuts,i,1))
+              MenuItem(#menuCustom+i,"[" + GetGadgetItemText(#gadShortcuts,i,0) + "] " + GetGadgetItemText(#gadShortcuts,i,1))
+            Else
+              MenuItem(#menuCustom+i,"[" + GetGadgetItemText(#gadShortcuts,i,0) + "] " + GetGadgetItemText(#gadShortcuts,i,2))
+            EndIf
           Else
-            MenuItem(#menuCustom+i,GetGadgetItemText(#gadShortcuts,i,1))
+            If Len(GetGadgetItemText(#gadShortcuts,i,1))
+              MenuItem(#menuCustom+i,GetGadgetItemText(#gadShortcuts,i,1))
+            Else
+              MenuItem(#menuCustom+i,GetGadgetItemText(#gadShortcuts,i,2))
+            EndIf
           EndIf
           BindMenuEvent(#menu,#menuCustom+i,@shortcutMenuEvents())
         EndIf
@@ -487,7 +509,8 @@ ProcedureC asListShortcuts(command.i)
       state = "0"
     EndIf
     Protected action.s = GetGadgetItemText(#gadShortcuts,i,1)
-    answerString + Str(i+1) + ~"\t" + state + ~"\t" + shortcut + ~"\t" + action + ~"\n"
+    Protected cmd.s = GetGadgetItemText(#gadShortcuts,i,2)
+    answerString + Str(i+1) + ~"\t" + state + ~"\t" + shortcut + ~"\t" + action + ~"\t" + cmd + ~"\n"
   Next
   Protected answer = CocoaMessage(0,0,"NSString stringWithString:$",@answerString)
   ProcedureReturn answer
@@ -613,8 +636,8 @@ ProcedureC keyHandler(sender,sel,event)
   ProcedureReturn result
 EndProcedure
 ; IDE Options = PureBasic 5.70 LTS (MacOS X - x64)
-; CursorPosition = 287
-; FirstLine = 264
+; CursorPosition = 83
+; FirstLine = 71
 ; Folding = ----
 ; EnableXP
 ; EnableUnicode
