@@ -49,6 +49,7 @@ CocoaMessage(0,CocoaMessage(0,WindowID(#wnd),"standardWindowButton:",#NSWindowBu
 CocoaMessage(0,CocoaMessage(0,WindowID(#wnd),"standardWindowButton:",#NSWindowButtonMaximize),"setHidden:",#YES)
 PanelGadget(#gadTabs,5,0,590,300)
 CocoaMessage(0,GadgetID(#gadTabs),"setFocusRingType:",1)
+CocoaMessage(0, WindowID(#wnd), "setAutorecalculatesKeyViewLoop:", #NO)
 
 AddGadgetItem(#gadTabs,0,"Shortcuts")
 ListIconGadget(#gadShortcuts,5,0,560,220,"Shortcut",80,#PB_ListIcon_CheckBoxes)
@@ -107,9 +108,9 @@ AddGadgetItem(#gadTabs,2,"About")
 ImageGadget(#gadLogo,68,35,64,64,ImageID(#resLogo))
 TextGadget(#gadNameVer,0,113,200,60,#myName + ~"\n" + #myVer,#PB_Text_Center)
 TextGadget(#gadCopyright,45,172,70,20,"created by")
-HyperLinkGadget(#gadWebDeveloper,105,176,100,20,"deseven",#linkColorHighlighted)
+HyperLinkGadget(#gadWebDeveloper,107,173,100,20,"deseven",#linkColorHighlighted)
 TextGadget(#gadCopyrightIcon,45,186,70,20,"icons by")
-HyperLinkGadget(#gadWebDesigner,92,190,100,20,"denboroda",#linkColorHighlighted)
+HyperLinkGadget(#gadWebDesigner,94,187,100,20,"denboroda",#linkColorHighlighted)
 SetGadgetColor(#gadWebDeveloper,#PB_Gadget_FrontColor,#linkColor)
 SetGadgetColor(#gadWebDesigner,#PB_Gadget_FrontColor,#linkColor)
 SetGadgetFont(#gadNameVer,FontID(#resBigFont))
@@ -249,7 +250,6 @@ Repeat
                 SetGadgetItemState(#gadShortcuts,GetGadgetState(#gadShortcuts),gadgetState + #PB_ListIcon_Selected)
               EndIf
               RemoveGadgetItem(#gadShortcuts,GetGadgetState(#gadShortcuts)+1)
-              editExistent = #False
             Else
               AddGadgetItem(#gadShortcuts,-1,GetGadgetText(#gadShortcutSelector) + ~"\n" + 
                                              GetGadgetText(#gadAction) + ~"\n" +
@@ -439,7 +439,7 @@ ForEver
 
 die()
 ; IDE Options = PureBasic 5.70 LTS (MacOS X - x64)
-; CursorPosition = 142
-; FirstLine = 126
+; CursorPosition = 51
+; FirstLine = 35
 ; EnableXP
 ; EnableUnicode

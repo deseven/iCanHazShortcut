@@ -163,6 +163,7 @@ Procedure MessageRequesterEx(Title.s, Info.s,type.s="'note'",defaultbutton=1,but
 EndProcedure
 
 Macro viewingMode()
+  editExistent = #False
   FreeGadget(#gadShortcutSelectorCap) : FreeGadget(#gadShortcutSelector)
   FreeGadget(#gadCommandCap) : FreeGadget(#gadCommand)
   FreeGadget(#gadWorkdirCap) : FreeGadget(#gadWorkdir)
@@ -250,6 +251,9 @@ Macro editingMode()
   HideGadget(#gadApply,#False)
   HideGadget(#gadCancel,#False)
   CloseGadgetList()
+  CocoaMessage(0,GadgetID(#gadAction),"setNextKeyView:",GadgetID(#gadCommand))
+  CocoaMessage(0,GadgetID(#gadCommand),"setNextKeyView:",GadgetID(#gadWorkdir))
+  CocoaMessage(0,GadgetID(#gadWorkdir),"setNextKeyView:",GadgetID(#gadAction))
 EndMacro
 
 Macro editingExistentMode()
@@ -298,8 +302,8 @@ Macro deactivateSelector(hotkey = "")
   EndIf
 EndMacro
 ; IDE Options = PureBasic 5.70 LTS (MacOS X - x64)
-; CursorPosition = 168
-; FirstLine = 164
+; CursorPosition = 255
+; FirstLine = 226
 ; Folding = ---
 ; EnableXP
 ; EnableUnicode

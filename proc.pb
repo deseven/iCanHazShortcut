@@ -150,7 +150,7 @@ EndProcedure
 Procedure initResources()
   Protected imageSize.NSSize
   Protected path.s = GetPathPart(ProgramFilename()) + "../Resources/"
-  LoadFont(#resNormalFont,"Calibri",14)
+  LoadFont(#resNormalFont,"Lucida Grande",12)
   LoadFont(#resBigFont,"Courier",18,#PB_Font_Bold)
   If LoadImageEx(#resLogo,path+"main.icns") And
      LoadImageEx(#resAdd,path+"plus-circle.png") And
@@ -636,8 +636,8 @@ ProcedureC keyHandler(sender,sel,event)
   ProcedureReturn result
 EndProcedure
 ; IDE Options = PureBasic 5.70 LTS (MacOS X - x64)
-; CursorPosition = 83
-; FirstLine = 71
+; CursorPosition = 152
+; FirstLine = 149
 ; Folding = ----
 ; EnableXP
 ; EnableUnicode
