@@ -49,7 +49,7 @@ CocoaMessage(0,CocoaMessage(0,WindowID(#wnd),"standardWindowButton:",#NSWindowBu
 CocoaMessage(0,CocoaMessage(0,WindowID(#wnd),"standardWindowButton:",#NSWindowButtonMaximize),"setHidden:",#YES)
 PanelGadget(#gadTabs,5,0,590,300)
 CocoaMessage(0,GadgetID(#gadTabs),"setFocusRingType:",1)
-CocoaMessage(0, WindowID(#wnd), "setAutorecalculatesKeyViewLoop:", #NO)
+CocoaMessage(0,WindowID(#wnd),"setAutorecalculatesKeyViewLoop:",#NO)
 
 AddGadgetItem(#gadTabs,0,"Shortcuts")
 ListIconGadget(#gadShortcuts,5,0,560,220,"Shortcut",80,#PB_ListIcon_CheckBoxes)
@@ -439,7 +439,7 @@ ForEver
 
 die()
 ; IDE Options = PureBasic 5.70 LTS (MacOS X - x64)
-; CursorPosition = 51
-; FirstLine = 35
+; CursorPosition = 164
+; FirstLine = 162
 ; EnableXP
 ; EnableUnicode

@@ -233,7 +233,7 @@ Procedure action(command.s,workdir.s)
       program = command
     EndIf
     ;Debug "running '" + program + "' with '" + params + "'"
-    RunProgram(program,params,"")
+    RunProgram(program,params,workdir)
   Else
     Protected shellEnd.l = FindString(shell," ")
     If shellEnd
@@ -241,7 +241,7 @@ Procedure action(command.s,workdir.s)
       shell = Left(shell,shellEnd-1)
     EndIf
     ;Debug "running '" + shell + "' with '" + command + "'"
-    Protected pid = RunProgram(shell,params,"",#PB_Program_Write|#PB_Program_Open)
+    Protected pid = RunProgram(shell,params,workdir,#PB_Program_Write|#PB_Program_Open)
     If IsProgram(pid)
       WriteProgramString(pid,command)
     EndIf
@@ -636,8 +636,8 @@ ProcedureC keyHandler(sender,sel,event)
   ProcedureReturn result
 EndProcedure
 ; IDE Options = PureBasic 5.70 LTS (MacOS X - x64)
-; CursorPosition = 152
-; FirstLine = 149
+; CursorPosition = 223
+; FirstLine = 220
 ; Folding = ----
 ; EnableXP
 ; EnableUnicode
