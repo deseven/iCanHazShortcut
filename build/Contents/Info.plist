@@ -17,7 +17,7 @@
 	<key>CFBundleSignature</key>
 	<string>PURE</string>
 	<key>CFBundleVersion</key>
-	<string>1.0.1</string>
+	<string>1.1.0</string>
 	<key>CFBundleName</key>
 	<string>iCanHazShortcut</string>
 	<key>CSResourcesFileMapped</key>
