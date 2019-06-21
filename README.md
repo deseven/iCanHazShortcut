@@ -1,5 +1,5 @@
 # iCanHazShortcut
-Simple shortcut manager for OS X 10.8 or higher.  
+Simple shortcut manager for macOS 10.8 or higher. It lets you execute any command that works in your terminal by pressing a combination of keyboard keys. No rocket science involved!  
 ![screenshot](https://d7.wtf/SchesisDodecaneCunarder.png)  
 
 ## binaries
