@@ -35,6 +35,6 @@
 	<key>OSAScriptingDefinition</key>
 	<string>AS.sdef</string>
 	<key>NSAppleEventsUsageDescription</key>
-	<string>I have no idea what your command is trying to do, but you should probably allow it.</string>
+	<string>Access to system events is required to handle keyboard shortcuts.</string>
 </dict>
 </plist>
