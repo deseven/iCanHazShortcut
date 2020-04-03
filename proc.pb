@@ -253,10 +253,21 @@ Procedure testRun(command.s,workdir.s)
   Protected tool.i,out.s,error.s,errString.s
   Protected bytes,oldBytes
   Protected *buf
-  Protected activeTime = ElapsedMilliseconds()
+  Protected ev.i
+  Shared application.i
   Shared testRunResult.testRunResults
-  testRunResult\timeouted = #False
+  testRunResult\aborted = #False
   testRunResult\exitCode = 0
+  OpenWindow(#wndSheet,0,0,140,80,"",#PB_Window_SystemMenu|#PB_Window_Invisible)
+  ButtonGadget(#gadTestAbort,20,40,100,30,"Abort")
+  ProgressBarGadget(#gadTestProgress,65,15,0,0,0,0)
+  CocoaMessage(0,GadgetID(#gadTestProgress),"setIndeterminate:",#YES)
+  CocoaMessage(0,GadgetID(#gadTestProgress),"setStyle:",1)
+  CocoaMessage(0,GadgetID(#gadTestProgress),"setControlSize:",1)
+  CocoaMessage(0,GadgetID(#gadTestProgress),"sizeToFit")
+  CocoaMessage(0,GadgetID(#gadTestProgress),"startAnimation:",#nil)
+  CocoaMessage(0,application,"beginSheet:",WindowID(#wndSheet),"modalForWindow:",WindowID(#wnd),"modalDelegate:",#nil,"didEndSelector:",0,"contextInfo:",0)
+  
   Protected shell.s = GetGadgetText(#gadPrefShell)
   Protected program.s,params.s
   If shell = ""
@@ -291,7 +302,6 @@ Procedure testRun(command.s,workdir.s)
         EndIf
         ReadProgramData(tool,*buf+oldBytes,bytes)
         oldBytes = MemorySize(*buf)
-        activeTime = ElapsedMilliseconds()
       EndIf
       Repeat
         errString.s = ReadProgramError(tool)
@@ -301,9 +311,9 @@ Procedure testRun(command.s,workdir.s)
           Break
         EndIf
       ForEver
-      Delay(10)
-      If ElapsedMilliseconds() - activeTime >= 10000
-        testRunResult\timeouted = #True
+      ev = WaitWindowEvent(10)
+      If ev = #PB_Event_Gadget And EventGadget() = #gadTestAbort
+        testRunResult\aborted = #True
         testRunResult\exitCode = -1
         KillProgram(tool)
         Break
@@ -325,7 +335,7 @@ Procedure testRun(command.s,workdir.s)
       out = PeekS(*buf,MemorySize(*buf),#PB_UTF8|#PB_ByteLength)
       FreeMemory(*buf)
     EndIf
-    If Not testRunResult\timeouted
+    If Not testRunResult\aborted
       testRunResult\exitCode = ProgramExitCode(tool)
     EndIf
     CloseProgram(tool)
@@ -334,6 +344,11 @@ Procedure testRun(command.s,workdir.s)
   EndIf
   testRunResult\stderr = error
   testRunResult\stdout = out
+  CocoaMessage(0,application,"endSheet:",WindowID(#wndSheet))
+  CocoaMessage(0,GadgetID(#gadTestProgress),"stopAnimation:",#nil)
+  CocoaMessage(0,WindowID(#wndSheet),"orderOut:",#nil)
+  While WindowEvent() : Wend
+  CloseWindow(#wndSheet)
 EndProcedure
 
 Procedure menuEvents()
@@ -635,9 +650,3 @@ ProcedureC keyHandler(sender,sel,event)
   EndIf
   ProcedureReturn result
 EndProcedure
-; IDE Options = PureBasic 5.70 LTS (MacOS X - x64)
-; CursorPosition = 223
-; FirstLine = 220
-; Folding = ----
-; EnableXP
-; EnableUnicode

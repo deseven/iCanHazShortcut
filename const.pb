@@ -17,7 +17,7 @@
 
 ; structures
 Structure testRunResults
-  timeouted.b
+  aborted.b
   exitCode.i
   stdout.s
   stderr.s
@@ -26,6 +26,7 @@ EndStructure
 ; enums
 Enumeration main
   #wnd
+  #wndSheet
   #menu
   #menuQuit
   #menuShortcuts
@@ -80,6 +81,8 @@ Enumeration gadgets
   #gadPrefFrame
   #gadPrefAutostart
   #gadPrefCheckUpdate
+  #gadTestProgress
+  #gadTestAbort
 EndEnumeration
 
 Enumeration resources
@@ -227,7 +230,3 @@ keys($33) = "Del"
 ~"\t<key>LimitLoadToSessionType</key>\n" +
 ~"\t<string>Aqua</string></dict>\n" +
 ~"</plist>"
-; IDE Options = PureBasic 5.71 beta 1 LTS (MacOS X - x64)
-; CursorPosition = 2
-; EnableXP
-; EnableUnicode

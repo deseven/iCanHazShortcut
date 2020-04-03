@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<project xmlns="http://www.purebasic.com/namespace" version="1.0" creator="PureBasic 5.71 beta 1 LTS (MacOS X - x64)">
+<project xmlns="http://www.purebasic.com/namespace" version="1.0" creator="PureBasic 5.71 LTS (MacOS X - x64)">
   <section name="config">
     <options closefiles="1" openmode="0" name="iCanHazShortcut"/>
   </section>
   <section name="data">
     <explorer view="../../" pattern="0"/>
     <log show="1"/>
-    <lastopen date="2019-04-16 12:46" user="deseven" host="de7mac.local"/>
+    <lastopen date="2020-01-05 20:14" user="deseven" host="de7mac.local"/>
   </section>
   <section name="files">
     <file name="const.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
-      <fingerprint md5="b8e0dd127f083d0a586a25f73bf7ef07"/>
+      <fingerprint md5="6b85bd255341cbaf4d1818a4ffac0c08"/>
     </file>
     <file name="helpers.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>

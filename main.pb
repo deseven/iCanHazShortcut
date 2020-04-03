@@ -227,8 +227,8 @@ Repeat
             If Len(testRunResult\stderr)
               testRunMessage + ~"[stderr]\n" + testRunResult\stderr + ~"\n\n"
             EndIf
-            If testRunResult\timeouted
-              testRunMessage + ~"There were no output for at least 10 seconds so the program has been killed!\nIf that's intended just ignore it."
+            If testRunResult\aborted
+              testRunMessage + ~"Program execution was aborted!"
             ElseIf testRunResult\exitCode = -1
               testRunMessage + "Failed to run!"
             Else
@@ -438,8 +438,3 @@ Repeat
 ForEver
 
 die()
-; IDE Options = PureBasic 5.70 LTS (MacOS X - x64)
-; CursorPosition = 164
-; FirstLine = 162
-; EnableXP
-; EnableUnicode

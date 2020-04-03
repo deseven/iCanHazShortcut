@@ -301,9 +301,3 @@ Macro deactivateSelector(hotkey = "")
     previousHotkey = ""
   EndIf
 EndMacro
-; IDE Options = PureBasic 5.70 LTS (MacOS X - x64)
-; CursorPosition = 255
-; FirstLine = 226
-; Folding = ---
-; EnableXP
-; EnableUnicode
