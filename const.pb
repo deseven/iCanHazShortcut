@@ -31,6 +31,7 @@ Enumeration main
   #menuQuit
   #menuShortcuts
   #menuPrefs
+  #menuUpdateCheck
   #menuAbout
   #menuCustom
 EndEnumeration
@@ -106,6 +107,7 @@ EndEnumeration
 
 Enumeration globalEvents #PB_Event_FirstCustomValue + 10000
   #evUpdateArrival
+  #evNoUpdateFound
   #evDisableShortcut
   #evEnableShortcut
   #evToggleShortcut

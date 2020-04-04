@@ -1,4 +1,6 @@
-﻿Procedure die()
+﻿Declare checkUpdateAsync(interval.i)
+
+Procedure die()
   Shared updateCheckThread.i
   If IsThread(updateCheckThread)
     KillThread(updateCheckThread)
@@ -354,10 +356,6 @@ EndProcedure
 Procedure menuEvents()
   Shared application.i
   Select EventMenu()
-    Case #menuAbout
-      SetGadgetState(#gadTabs,2)
-      SetActiveGadget(#gadCopyright)
-      wndState(#show)
     Case #menuShortcuts
       SetGadgetState(#gadTabs,0)
       SetActiveGadget(#gadShortcuts)
@@ -365,6 +363,12 @@ Procedure menuEvents()
       setListStyle()
     Case #menuPrefs
       SetGadgetState(#gadTabs,1)
+      wndState(#show)
+    Case #menuUpdateCheck
+      CreateThread(@checkUpdateAsync(),0)
+    Case #menuAbout
+      SetGadgetState(#gadTabs,2)
+      SetActiveGadget(#gadCopyright)
       wndState(#show)
     Case #menuQuit
       die()
@@ -428,6 +432,8 @@ Procedure buildMenu()
     BindMenuEvent(#menu,#menuShortcuts,@menuEvents())
     MenuItem(#menuPrefs,"Preferences...")
     BindMenuEvent(#menu,#menuPrefs,@menuEvents())
+    MenuItem(#menuUpdateCheck,"Check for updates")
+    BindMenuEvent(#menu,#menuUpdateCheck,@menuEvents())
     MenuItem(#menuAbout,"About")
     BindMenuEvent(#menu,#menuAbout,@menuEvents())
     MenuBar()
@@ -508,7 +514,12 @@ Procedure checkUpdateAsync(interval.i)
         EndIf
       EndIf
     EndIf
-    If interval > 0 : Delay(interval) : Else : ProcedureReturn : EndIf
+    If interval > 0
+      Delay(interval)
+    Else
+      PostEvent(#evNoUpdateFound)
+      ProcedureReturn
+    EndIf
   ForEver
 EndProcedure
 

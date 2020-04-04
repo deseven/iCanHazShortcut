@@ -374,6 +374,10 @@ Repeat
       EndSelect
       wndState(#False)
       settings(#True)
+    Case #evNoUpdateFound
+      wndState(#True)
+      MessageRequester(#myName,"You have the latest stable version!")
+      wndState(#False)
     Case #evDisableShortcut
       If EventData()
         Define shortcut.s = PeekS(EventData())
