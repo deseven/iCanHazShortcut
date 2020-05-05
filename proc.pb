@@ -223,9 +223,23 @@ Procedure initResources()
   EndIf
 EndProcedure
 
+Procedure.s handleWorkdir(workdir.s)
+  ; probably the safest way to expand tilde
+  ; https://stackoverflow.com/questions/3963716/how-to-manually-expand-a-special-variable-ex-tilde-in-bash
+  If Left(workdir,1) = "~"
+    workdir = ReplaceString(workdir,"~",GetEnvironmentVariable("HOME"),0,1,1)
+  EndIf
+  If FindString(workdir,"$")
+    
+  EndIf
+  ProcedureReturn workdir
+EndProcedure
+
 Procedure action(command.s,workdir.s)
   Protected shell.s = GetGadgetText(#gadPrefShell)
   Protected program.s,params.s
+  workdir = handleWorkdir(workdir)
+  
   If shell = ""
     Protected programEnd.l = FindString(command," ")
     If programEnd
@@ -272,6 +286,8 @@ Procedure testRun(command.s,workdir.s)
   
   Protected shell.s = GetGadgetText(#gadPrefShell)
   Protected program.s,params.s
+  workdir = handleWorkdir(workdir)
+  
   If shell = ""
     Protected programEnd.l = FindString(command," ")
     If programEnd
