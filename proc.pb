@@ -634,6 +634,7 @@ ProcedureC keyHandler(sender,sel,event)
   Shared activeSelector
   Shared previousHotkey
   Shared keys()
+  Shared singleWL.s()
   Protected result = #YES  
   Protected currentHtk.s
   Static currentMod.s
@@ -659,7 +660,7 @@ ProcedureC keyHandler(sender,sel,event)
     If activeSelector <> -1 And IsGadget(#gadShortcutSelector)
       If Len(currentMod) = 0 And currentHtk = "⎋"
         deactivateSelector()
-      ElseIf Len(currentMod) = 0 And Len(currentHtk) >= 2 And Left(currentHtk,1) = "F"
+      ElseIf Len(currentMod) = 0 And singleWL(currentHtk)
         deactivateSelector(currentHtk)
       ElseIf Len(currentMod) And Len(currentHtk)
         deactivateSelector(currentMod + currentHtk)

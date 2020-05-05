@@ -187,6 +187,7 @@ keys($30) = "Tab"
 keys($31) = "Space"
 keys($35) = "⎋"
 keys($39) = "CAPS"
+keys($47) = "Clear"
 keys($7A) = "F1"
 keys($78) = "F2"
 keys($63) = "F3"
@@ -213,6 +214,29 @@ keys($74) = "PgUp"
 keys($79) = "PgDown"
 keys($0A) = "§"
 keys($33) = "Del"
+
+NewMap singleWL.b()
+singleWL("F1") = #True
+singleWL("F2") = #True
+singleWL("F3") = #True
+singleWL("F4") = #True
+singleWL("F5") = #True
+singleWL("F6") = #True
+singleWL("F7") = #True
+singleWL("F8") = #True
+singleWL("F9") = #True
+singleWL("F10") = #True
+singleWL("F11") = #True
+singleWL("F12") = #True
+singleWL("F13") = #True
+singleWL("F14") = #True
+singleWL("F15") = #True
+singleWL("F16") = #True
+singleWL("F17") = #True
+singleWL("F18") = #True
+singleWL("F19") = #True
+singleWL("Clear") = #True
+singleWL("CAPS") = #True
 
 #loginItemPlist = ~"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
 ~"<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n" +
