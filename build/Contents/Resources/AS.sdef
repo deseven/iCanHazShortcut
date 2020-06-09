@@ -3,6 +3,24 @@
 
 <dictionary title="iCanHazShortcut">
     <suite name="iCanHazShortcut Suite" code="iCHS" description="iCanHazShortcut Scripts">
+        <command name="enableAction" code="enableac" description="Enable defined action">
+            <cocoa class="asEnableAction"/>
+            <direct-parameter description="Action">
+                <type type="text"/>
+            </direct-parameter>
+        </command>
+        <command name="disableAction" code="disablac" description="Disable defined action">
+            <cocoa class="asDisableAction"/>
+            <direct-parameter description="Action">
+                <type type="text"/>
+            </direct-parameter>
+        </command>
+        <command name="toggleAction" code="toggleac" description="Toggle defined action">
+            <cocoa class="asToggleAction"/>
+            <direct-parameter description="Action">
+                <type type="text"/>
+            </direct-parameter>
+        </command>
         <command name="enableID" code="enablesi" description="Enable defined shortcut by ID">
             <cocoa class="asEnableShortcutID"/>
             <direct-parameter description="Shortcut ID">

@@ -115,6 +115,9 @@ Enumeration globalEvents #PB_Event_FirstCustomValue + 10000
   #evDisableShortcutID
   #evEnableShortcutID
   #evToggleShortcutID
+  #evDisableAction
+  #evEnableAction
+  #evToggleAction
   #evUpdateConfig
 EndEnumeration
 

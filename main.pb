@@ -6,6 +6,7 @@ EnableExplicit
 Define statusBar.i,statusItem.i,i.l
 Define application.i = CocoaMessage(0,0,"NSApplication sharedApplication")
 Define workspace.i = CocoaMessage(0,0,"NSWorkspace sharedWorkspace")
+Define ev.i
 Define editExistent.b = #False
 Define updateCheckThread.i
 Define updateVer.s = #myVer
@@ -19,28 +20,7 @@ Define setWorkdirWithCD.b = #False
 
 IncludeFile "helpers.pb"
 IncludeFile "proc.pb"
-
-Define subClass = objc_allocateClassPair_(objc_getClass_("NSScriptCommand"),"asEnableShortcut",0)
-class_addMethod_(subClass,sel_registerName_("performDefaultImplementation"),@asEnableShortcut(),"v@")
-objc_registerClassPair_(subClass)
-subClass = objc_allocateClassPair_(objc_getClass_("NSScriptCommand"),"asDisableShortcut",0)
-class_addMethod_(subClass,sel_registerName_("performDefaultImplementation"),@asDisableShortcut(),"v@")
-objc_registerClassPair_(subClass)
-subClass = objc_allocateClassPair_(objc_getClass_("NSScriptCommand"),"asToggleShortcut",0)
-class_addMethod_(subClass,sel_registerName_("performDefaultImplementation"),@asToggleShortcut(),"v@")
-objc_registerClassPair_(subClass)
-subClass = objc_allocateClassPair_(objc_getClass_("NSScriptCommand"),"asEnableShortcutID",0)
-class_addMethod_(subClass,sel_registerName_("performDefaultImplementation"),@asEnableShortcutID(),"v@")
-objc_registerClassPair_(subClass)
-subClass = objc_allocateClassPair_(objc_getClass_("NSScriptCommand"),"asDisableShortcutID",0)
-class_addMethod_(subClass,sel_registerName_("performDefaultImplementation"),@asDisableShortcutID(),"v@")
-objc_registerClassPair_(subClass)
-subClass = objc_allocateClassPair_(objc_getClass_("NSScriptCommand"),"asToggleShortcutID",0)
-class_addMethod_(subClass,sel_registerName_("performDefaultImplementation"),@asToggleShortcutID(),"v@")
-objc_registerClassPair_(subClass)
-subClass = objc_allocateClassPair_(objc_getClass_("NSScriptCommand"),"asListShortcuts",0)
-class_addMethod_(subClass,sel_registerName_("performDefaultImplementation"),@asListShortcuts(),"v@")
-objc_registerClassPair_(subClass)
+IncludeFile "applescript.pb"
 
 initResources()
 globalHK::Init()
@@ -171,7 +151,7 @@ selector = sel_registerName_("flagsChanged:")
 class_addMethod_(class,selector,@keyHandler(),"v@:@")
 
 Repeat
-  Define ev = WaitWindowEvent(1000)
+  ev = WaitWindowEvent(1000)
   Select ev
     Case #PB_Event_Gadget
       Select EventGadget()
@@ -380,55 +360,46 @@ Repeat
         viewingMode()
       EndIf
       wndState(#hide)
-    Case #evUpdateArrival
-      wndState(#True)
-      Select MessageRequesterEx(#myName + ", new version is available!","Found new version " + updateVer + ~"\n\nChangelog:\n" + updateDetails + ~"\n\nDo you want to download it?","note",1,"Download new version","Remind me later","Skip this version")
-        Case 1
-          RunProgram("open",#updateDownloadUrl,"")
-          die()
-        Case 2
-          updateVer = #myVer
-      EndSelect
-      wndState(#False)
-      settings(#True)
-    Case #evNoUpdateFound
-      wndState(#True)
-      MessageRequester(#myName,"You have the latest stable version!")
-      wndState(#False)
-    Case #evDisableShortcut
+    Case #evDisableShortcut,#evEnableShortcut,#evToggleShortcut
       If EventData()
         Define shortcut.s = PeekS(EventData())
         For i = 0 To CountGadgetItems(#gadShortcuts)-1
           If GetGadgetItemText(#gadShortcuts,i,0) = shortcut
-            SetGadgetItemState(#gadShortcuts,i,0)
-            registerShortcuts()
-            settings(#True)
-            Break
-          EndIf
-        Next
-      EndIf
-    Case #evEnableShortcut
-      If EventData()
-        Define shortcut.s = PeekS(EventData())
-        For i = 0 To CountGadgetItems(#gadShortcuts)-1
-          If GetGadgetItemText(#gadShortcuts,i,0) = shortcut
-            SetGadgetItemState(#gadShortcuts,i,#PB_ListIcon_Checked)
-            registerShortcuts()
-            settings(#True)
-            Break
-          EndIf
-        Next
-      EndIf
-    Case #evToggleShortcut
-      If EventData()
-        Define shortcut.s = PeekS(EventData())
-        For i = 0 To CountGadgetItems(#gadShortcuts)-1
-          If GetGadgetItemText(#gadShortcuts,i,0) = shortcut
-            If GetGadgetItemState(#gadShortcuts,i) >= #PB_ListIcon_Checked
-              PostEvent(#evDisableShortcutID,0,0,0,i+1)
+            If ev = #evDisableShortcut
+              SetGadgetItemState(#gadShortcuts,i,0)
+            ElseIf ev = #evEnableShortcut
+              SetGadgetItemState(#gadShortcuts,i,#PB_ListIcon_Checked)
             Else
-              PostEvent(#evEnableShortcutID,0,0,0,i+1)
+              If GetGadgetItemState(#gadShortcuts,i) >= #PB_ListIcon_Checked
+                PostEvent(#evDisableShortcutID,0,0,0,i+1)
+              Else
+                PostEvent(#evEnableShortcutID,0,0,0,i+1)
+              EndIf
             EndIf
+            registerShortcuts()
+            settings(#True)
+            Break
+          EndIf
+        Next
+      EndIf
+    Case #evDisableAction,#evEnableAction,#evToggleAction
+      If EventData()
+        Define action.s = PeekS(EventData())
+        For i = 0 To CountGadgetItems(#gadShortcuts)-1
+          If GetGadgetItemText(#gadShortcuts,i,1) = action
+            If ev = #evDisableAction
+              SetGadgetItemState(#gadShortcuts,i,0)
+            ElseIf ev = #evEnableAction
+              SetGadgetItemState(#gadShortcuts,i,#PB_ListIcon_Checked)
+            Else
+              If GetGadgetItemState(#gadShortcuts,i) >= #PB_ListIcon_Checked
+                PostEvent(#evDisableShortcutID,0,0,0,i+1)
+              Else
+                PostEvent(#evEnableShortcutID,0,0,0,i+1)
+              EndIf
+            EndIf
+            registerShortcuts()
+            settings(#True)
             Break
           EndIf
         Next
@@ -453,6 +424,21 @@ Repeat
           PostEvent(#evEnableShortcutID,0,0,0,EventData())
         EndIf
       EndIf
+    Case #evUpdateArrival
+      wndState(#True)
+      Select MessageRequesterEx(#myName + ", new version is available!","Found new version " + updateVer + ~"\n\nChangelog:\n" + updateDetails + ~"\n\nDo you want to download it?","note",1,"Download new version","Remind me later","Skip this version")
+        Case 1
+          RunProgram("open",#updateDownloadUrl,"")
+          die()
+        Case 2
+          updateVer = #myVer
+      EndSelect
+      wndState(#False)
+      settings(#True)
+    Case #evNoUpdateFound
+      wndState(#True)
+      MessageRequester(#myName,"You have the latest stable version!")
+      wndState(#False)
     Case #evUpdateConfig
       settings(#True)
   EndSelect
