@@ -7,11 +7,13 @@ Latest binary release can be downloaded [here](https://github.com/deseven/icanha
 
 ## applescript support
 Use `list` command to get the full TSV list of shortcuts and their states.  
-Use `enable`, `disable`, `toggle` commands to control state of shortcuts by their names.  
+Use `enable`, `disable`, `toggle` commands to control state of shortcuts by their shortcut names.  
+Use `enableAction`, `disableAction`, `toggleAction` commands to control state of shortcuts by their action names.  
 Use `enableID`,  `disableID`, `toggleID` commands to control state of shortcuts by their IDs.  
 Here are some examples:  
 `tell application "iCanHazShortcut" to list`  
 `tell application "iCanHazShortcut" to enable "⇧⌘L"`  
+`tell application "iCanHazShortcut" to disableAction "lock screen"`  
 `tell application "iCanHazShortcut" to toggleID 6`  
 
 ## compiling from source
