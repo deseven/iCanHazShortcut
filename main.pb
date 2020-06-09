@@ -15,6 +15,7 @@ Define testRunResult.testRunResults
 Define activeSelector.i = -1
 Define previousHotkey.s
 Define cur.NSPoint
+Define setWorkdirWithCD.b = #False
 
 IncludeFile "helpers.pb"
 IncludeFile "proc.pb"
@@ -103,6 +104,15 @@ CheckBoxGadget(#gadPrefPopulateMenu,390,85,160,20,"Show actions in menu")
 CocoaMessage(0,GadgetID(#gadPrefPopulateMenu),"setFocusRingType:",1)
 CheckBoxGadget(#gadPrefShowHtk,390,110,160,20,"Show hotkeys in menu")
 CocoaMessage(0,GadgetID(#gadPrefShowHtk),"setFocusRingType:",1)
+CheckBoxGadget(#gadPrefSetWorkdirCD,390,135,160,20,"Set workdir with `cd`")
+CocoaMessage(0,GadgetID(#gadPrefSetWorkdirCD),"setFocusRingType:",1)
+
+GadgetToolTip(#gadPrefStatusBar,"Show/hide status bar icon. If hidden, you can open preferences dialog by launching iCHS app again.")
+GadgetToolTip(#gadPrefAutostart,"Ugh... I wonder what this does...")
+GadgetToolTip(#gadPrefCheckUpdate,"Enable/disable automatic updates checking every 24 hours.")
+GadgetToolTip(#gadPrefPopulateMenu,"Show/hide all enabled actions in status bar menu.")
+GadgetToolTip(#gadPrefShowHtk,"Show/hide hotkeys binded to each action in status bar menu.")
+GadgetToolTip(#gadPrefSetWorkdirCD,"Enable to try to set workdir by sending `cd $workdir` to shell as a first line. Useful if you want to use environment variables in your workdir param, otherwise only ~ will be expanded. Has no effect at all if shell is not defined.")
 
 AddGadgetItem(#gadTabs,2,"About")
 ImageGadget(#gadLogo,68,35,64,64,ImageID(#resLogo))
@@ -334,6 +344,13 @@ Repeat
         Case #gadPrefStatusBar
           settings(#True)
           buildMenu()
+        Case #gadPrefSetWorkdirCD
+          If GetGadgetState(#gadPrefSetWorkdirCD) = #PB_Checkbox_Checked
+            setWorkdirWithCD = #True
+          Else
+            setWorkdirWithCD = #False
+          EndIf
+          settings(#True)
         Case #gadPrefShellDefault
           SetGadgetText(#gadPrefShell,"/bin/bash -l")
           PostEvent(#PB_Event_Gadget,#wnd,#gadPrefShell,#PB_EventType_Change)

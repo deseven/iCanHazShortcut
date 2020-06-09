@@ -82,6 +82,7 @@ Enumeration gadgets
   #gadPrefFrame
   #gadPrefAutostart
   #gadPrefCheckUpdate
+  #gadPrefSetWorkdirCD
   #gadTestProgress
   #gadTestAbort
 EndEnumeration

@@ -22,6 +22,7 @@ EndProcedure
 Procedure settings(save.b = #False)
   Protected shortcut.s,action.s,command.s,workdir.s,i.l
   Shared updateVer.s
+  Shared setWorkdirWithCD.b
   If FileSize(GetEnvironmentVariable("HOME") + "/.config") = -1
     CreateDirectory(GetEnvironmentVariable("HOME") + "/.config")
   EndIf
@@ -61,6 +62,11 @@ Procedure settings(save.b = #False)
       WritePreferenceString("show_icon_in_statusbar","yes")
     Else
       WritePreferenceString("show_icon_in_statusbar","no")
+    EndIf
+    If GetGadgetState(#gadPrefSetWorkdirCD) = #PB_Checkbox_Checked
+      WritePreferenceString("set_workdir_with_cd","yes")
+    Else
+      WritePreferenceString("set_workdir_with_cd","no")
     EndIf
     For i = 0 To CountGadgetItems(#gadShortcuts)-1
       shortcut = GetGadgetItemText(#gadShortcuts,i,0)
@@ -123,6 +129,13 @@ Procedure settings(save.b = #False)
       SetGadgetState(#gadPrefStatusBar,#PB_Checkbox_Checked)
     Else
       SetGadgetState(#gadPrefStatusBar,#PB_Checkbox_Unchecked)
+    EndIf
+    If ReadPreferenceString("set_workdir_with_cd","no") = "yes"
+      SetGadgetState(#gadPrefSetWorkdirCD,#PB_Checkbox_Checked)
+      setWorkdirWithCD = #True
+    Else
+      SetGadgetState(#gadPrefSetWorkdirCD,#PB_Checkbox_Unchecked)
+      setWorkdirWithCD = #False
     EndIf
     ExaminePreferenceGroups()
     i = 0
@@ -238,6 +251,7 @@ EndProcedure
 Procedure action(command.s,workdir.s)
   Protected shell.s = GetGadgetText(#gadPrefShell)
   Protected program.s,params.s
+  Shared setWorkdirWithCD.b
   workdir = handleWorkdir(workdir)
   
   If shell = ""
@@ -259,6 +273,9 @@ Procedure action(command.s,workdir.s)
     ;Debug "running '" + shell + "' with '" + command + "'"
     Protected pid = RunProgram(shell,params,workdir,#PB_Program_Write|#PB_Program_Open)
     If IsProgram(pid)
+      If setWorkdirWithCD
+        WriteProgramStringN(pid,"cd " + workdir)
+      EndIf
       WriteProgramString(pid,command)
     EndIf
     CloseProgram(pid)
@@ -272,6 +289,7 @@ Procedure testRun(command.s,workdir.s)
   Protected ev.i
   Shared application.i
   Shared testRunResult.testRunResults
+  Shared setWorkdirWithCD.b
   testRunResult\aborted = #False
   testRunResult\exitCode = 0
   OpenWindow(#wndSheet,0,0,140,80,"",#PB_Window_SystemMenu|#PB_Window_Invisible)
@@ -307,6 +325,9 @@ Procedure testRun(command.s,workdir.s)
   EndIf
   If tool
     If shell
+      If setWorkdirWithCD
+        WriteProgramStringN(tool,"cd " + workdir)
+      EndIf
       WriteProgramString(tool,command)
       WriteProgramData(tool,#PB_Program_Eof,0)
     EndIf
@@ -500,7 +521,9 @@ Procedure checkUpdateAsync(interval.i)
   Protected *buf,i,strCount
   Protected Dim strings.s(1)
   If Not InitNetwork() : ProcedureReturn : EndIf
-  CompilerIf Not #PB_Compiler_Debugger :  Delay(interval) : CompilerEndIf
+  ;CompilerIf Not #PB_Compiler_Debugger
+    Delay(interval)
+  ;CompilerEndIf
   Repeat
     *buf = ReceiveHTTPMemory(#updateCheckUrl)
     If *buf
