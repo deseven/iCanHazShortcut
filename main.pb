@@ -197,7 +197,7 @@ Repeat
               EndIf
           EndSelect
         Case #gadWebDeveloper
-          RunProgram("open","http://deseven.info","")
+          RunProgram("open","http://d7.wtf","")
         Case #gadWebDesigner
           RunProgram("open","https://dribbble.com/denboroda","")
         Case #gadAdd

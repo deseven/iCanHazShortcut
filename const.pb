@@ -5,8 +5,8 @@
 #myID = "info.deseven.icanhazshortcut"
 
 ; update params
-#updateCheckUrl = "http://deseven.info/sys/ichs.ver"
-#updateDownloadUrl = "http://deseven.info/sys/ichs.dmg"
+#updateCheckUrl = "https://d7.wtf/sys/ichs.ver"
+#updateDownloadUrl = "https://d7.wtf/sys/ichs.dmg"
 #updateCheckInterval = 1440
 
 #pressInvite = "press to set"
