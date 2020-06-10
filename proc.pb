@@ -23,6 +23,7 @@ Procedure settings(save.b = #False)
   Protected shortcut.s,action.s,command.s,workdir.s,i.l
   Shared updateVer.s
   Shared setWorkdirWithCD.b
+  Shared wndW,wndH,wndX,wndY
   If FileSize(GetEnvironmentVariable("HOME") + "/.config") = -1
     CreateDirectory(GetEnvironmentVariable("HOME") + "/.config")
   EndIf
@@ -68,6 +69,10 @@ Procedure settings(save.b = #False)
     Else
       WritePreferenceString("set_workdir_with_cd","no")
     EndIf
+    WritePreferenceInteger("window_x",wndX)
+    WritePreferenceInteger("window_y",wndY)
+    WritePreferenceInteger("window_width",wndW)
+    WritePreferenceInteger("window_height",wndH)
     For i = 0 To CountGadgetItems(#gadShortcuts)-1
       shortcut = GetGadgetItemText(#gadShortcuts,i,0)
       action = GetGadgetItemText(#gadShortcuts,i,1)
@@ -137,6 +142,10 @@ Procedure settings(save.b = #False)
       SetGadgetState(#gadPrefSetWorkdirCD,#PB_Checkbox_Unchecked)
       setWorkdirWithCD = #False
     EndIf
+    wndX = ReadPreferenceInteger("window_x",#PB_Ignore)
+    wndY = ReadPreferenceInteger("window_y",#PB_Ignore)
+    wndW = ReadPreferenceInteger("window_width",600)
+    wndH = ReadPreferenceInteger("window_height",300)
     ExaminePreferenceGroups()
     i = 0
     While NextPreferenceGroup()
@@ -609,4 +618,42 @@ ProcedureC keyHandler(sender,sel,event)
     EndIf
   EndIf
   ProcedureReturn result
+EndProcedure
+
+ProcedureC windowHandler()
+  Protected w.i = WindowWidth(#wnd)
+  Protected h.i = WindowHeight(#wnd)
+  Protected i.i
+  ResizeGadget(#gadTabs,#PB_Ignore,#PB_Ignore,w-10,h)
+
+  ; Shortcuts
+  ResizeGadget(#gadShortcuts,#PB_Ignore,#PB_Ignore,w-40,h-80)
+  ResizeGadget(#gadAdd,w-140,h-78,#PB_Ignore,#PB_Ignore)
+  ResizeGadget(#gadEdit,w-104,h-78,#PB_Ignore,#PB_Ignore)
+  ResizeGadget(#gadDel,w-68,h-78,#PB_Ignore,#PB_Ignore)
+  ResizeGadget(#gadTest,w-140,h-78,#PB_Ignore,#PB_Ignore)
+  ResizeGadget(#gadTestNote,w-390,h-70,#PB_Ignore,#PB_Ignore)
+  ResizeGadget(#gadApply,w-104,h-78,#PB_Ignore,#PB_Ignore)
+  ResizeGadget(#gadCancel,w-68,h-78,#PB_Ignore,#PB_Ignore)
+  ResizeGadget(#gadUp,#PB_Ignore,h-78,#PB_Ignore,#PB_Ignore)
+  ResizeGadget(#gadDown,#PB_Ignore,h-78,#PB_Ignore,#PB_Ignore)
+
+  ; Shortcut editor
+  If IsGadget(#gadActionHelpFrame) : ResizeGadget(#gadActionHelpFrame,w-300,#PB_Ignore,#PB_Ignore,h-80) : EndIf
+  If IsGadget(#gadActionHelp) : ResizeGadget(#gadActionHelp,w-290,#PB_Ignore,#PB_Ignore,#PB_Ignore) : EndIf
+  For i = #gadActionHelp1 To #gadActionHelp6
+    If IsGadget(i) : ResizeGadget(i,w-290,#PB_Ignore,#PB_Ignore,#PB_Ignore) : EndIf
+  Next
+  If IsGadget(#gadAction) : ResizeGadget(#gadAction,#PB_Ignore,#PB_Ignore,limitVal(w-390,400),#PB_Ignore) : EndIf
+  If IsGadget(#gadCommand) : ResizeGadget(#gadCommand,#PB_Ignore,#PB_Ignore,w-390,#PB_Ignore) : EndIf
+  If IsGadget(#gadWorkdir) : ResizeGadget(#gadWorkdir,#PB_Ignore,#PB_Ignore,limitVal(w-390,400),#PB_Ignore) : EndIf
+
+  ; Preferences
+  ResizeGadget(#gadPrefFrame,w-220,#PB_Ignore,#PB_Ignore,h-50)
+  For i = #gadPrefStatusBar To #gadPrefSetWorkdirCD
+    ResizeGadget(i,w-210,#PB_Ignore,#PB_Ignore,#PB_Ignore)
+  Next
+
+  ; About
+  ResizeGadget(#gadLicense,#PB_Ignore,#PB_Ignore,w-240,h-55)
 EndProcedure

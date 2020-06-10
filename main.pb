@@ -17,6 +17,7 @@ Define activeSelector.i = -1
 Define previousHotkey.s
 Define cur.NSPoint
 Define setWorkdirWithCD.b = #False
+Define.i wndW,wndH,wndX,wndY
 
 IncludeFile "helpers.pb"
 IncludeFile "proc.pb"
@@ -25,7 +26,7 @@ IncludeFile "applescript.pb"
 initResources()
 globalHK::Init()
 
-OpenWindow(#wnd,#PB_Ignore,#PB_Ignore,0,0,#myName,#PB_Window_SystemMenu|#PB_Window_ScreenCentered)
+OpenWindow(#wnd,#PB_Ignore,#PB_Ignore,0,0,#myName,#PB_Window_SystemMenu|#PB_Window_SizeGadget|#PB_Window_ScreenCentered)
 CocoaMessage(0,CocoaMessage(0,WindowID(#wnd),"standardWindowButton:",#NSWindowButtonMinimize),"setHidden:",#YES)
 CocoaMessage(0,CocoaMessage(0,WindowID(#wnd),"standardWindowButton:",#NSWindowButtonMaximize),"setHidden:",#YES)
 PanelGadget(#gadTabs,5,0,590,300)
@@ -138,7 +139,13 @@ Else
   wndState(#hide)
 EndIf
 
-ResizeWindow(#wnd,WindowX(#wnd)-300,WindowY(#wnd),600,300)
+WindowBounds(#wnd,600,300,1280,720)
+BindEvent(#PB_Event_SizeWindow,@windowHandler())
+If wndX = #PB_Ignore
+  ResizeWindow(#wnd,WindowX(#wnd)-(wndW/2),wndY,wndW,wndH)
+Else
+  ResizeWindow(#wnd,wndX,wndY,wndW,wndH)
+EndIf
 
 If GetGadgetState(#gadPrefCheckUpdate) = #PB_Checkbox_Checked
   updateCheckThread = CreateThread(@checkUpdateAsync(),#updateCheckInterval*60*1000)
@@ -153,6 +160,14 @@ class_addMethod_(class,selector,@keyHandler(),"v@:@")
 Repeat
   ev = WaitWindowEvent(1000)
   Select ev
+    Case #PB_Event_SizeWindow,#PB_Event_MoveWindow ; those do not fire in realtime
+      If WindowWidth(#wnd) <> wndW Or WindowHeight(#wnd) <> wndH Or WindowX(#wnd) <> wndX Or WindowY(#wnd) <> wndY
+        wndW = WindowWidth(#wnd)
+        wndH = WindowHeight(#wnd)
+        wndX = WindowX(#wnd)
+        wndY = WindowY(#wnd)
+        settings(#True)
+      EndIf
     Case #PB_Event_Gadget
       Select EventGadget()
         Case #gadShortcuts

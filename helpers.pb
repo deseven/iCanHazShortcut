@@ -129,6 +129,13 @@ Procedure.f getBackingScaleFactor()
   ProcedureReturn backingScaleFactor
 EndProcedure
 
+Procedure.i limitVal(value.i,max.i)
+  If value > max
+    ProcedureReturn max
+  EndIf
+  ProcedureReturn value
+EndProcedure
+
 Procedure MessageRequesterEx(Title.s, Info.s,type.s="'note'",defaultbutton=1,buttonone.s="Ok",buttontwo.s="",buttonthree.s="",buttonfour.s="",buttonfive.s="") ; max 5 buttons
   Protected.i Alert, Frame.NSRect,numberbuttons=0,button
   Shared workspace,application
@@ -211,8 +218,8 @@ Macro editingMode()
   HideGadget(#gadUp,#True)
   HideGadget(#gadDown,#True)
   OpenGadgetList(#gadTabs,0)
-  TextGadget(#gadBg,0,0,590,300,"") ; dirty fix for a strange redraw behavior
-  FreeGadget(#gadBg)
+  ;TextGadget(#gadBg,0,0,WindowWidth(#wnd)-10,WindowHeight(#wnd),"") ; dirty fix for a strange redraw behavior
+  ;FreeGadget(#gadBg)
   TextGadget(#gadShortcutSelectorCap,10,12,70,20,"Shortcut:")
   ButtonGadget(#gadShortcutSelector,80,10,80,20,#pressInvite)
   CocoaMessage(0,GadgetID(#gadShortcutSelector),"setBezelStyle:",10)
@@ -254,6 +261,7 @@ Macro editingMode()
   CocoaMessage(0,GadgetID(#gadAction),"setNextKeyView:",GadgetID(#gadCommand))
   CocoaMessage(0,GadgetID(#gadCommand),"setNextKeyView:",GadgetID(#gadWorkdir))
   CocoaMessage(0,GadgetID(#gadWorkdir),"setNextKeyView:",GadgetID(#gadAction))
+  PostEvent(#PB_Event_SizeWindow)
 EndMacro
 
 Macro editingExistentMode()

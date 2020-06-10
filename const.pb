@@ -76,13 +76,13 @@ Enumeration gadgets
   #gadPrefShellDefault
   #gadPrefShellCap
   #gadPrefShellNote
-  #gadPrefStatusBar
+  #gadPrefFrame
+  #gadPrefStatusBar ; checkboxes start
   #gadPrefPopulateMenu
   #gadPrefShowHtk
-  #gadPrefFrame
   #gadPrefAutostart
   #gadPrefCheckUpdate
-  #gadPrefSetWorkdirCD
+  #gadPrefSetWorkdirCD ; checkboxes end
   #gadTestProgress
   #gadTestAbort
 EndEnumeration
