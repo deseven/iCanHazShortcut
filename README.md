@@ -3,7 +3,8 @@ Simple shortcut manager for macOS 10.8 or higher. It lets you execute any comman
 ![screenshot](https://d7.wtf/SchesisDodecaneCunarder.png)  
 
 ## binaries
-Latest binary release can be downloaded [here](https://github.com/deseven/icanhazshortcut/releases).  
+Latest **stable** release can be downloaded in [Releases section](https://github.com/deseven/icanhazshortcut/releases).  
+Latest **unstable** build compiled from `master` branch can be downloaded [here](https://d7.wtf/s/ichs-dev.zip) (please don't use it unless you desperately need some functionality that's not available in stable release or want to help with testing).
 
 ## applescript support
 Use `list` command to get the full TSV list of shortcuts and their states.  
