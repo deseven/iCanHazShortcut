@@ -92,7 +92,7 @@ GadgetToolTip(#gadPrefStatusBar,"Show/hide status bar icon. If hidden, you can o
 GadgetToolTip(#gadPrefAutostart,"Ugh... I wonder what this does...")
 GadgetToolTip(#gadPrefCheckUpdate,"Enable/disable automatic updates checking every 24 hours.")
 GadgetToolTip(#gadPrefPopulateMenu,"Show/hide all enabled actions in status bar menu.")
-GadgetToolTip(#gadPrefShowHtk,"Show/hide hotkeys binded to each action in status bar menu.")
+GadgetToolTip(#gadPrefShowHtk,"Show/hide hotkeys bound to each action in status bar menu.")
 GadgetToolTip(#gadPrefSetWorkdirCD,"Enable to try to set workdir by sending `cd $workdir` to shell as a first line. Useful if you want to use environment variables in your workdir param, otherwise only ~ will be expanded. Has no effect at all if shell is not defined.")
 
 AddGadgetItem(#gadTabs,2,"About")
