@@ -13,8 +13,8 @@ Procedure wndState(show.b)
   If Not show
     CocoaMessage(0,application,"hide:")
   Else
-    HideWindow(#wnd,#False)
     CocoaMessage(0,GadgetID(#gadShortcuts),"sizeLastColumnToFit")
+    CocoaMessage(0,application,"unhide:")
     CocoaMessage(0,application,"activateIgnoringOtherApps:",#YES)
   EndIf
 EndProcedure
