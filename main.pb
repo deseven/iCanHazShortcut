@@ -1,4 +1,4 @@
-﻿IncludeFile "../pb-osx-globalhotkeys/ghk.pbi"
+﻿IncludeFile "../pb-macos-globalhotkeys/ghk.pbi"
 IncludeFile "const.pb"
 
 EnableExplicit
