@@ -272,22 +272,27 @@ Procedure action(command.s,workdir.s)
       program = command
     EndIf
     ;Debug "running '" + program + "' with '" + params + "'"
-    RunProgram(program,params,workdir)
+    nativeAction(program,params,workdir)
+    ;RunProgram(program,params,workdir)
   Else
     Protected shellEnd.l = FindString(shell," ")
     If shellEnd
       params = Mid(shell,shellEnd+1)
       shell = Left(shell,shellEnd-1)
     EndIf
-    ;Debug "running '" + shell + "' with '" + command + "'"
-    Protected pid = RunProgram(shell,params,workdir,#PB_Program_Write|#PB_Program_Open)
-    If IsProgram(pid)
-      If setWorkdirWithCD
-        WriteProgramStringN(pid,"cd " + workdir)
-      EndIf
-      WriteProgramString(pid,command)
+    If setWorkdirWithCD
+      command = ~"cd \"" + workdir + ~"\"\n" + command
     EndIf
-    CloseProgram(pid)
+    ;Debug "running '" + shell + "' with '" + command + "'"
+    nativeAction(shell,params,workdir,command)
+    ;Protected pid = RunProgram(shell,params,workdir,#PB_Program_Write|#PB_Program_Open)
+    ;If IsProgram(pid)
+    ;  If setWorkdirWithCD
+    ;    WriteProgramStringN(pid,"cd " + workdir)
+    ;  EndIf
+    ;  WriteProgramString(pid,command)
+    ;EndIf
+    ;CloseProgram(pid)
   EndIf
 EndProcedure
 

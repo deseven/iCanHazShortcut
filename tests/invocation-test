@@ -1,0 +1,19 @@
+#!/bin/bash
+
+parent=$(ps -o pid,comm -p $PPID | grep $PPID)
+workdir=$(pwd)
+args="$@"
+if [ ! -t 0 ]; then
+	stdin=$(cat)
+fi
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
+echo "- - - - - - - - - -" >> "$DIR/invocation.log"
+echo "started "$(date +'%Y-%m-%d %H:%M:%S') >> "$DIR/invocation.log"
+echo "parent: $parent" >> "$DIR/invocation.log"
+echo "path: $PATH" >> "$DIR/invocation.log"
+echo "args: $args" >> "$DIR/invocation.log"
+echo "workdir: $workdir" >> "$DIR/invocation.log"
+echo "stdin: $stdin" >> "$DIR/invocation.log"
+echo >> "$DIR/invocation.log"

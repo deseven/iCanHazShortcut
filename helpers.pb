@@ -169,6 +169,53 @@ Procedure MessageRequesterEx(Title.s, Info.s,type.s="'note'",defaultbutton=1,but
   ProcedureReturn 1001+numberbuttons-CocoaMessage(0, Alert, "runModal")
 EndProcedure
 
+Procedure nativeAction(path.s,args.s,workdir.s = "",stdin.s = "")
+  Protected i
+  Protected argsArray
+  If args
+    Protected arg.s = StringField(args,1," ")
+    If arg
+      argsArray = CocoaMessage(0,0,"NSArray arrayWithObject:$",@arg)
+      If CountString(args," ") > 0
+        For i = 2 To CountString(args," ") + 1
+          arg = StringField(args,i," ")
+          If arg
+            argsArray = CocoaMessage(0,argsArray,"arrayByAddingObject:$",@arg)
+          EndIf
+        Next
+      EndIf
+    EndIf
+  EndIf
+  Protected task = CocoaMessage(0,CocoaMessage(0,0,"NSTask alloc"),"init")
+  
+  CocoaMessage(0,task,"setLaunchPath:$",@path)
+  
+  If argsArray
+    CocoaMessage(0,task,"setArguments:",argsArray)
+  EndIf
+  
+  If workdir
+    CocoaMessage(0,task,"setCurrentDirectoryPath:$",@workdir)
+  EndIf
+  
+  If stdin
+    Protected writePipe = CocoaMessage(0,0,"NSPipe pipe")
+    Protected writeHandle = CocoaMessage(0,writePipe,"fileHandleForWriting")
+    CocoaMessage(0,task,"setStandardInput:",writePipe)
+    Protected string = CocoaMessage(0,0,"NSString stringWithString:$",@stdin)
+    Protected stringData = CocoaMessage(0,string,"dataUsingEncoding:",#NSUTF8StringEncoding)
+  EndIf
+  
+  CocoaMessage(0,task,"launch")
+  
+  If stdin
+    CocoaMessage(0,writeHandle,"writeData:",stringData)
+    CocoaMessage(0,writeHandle,"closeFile")
+  EndIf
+  
+  CocoaMessage(0,task,"release")
+EndProcedure
+
 Macro viewingMode()
   editExistent = #False
   FreeGadget(#gadShortcutSelectorCap) : FreeGadget(#gadShortcutSelector)
