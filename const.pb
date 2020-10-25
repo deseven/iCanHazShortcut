@@ -60,6 +60,8 @@ Enumeration gadgets
   #gadWebDeveloper
   #gadCopyrightIcon
   #gadWebDesigner
+  #gadWebGitHub
+  #gadWebTelegram
   #gadLicense
   #gadBg
   #gadShortcutSelector

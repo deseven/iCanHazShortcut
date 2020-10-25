@@ -102,12 +102,12 @@ GadgetToolTip(#gadPrefShowHtk,"Show/hide hotkeys bound to each action in status 
 GadgetToolTip(#gadPrefSetWorkdirCD,"Enable to try to set workdir by sending `cd $workdir` to shell as a first line. Useful if you want to use environment variables in your workdir param, otherwise only ~ will be expanded. Has no effect at all if shell is not defined.")
 
 AddGadgetItem(#gadTabs,2,"About")
-ImageGadget(#gadLogo,68,35,64,64,ImageID(#resLogo))
-TextGadget(#gadNameVer,0,113,200,60,#myName + ~"\n" + #myVer,#PB_Text_Center)
-TextGadget(#gadCopyright,45,172,70,20,"created by")
-HyperLinkGadget(#gadWebDeveloper,107,173,100,20,"deseven",#linkColorHighlighted)
-TextGadget(#gadCopyrightIcon,45,186,70,20,"icons by")
-HyperLinkGadget(#gadWebDesigner,94,187,100,20,"denboroda",#linkColorHighlighted)
+ImageGadget(#gadLogo,68,25,64,64,ImageID(#resLogo))
+TextGadget(#gadNameVer,0,103,200,60,#myName + ~"\n" + #myVer,#PB_Text_Center)
+TextGadget(#gadCopyright,45,162,70,20,"created by")
+HyperLinkGadget(#gadWebDeveloper,107,163,100,20,"deseven",#linkColorHighlighted)
+TextGadget(#gadCopyrightIcon,45,176,70,20,"icons by")
+HyperLinkGadget(#gadWebDesigner,94,177,100,20,"denboroda",#linkColorHighlighted)
 SetGadgetColor(#gadWebDeveloper,#PB_Gadget_FrontColor,#linkColor)
 SetGadgetColor(#gadWebDesigner,#PB_Gadget_FrontColor,#linkColor)
 SetGadgetFont(#gadNameVer,FontID(#resBigFont))
@@ -115,6 +115,10 @@ SetGadgetFont(#gadCopyright,FontID(#resNormalFont))
 SetGadgetFont(#gadWebDeveloper,FontID(#resNormalFont))
 SetGadgetFont(#gadCopyrightIcon,FontID(#resNormalFont))
 SetGadgetFont(#gadWebDesigner,FontID(#resNormalFont))
+HyperLinkGadget(#gadWebGitHub,60,203,120,20,"[GitHub repo]",#linkColorHighlighted)
+HyperLinkGadget(#gadWebTelegram,52,220,120,20,"[Telegram group]",#linkColorHighlighted)
+SetGadgetColor(#gadWebGitHub,#PB_Gadget_FrontColor,#linkColor)
+SetGadgetColor(#gadWebTelegram,#PB_Gadget_FrontColor,#linkColor)
 
 EditorGadget(#gadLicense,205,5,360,245,#PB_Editor_ReadOnly|#PB_Editor_WordWrap)
 AddGadgetItem(#gadLicense,-1,#LICENSE)
@@ -252,6 +256,10 @@ Repeat
           RunProgram("open","http://d7.wtf","")
         Case #gadWebDesigner
           RunProgram("open","https://dribbble.com/denboroda","")
+        Case #gadWebGitHub
+          RunProgram("open","https://github.com/deseven/icanhazshortcut","")
+        Case #gadWebTelegram
+          RunProgram("open","https://t.me/icanhazshortcut","")
         Case #gadAdd
           editingMode()
         Case #gadEdit
