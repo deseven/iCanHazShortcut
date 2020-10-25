@@ -76,6 +76,30 @@ Procedure settings(save.b = #False)
     WritePreferenceInteger("window_y",wndY)
     WritePreferenceInteger("window_width",wndW)
     WritePreferenceInteger("window_height",wndH)
+    If GetMenuItemState(#columnMenu,#columnMenuShortcut)
+      WritePreferenceString("shortcut_column_enabled","yes")
+    Else
+      WritePreferenceString("shortcut_column_enabled","no")
+    EndIf
+    If GetMenuItemState(#columnMenu,#columnMenuAction)
+      WritePreferenceString("action_column_enabled","yes")
+    Else
+      WritePreferenceString("action_column_enabled","no")
+    EndIf
+    If GetMenuItemState(#columnMenu,#columnMenuCommand)
+      WritePreferenceString("command_column_enabled","yes")
+    Else
+      WritePreferenceString("command_column_enabled","no")
+    EndIf
+    If GetMenuItemState(#columnMenu,#columnMenuWorkdir)
+      WritePreferenceString("workdir_column_enabled","yes")
+    Else
+      WritePreferenceString("workdir_column_enabled","no")
+    EndIf
+    WritePreferenceInteger("shortcut_column_width",GetGadgetItemAttribute(#gadShortcuts,0,#PB_ListIcon_ColumnWidth,0))
+    WritePreferenceInteger("action_column_width",GetGadgetItemAttribute(#gadShortcuts,0,#PB_ListIcon_ColumnWidth,1))
+    WritePreferenceInteger("command_column_width",GetGadgetItemAttribute(#gadShortcuts,0,#PB_ListIcon_ColumnWidth,2))
+    WritePreferenceInteger("workdir_column_width",GetGadgetItemAttribute(#gadShortcuts,0,#PB_ListIcon_ColumnWidth,3))
     For i = 0 To CountGadgetItems(#gadShortcuts)-1
       shortcut = GetGadgetItemText(#gadShortcuts,i,0)
       action = GetGadgetItemText(#gadShortcuts,i,1)
@@ -145,6 +169,30 @@ Procedure settings(save.b = #False)
       SetGadgetState(#gadPrefSetWorkdirCD,#PB_Checkbox_Unchecked)
       setWorkdirWithCD = #False
     EndIf
+    If ReadPreferenceString("shortcut_column_enabled","yes") = "yes"
+      SetMenuItemState(#columnMenu,#columnMenuShortcut,#True)
+    Else
+      SetMenuItemState(#columnMenu,#columnMenuShortcut,#False)
+    EndIf
+    If ReadPreferenceString("action_column_enabled","yes") = "yes"
+      SetMenuItemState(#columnMenu,#columnMenuAction,#True)
+    Else
+      SetMenuItemState(#columnMenu,#columnMenuAction,#False)
+    EndIf
+    If ReadPreferenceString("command_column_enabled","yes") = "yes"
+      SetMenuItemState(#columnMenu,#columnMenuCommand,#True)
+    Else
+      SetMenuItemState(#columnMenu,#columnMenuCommand,#False)
+    EndIf
+    If ReadPreferenceString("workdir_column_enabled","no") = "yes"
+      SetMenuItemState(#columnMenu,#columnMenuWorkdir,#True)
+    Else
+      SetMenuItemState(#columnMenu,#columnMenuWorkdir,#False)
+    EndIf
+    SetGadgetItemAttribute(#gadShortcuts,0,#PB_ListIcon_ColumnWidth,ReadPreferenceInteger("shortcut_column_width",80),0)
+    SetGadgetItemAttribute(#gadShortcuts,0,#PB_ListIcon_ColumnWidth,ReadPreferenceInteger("action_column_width",100),1)
+    SetGadgetItemAttribute(#gadShortcuts,0,#PB_ListIcon_ColumnWidth,ReadPreferenceInteger("command_column_width",120),2)
+    SetGadgetItemAttribute(#gadShortcuts,0,#PB_ListIcon_ColumnWidth,ReadPreferenceInteger("workdir_column_width",100),3)
     wndX = ReadPreferenceInteger("window_x",#PB_Ignore)
     wndY = ReadPreferenceInteger("window_y",#PB_Ignore)
     wndW = ReadPreferenceInteger("window_width",600)

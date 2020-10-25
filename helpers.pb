@@ -356,3 +356,34 @@ Macro deactivateSelector(hotkey = "")
     previousHotkey = ""
   EndIf
 EndMacro
+
+Macro setColumnsState()
+  If GetMenuItemState(#columnMenu,#columnMenuShortcut)
+    ListIconGadgetHideColumn(#gadShortcuts,2,#False)
+  Else
+    ListIconGadgetHideColumn(#gadShortcuts,2,#True)
+  EndIf
+  If GetMenuItemState(#columnMenu,#columnMenuAction)
+    ListIconGadgetHideColumn(#gadShortcuts,3,#False)
+  Else
+    ListIconGadgetHideColumn(#gadShortcuts,3,#True)
+  EndIf
+  If GetMenuItemState(#columnMenu,#columnMenuCommand)
+    ListIconGadgetHideColumn(#gadShortcuts,4,#False)
+  Else
+    ListIconGadgetHideColumn(#gadShortcuts,4,#True)
+  EndIf
+  If GetMenuItemState(#columnMenu,#columnMenuWorkdir)
+    ListIconGadgetHideColumn(#gadShortcuts,5,#False)
+  Else
+    ListIconGadgetHideColumn(#gadShortcuts,5,#True)
+  EndIf
+EndMacro
+
+Macro ToggleMenuItemState(Menu,MenuItem)
+  If GetMenuItemState(Menu,MenuItem)
+    SetMenuItemState(Menu,MenuItem,#False)
+  Else
+    SetMenuItemState(Menu,MenuItem,#True)
+  EndIf
+EndMacro

@@ -40,9 +40,7 @@ CocoaMessage(0,GadgetID(#gadShortcuts),"setFocusRingType:",1)
 AddGadgetColumn(#gadShortcuts,2,"Action",120)
 AddGadgetColumn(#gadShortcuts,3,"Command",1)
 AddGadgetColumn(#gadShortcuts,4,"Workdir",1)
-ListIconGadgetHideColumn(#gadShortcuts,4,#True)
 ListIconGadgetHideColumn(#gadShortcuts,0,#True)
-CocoaMessage(0,GadgetID(#gadShortcuts),"sizeLastColumnToFit")
 ButtonImageGadget(#gadAdd,460,222,36,34,ImageID(#resAdd))
 ButtonImageGadget(#gadEdit,496,222,36,34,ImageID(#resEdit))
 ButtonImageGadget(#gadDel,532,222,36,34,ImageID(#resDel))
@@ -67,6 +65,14 @@ CocoaMessage(0,GadgetID(#gadApply),"setBordered:",0)
 CocoaMessage(0,GadgetID(#gadCancel),"setBordered:",0)
 CocoaMessage(0,GadgetID(#gadUp),"setBordered:",0)
 CocoaMessage(0,GadgetID(#gadDown),"setBordered:",0)
+
+CreatePopupMenu(#columnMenu)
+MenuItem(#columnMenuShortcut,"Shortcut")
+MenuItem(#columnMenuAction,"Action")
+MenuItem(#columnMenuCommand,"Command")
+MenuItem(#columnMenuWorkdir,"Workdir")
+MenuBar()
+MenuItem(#columnMenuReset,"Reset")
 
 AddGadgetItem(#gadTabs,1,"Preferences")
 TextGadget(#gadPrefShellCap,10,12,45,20,"Shell:")
@@ -134,10 +140,17 @@ registerShortcuts()
 
 ;If #True
 If Not CountGadgetItems(#gadShortcuts)
+  ; a hack to add a special gadget state column
+  AddGadgetItem(#gadShortcuts,0,~"-\n-\n-\n-")
+  SetGadgetItemState(#gadShortcuts,0,#PB_ListIcon_Checked)
+  SetGadgetItemImage(#gadShortcuts,i,ImageID(#resDisabled))
+  ClearGadgetItems(#gadShortcuts)
   wndState(#show)
 Else
   wndState(#hide)
 EndIf
+
+setColumnsState()
 
 WindowBounds(#wnd,600,300,1280,720)
 BindEvent(#PB_Event_SizeWindow,@windowHandler())
@@ -166,6 +179,40 @@ Repeat
         wndH = WindowHeight(#wnd)
         wndX = WindowX(#wnd)
         wndY = WindowY(#wnd)
+        settings(#True)
+      EndIf
+    Case #PB_Event_RightClick
+      If GetGadgetState(#gadTabs) = 0
+      If (WindowMouseX(#wnd) >= GadgetX(#gadShortcuts)) And (WindowMouseX(#wnd) <= GadgetX(#gadShortcuts) + GadgetWidth(#gadShortcuts)) And
+         (WindowMouseY(#wnd) >= GadgetY(#gadShortcuts)) And (WindowMouseY(#wnd) <= GadgetY(#gadShortcuts) + GadgetHeight(#gadShortcuts))
+        DisplayPopupMenu(#columnMenu,WindowID(#wnd))
+      EndIf
+      EndIf
+    Case #PB_Event_Menu
+      Select EventMenu()
+        Case #columnMenuShortcut
+          ToggleMenuItemState(#columnMenu,#columnMenuShortcut)
+        Case #columnMenuAction
+          ToggleMenuItemState(#columnMenu,#columnMenuAction)
+        Case #columnMenuCommand
+          ToggleMenuItemState(#columnMenu,#columnMenuCommand)
+        Case #columnMenuWorkdir
+          ToggleMenuItemState(#columnMenu,#columnMenuWorkdir)
+        Case #columnMenuReset
+          SetGadgetItemAttribute(#gadShortcuts,0,#PB_ListIcon_ColumnWidth,80,0)
+          SetGadgetItemAttribute(#gadShortcuts,0,#PB_ListIcon_ColumnWidth,100,1)
+          SetGadgetItemAttribute(#gadShortcuts,0,#PB_ListIcon_ColumnWidth,120,2)
+          SetGadgetItemAttribute(#gadShortcuts,0,#PB_ListIcon_ColumnWidth,100,3)
+          SetMenuItemState(#columnMenu,#columnMenuShortcut,#True)
+          SetMenuItemState(#columnMenu,#columnMenuAction,#True)
+          SetMenuItemState(#columnMenu,#columnMenuCommand,#True)
+          SetMenuItemState(#columnMenu,#columnMenuWorkdir,#False)
+          setColumnsState()
+          CocoaMessage(0,GadgetID(#gadShortcuts),"sizeLastColumnToFit")
+          settings(#True)
+      EndSelect
+      If EventMenu() >= #columnMenuShortcut And EventMenu() <= #columnMenuWorkdir
+        setColumnsState()
         settings(#True)
       EndIf
     Case #PB_Event_Gadget
@@ -375,6 +422,7 @@ Repeat
         viewingMode()
       EndIf
       wndState(#hide)
+      settings(#True)
     Case #evDisableShortcut,#evEnableShortcut,#evToggleShortcut
       If EventData()
         Define shortcut.s = PeekS(EventData())

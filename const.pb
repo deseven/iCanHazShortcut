@@ -33,6 +33,12 @@ Enumeration main
   #menuPrefs
   #menuUpdateCheck
   #menuAbout
+  #columnMenu
+  #columnMenuShortcut
+  #columnMenuAction
+  #columnMenuCommand
+  #columnMenuWorkdir
+  #columnMenuReset
   #menuCustom
 EndEnumeration
 
