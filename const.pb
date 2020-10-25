@@ -1,6 +1,6 @@
 ﻿; main
 #myName = "iCanHazShortcut"
-#myVer = "1.2.0"
+#myVer = "1.3.0"
 #cfgVer = "2"
 #myID = "info.deseven.icanhazshortcut"
 

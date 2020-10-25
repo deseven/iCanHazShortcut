@@ -3,10 +3,14 @@ Simple shortcut manager for macOS 10.8 or higher. It lets you execute any comman
 ![screenshot](https://d7.wtf/SchesisDodecaneCunarder.png)  
 
 ## binaries
-Latest **stable** release can be downloaded in [Releases section](https://github.com/deseven/icanhazshortcut/releases).  
+Latest **stable** release can be downloaded in [Releases section](https://github.com/deseven/icanhazshortcut/releases). You can also install it using Homebrew Cask, just run `brew cask install icanhazshortcut`.  
 Latest **unstable** build compiled from `master` branch can be downloaded [here](https://d7.wtf/s/ichs-dev.zip) (please don't use it unless you desperately need some functionality that's not available in stable release or want to help with testing).
 
-## applescript support
+## help & support
+If you found a bug, have a suggestion or some question, feel free to [create issue](https://github.com/deseven/icanhazshortcut/issues/new) in this repo.  
+There is also Telegram group you can join - https://t.me/icanhazshortcut
+
+## applescript
 Use `list` command to get the full TSV list of shortcuts and their states.  
 Use `enable`, `disable`, `toggle` commands to control state of shortcuts by their shortcut names.  
 Use `enableAction`, `disableAction`, `toggleAction` commands to control state of shortcuts by their action names.  

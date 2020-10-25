@@ -615,6 +615,9 @@ Procedure checkUpdateAsync(interval.i)
           Next
           FreeArray(strings())
           PostEvent(#evUpdateArrival)
+          If Not interval
+            ProcedureReturn
+          EndIf
         EndIf
       EndIf
     EndIf
