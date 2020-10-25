@@ -7,28 +7,28 @@
   <section name="data">
     <explorer view="../../" pattern="0"/>
     <log show="1"/>
-    <lastopen date="2020-06-09 20:19" user="deseven" host="de7mac.local"/>
+    <lastopen date="2020-09-30 21:52" user="deseven" host="de7mac.local"/>
   </section>
   <section name="files">
-    <file name="const.pb">
-      <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
-      <fingerprint md5="a702693a2a1c7b802de098168cbb82ea"/>
-    </file>
-    <file name="helpers.pb">
-      <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
-      <fingerprint md5="f8eba27eb4f9f7e0ac68e2a7eb61635f"/>
-    </file>
-    <file name="main.pb">
-      <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
-      <fingerprint md5="6e2e9fa955f3e2f99a47d5ab935a3284"/>
-    </file>
-    <file name="proc.pb">
-      <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
-      <fingerprint md5="77c7215e7b784c35cb3ccba89ecb3bbc"/>
-    </file>
     <file name="applescript.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
       <fingerprint md5="42bb356cf3c1f7d343d4237f9ad739c6"/>
+    </file>
+    <file name="const.pb">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
+      <fingerprint md5="e94f56404bbc495252c4d96e7e028658"/>
+    </file>
+    <file name="helpers.pb">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
+      <fingerprint md5="0739c82bbb7f0daca4dbffd1650d37e7"/>
+    </file>
+    <file name="main.pb">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
+      <fingerprint md5="9dc596f9a4860b6bdcc4750188568f95"/>
+    </file>
+    <file name="proc.pb">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
+      <fingerprint md5="8fc13b1ff2f990f4876b882d51a1c182"/>
     </file>
   </section>
   <section name="targets">

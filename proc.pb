@@ -11,11 +11,14 @@ EndProcedure
 Procedure wndState(show.b)
   Shared application.i
   If Not show
+    CocoaMessage(0, application, "setActivationPolicy:", #NSApplicationActivationPolicyAccessory)
     CocoaMessage(0,application,"hide:")
   Else
-    CocoaMessage(0,GadgetID(#gadShortcuts),"sizeLastColumnToFit")
+    ;CocoaMessage(0,GadgetID(#gadShortcuts),"sizeLastColumnToFit")
+    ;CocoaMessage(0,application,"activateIgnoringOtherApps:",#YES)
+    ;CocoaMessage(0,WindowID(#wnd),"makeKeyAndOrderFront:")
+    CocoaMessage(0, application, "setActivationPolicy:", #NSApplicationActivationPolicyRegular)
     CocoaMessage(0,application,"unhide:")
-    CocoaMessage(0,application,"activateIgnoringOtherApps:",#YES)
   EndIf
 EndProcedure
 

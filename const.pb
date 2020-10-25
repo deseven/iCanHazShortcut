@@ -243,20 +243,24 @@ singleWL("Clear") = #True
 singleWL("CAPS") = #True
 
 #loginItemPlist = ~"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-~"<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n" +
-~"<plist version=\"1.0\">\n" +
-~"<dict>\n" +
-~"\t<key>Label</key>\n" +
-~"\t<string>{appid}</string>\n" +
-~"\t<key>ProgramArguments</key>\n" +
-~"\t<array>\n" +
-~"\t\t<string>/usr/bin/open</string>\n" +
-~"\t\t<string>{apppath}</string>\n" +
-~"\t</array>\n" +
-~"\t<key>RunAtLoad</key>\n" +
-~"\t<true/>\n" +
-~"\t<key>KeepAlive</key>\n" +
-~"\t<false/>\n" +
-~"\t<key>LimitLoadToSessionType</key>\n" +
-~"\t<string>Aqua</string></dict>\n" +
-~"</plist>"
+                  ~"<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n" +
+                  ~"<plist version=\"1.0\">\n" +
+                  ~"<dict>\n" +
+                  ~"\t<key>Label</key>\n" +
+                  ~"\t<string>{appid}</string>\n" +
+                  ~"\t<key>ProgramArguments</key>\n" +
+                  ~"\t<array>\n" +
+                  ~"\t\t<string>/usr/bin/open</string>\n" +
+                  ~"\t\t<string>{apppath}</string>\n" +
+                  ~"\t</array>\n" +
+                  ~"\t<key>RunAtLoad</key>\n" +
+                  ~"\t<true/>\n" +
+                  ~"\t<key>KeepAlive</key>\n" +
+                  ~"\t<false/>\n" +
+                  ~"\t<key>LimitLoadToSessionType</key>\n" +
+                  ~"\t<string>Aqua</string></dict>\n" +
+                  ~"</plist>"
+
+#NSApplicationActivationPolicyRegular = 0
+#NSApplicationActivationPolicyAccessory = 1
+#NSApplicationActivationPolicyProhibited = 2
