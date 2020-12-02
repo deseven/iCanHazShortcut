@@ -1,6 +1,7 @@
 # iCanHazShortcut
 Simple shortcut manager for macOS 10.8 or higher. It lets you execute any command that works in your terminal by pressing a combination of keyboard keys. No rocket science involved!  
 ![screenshot](https://d7.wtf/SchesisDodecaneCunarder.png)  
+[![Mac Informer Editor's pick award](https://img.informer.com/awards/mi-award-epick4.png)](https:////macdownload.informer.com/icanhazshortcut/)  
 
 ## binaries
 Latest **stable** release can be downloaded in [Releases section](https://github.com/deseven/icanhazshortcut/releases). You can also install it using Homebrew Cask, just run `brew cask install icanhazshortcut`.  
