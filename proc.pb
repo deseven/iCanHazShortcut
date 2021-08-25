@@ -24,18 +24,25 @@ EndProcedure
 
 Procedure settings(save.b = #False)
   Protected shortcut.s,action.s,command.s,workdir.s,i.l
+  Protected error.s
   Shared updateVer.s
   Shared setWorkdirWithCD.b
   Shared wndW,wndH,wndX,wndY
   If FileSize(GetEnvironmentVariable("HOME") + "/.config") = -1
-    CreateDirectory(GetEnvironmentVariable("HOME") + "/.config")
+    If Not CreateDirectory(GetEnvironmentVariable("HOME") + "/.config")
+      error + ~"\ncreating directory " + GetEnvironmentVariable("HOME") + "/.config"
+    EndIf
   EndIf
   If FileSize(GetEnvironmentVariable("HOME") + "/.config/" + #myName) = -1
-    CreateDirectory(GetEnvironmentVariable("HOME") + "/.config/" + #myName)
+    If Not CreateDirectory(GetEnvironmentVariable("HOME") + "/.config/" + #myName)
+      error + ~"\ncreating directory " + GetEnvironmentVariable("HOME") + "/.config" + #myName
+    EndIf
   EndIf
   Protected path.s = GetEnvironmentVariable("HOME") + "/.config/" + #myName + "/config.ini"
   If save
-    CreatePreferences(path,#PB_Preference_GroupSeparator)
+    If Not CreatePreferences(path,#PB_Preference_GroupSeparator)
+      error + ~"\nwriting config file to " + path
+    EndIf
     PreferenceGroup("main")
     WritePreferenceString("config version",#cfgVer)
     If updateVer <> #myVer
@@ -220,6 +227,10 @@ Procedure settings(save.b = #False)
     Wend
   EndIf
   ClosePreferences()
+  If error
+    MessageRequester(#myName,#errorMsg + error)
+    End 1
+  EndIf
 EndProcedure
 
 Procedure initResources()
@@ -584,7 +595,6 @@ EndProcedure
 Procedure checkUpdateAsync(interval.i)
   Shared updateVer.s,updateDetails.s
   Protected *buf,i,strCount
-  Protected Dim strings.s(1)
   If Not InitNetwork() : ProcedureReturn : EndIf
   ;CompilerIf Not #PB_Compiler_Debugger
     Delay(interval)
