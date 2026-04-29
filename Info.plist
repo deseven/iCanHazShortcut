@@ -14,10 +14,8 @@
 	<string>info.deseven.icanhazshortcut</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
-	<key>CFBundleSignature</key>
-	<string>PURE</string>
 	<key>CFBundleVersion</key>
-	<string>1.2.0</string>
+	<string>2.0.0</string>
 	<key>CFBundleName</key>
 	<string>iCanHazShortcut</string>
 	<key>CSResourcesFileMapped</key>
@@ -29,7 +27,7 @@
 	<key>NSDisablePersistence</key>
 	<true/>
 	<key>LSMinimumSystemVersion</key>
-	<string>10.8</string>
+	<string>11.0</string>
 	<key>NSAppleScriptEnabled</key>
 	<true/>
 	<key>OSAScriptingDefinition</key>
