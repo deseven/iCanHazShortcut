@@ -29,42 +29,44 @@ rm -rf "$loc/dist/$name"
 mkdir -p "$loc/dist"
 
 die() {
-    echo -e "${redColor}[FAILED]${noColor}"
-    echo -e "  ${redColor}$1${noColor}"
-    echo -e "  ${dimColor}check build.log for details${noColor}"
+    echo -e "${redColor}[FAILED]${noColor}" > /dev/tty
+    echo -e "  ${redColor}$1${noColor}" > /dev/tty
+    echo -e "  ${dimColor}check build.log for details${noColor}" > /dev/tty
     exit 1
 }
 
 step() {
-    printf "  ${dimColor}[%d/4]${noColor} ${bold}%s${noColor} " "$1" "$2"
+    printf "  ${dimColor}[%d/5]${noColor} ${bold}%s${noColor} " "$1" "$2"
 }
 
 ok() {
     echo -e "${greenColor}[OK]${noColor}"
 }
 
-# ── Compile ──────────────────────────────────────────────────────────
-step 1 "Compiling swift sources..."
+# ── Resolve dependencies ─────────────────────────────────────────────
+step 1 "Resolving dependencies..."
 {
-    echo "--- swiftc ---" >> "$logFile"
-    swiftc \
-        -target arm64-apple-macos11.0 \
-        -framework Cocoa \
-        -o "$loc/dist/$name" \
-        "$loc/src/main.swift" \
-        2>&1 >> "$logFile" \
-        || die "failed to compile $shortName"
+    echo "--- swift package resolve ---" >> "$logFile"
+    swift package resolve 2>&1 >> "$logFile" || die "failed to resolve dependencies"
+} >> "$logFile" 2>&1
+ok
+
+# ── Compile ──────────────────────────────────────────────────────────
+step 2 "Compiling Swift sources..."
+{
+    echo "--- swift build ---" >> "$logFile"
+    swift build -c release 2>&1 >> "$logFile" || die "failed to compile $shortName"
 } >> "$logFile" 2>&1
 ok
 
 # ── Bundle ───────────────────────────────────────────────────────────
-step 2 "Creating app bundle..."
+step 3 "Creating APP bundle..."
 {
     echo "--- app bundle ---" >> "$logFile"
     mkdir -p "$loc/dist/$name.app/Contents/MacOS"
     mkdir -p "$loc/dist/$name.app/Contents/Resources"
 
-    cp "$loc/dist/$name" "$loc/dist/$name.app/Contents/MacOS/$name"
+    cp "$loc/.build/release/$name" "$loc/dist/$name.app/Contents/MacOS/$name"
     cp "$loc/Info.plist" "$loc/dist/$name.app/Contents/Info.plist"
     cp "$loc/res/status_icon.png" "$loc/dist/$name.app/Contents/Resources/"
     cp "$loc/res/status_icon@2x.png" "$loc/dist/$name.app/Contents/Resources/"
@@ -75,7 +77,7 @@ step 2 "Creating app bundle..."
 ok
 
 # ── Zip ──────────────────────────────────────────────────────────────
-step 3 "Packing into zip..."
+step 4 "Creating distribution ZIP..."
 {
     echo "--- zip ---" >> "$logFile"
     cd "$loc/dist"
@@ -85,7 +87,7 @@ step 3 "Packing into zip..."
 ok
 
 # ── DMG ──────────────────────────────────────────────────────────────
-step 4 "Creating dmg..."
+step 5 "Creating distribution DMG..."
 {
     echo "--- create-dmg ---" >> "$logFile"
     dmgStaging="$loc/dist/dmg_staging"
@@ -109,9 +111,6 @@ step 4 "Creating dmg..."
     rm -rf "$dmgStaging"
 } >> "$logFile" 2>&1
 ok
-
-# clean up intermediate binary (keep only the .app, .zip and .dmg)
-rm -f "$loc/dist/$name"
 
 echo ""
 echo -e "  ${greenColor}${bold}Build complete!${noColor}"

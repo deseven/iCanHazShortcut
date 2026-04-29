@@ -6,3 +6,6 @@
 .DS_Store
 Thumbs.db
 project.cfg
+.build/
+.swiftpm/
+Package.resolved
