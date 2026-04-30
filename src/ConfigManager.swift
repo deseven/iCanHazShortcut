@@ -39,15 +39,15 @@ struct ShortcutConfig {
         self.enabled = json["enabled"].boolValue
     }
 
-    func toJSON() -> JSON {
-        var json = JSON()
-        json["shortcut"] = JSON(shortcut)
-        json["category"] = JSON(category)
-        json["action"] = JSON(action)
-        json["command"] = JSON(command)
-        json["workdir"] = JSON(workdir)
-        json["enabled"] = JSON(enabled)
-        return json
+    func toOrderedDict() -> NSMutableDictionary {
+        let dict = NSMutableDictionary()
+        dict["shortcut"] = shortcut
+        dict["category"] = category
+        dict["action"] = action
+        dict["command"] = command
+        dict["workdir"] = workdir
+        dict["enabled"] = enabled
+        return dict
     }
 }
 
@@ -91,17 +91,17 @@ struct ShortcutsTableConfig {
         self.workdirColumnWidth = json["workdir_column_width"].intValue
     }
 
-    func toJSON() -> JSON {
-        var json = JSON()
-        json["shortcut_column"] = JSON(shortcutColumn)
-        json["action_column"] = JSON(actionColumn)
-        json["command_column"] = JSON(commandColumn)
-        json["workdir_column"] = JSON(workdirColumn)
-        json["shortcut_column_width"] = JSON(shortcutColumnWidth)
-        json["action_column_width"] = JSON(actionColumnWidth)
-        json["command_column_width"] = JSON(commandColumnWidth)
-        json["workdir_column_width"] = JSON(workdirColumnWidth)
-        return json
+    func toOrderedDict() -> NSMutableDictionary {
+        let dict = NSMutableDictionary()
+        dict["shortcut_column"] = shortcutColumn
+        dict["action_column"] = actionColumn
+        dict["command_column"] = commandColumn
+        dict["workdir_column"] = workdirColumn
+        dict["shortcut_column_width"] = shortcutColumnWidth
+        dict["action_column_width"] = actionColumnWidth
+        dict["command_column_width"] = commandColumnWidth
+        dict["workdir_column_width"] = workdirColumnWidth
+        return dict
     }
 }
 
@@ -133,14 +133,14 @@ struct WindowConfig {
         self.shortcutsTable = ShortcutsTableConfig(from: json["shortcuts_table"])
     }
 
-    func toJSON() -> JSON {
-        var json = JSON()
-        json["x"] = JSON(x)
-        json["y"] = JSON(y)
-        json["width"] = JSON(width)
-        json["height"] = JSON(height)
-        json["shortcuts_table"] = shortcutsTable.toJSON()
-        return json
+    func toOrderedDict() -> NSMutableDictionary {
+        let dict = NSMutableDictionary()
+        dict["x"] = x
+        dict["y"] = y
+        dict["width"] = width
+        dict["height"] = height
+        dict["shortcuts_table"] = shortcutsTable.toOrderedDict()
+        return dict
     }
 }
 
@@ -190,19 +190,19 @@ struct AppConfig {
         self.shortcuts = json["shortcuts"].arrayValue.map { ShortcutConfig(from: $0) }
     }
 
-    func toJSON() -> JSON {
-        var json = JSON()
-        json["config_version"] = JSON(configVersion)
-        json["shell"] = JSON(shell)
-        json["populate_menu_with_actions"] = JSON(populateMenuWithActions)
-        json["show_hotkeys_in_menu"] = JSON(showHotkeysInMenu)
-        json["check_for_updates"] = JSON(checkForUpdates)
-        json["start_on_login"] = JSON(startOnLogin)
-        json["show_icon_in_statusbar"] = JSON(showIconInStatusbar)
-        json["set_workdir_with_cd"] = JSON(setWorkdirWithCd)
-        json["window"] = window.toJSON()
-        json["shortcuts"] = JSON(shortcuts.map { $0.toJSON().object })
-        return json
+    func toOrderedDict() -> NSMutableDictionary {
+        let dict = NSMutableDictionary()
+        dict["config_version"] = configVersion
+        dict["shell"] = shell
+        dict["populate_menu_with_actions"] = populateMenuWithActions
+        dict["show_hotkeys_in_menu"] = showHotkeysInMenu
+        dict["check_for_updates"] = checkForUpdates
+        dict["start_on_login"] = startOnLogin
+        dict["show_icon_in_statusbar"] = showIconInStatusbar
+        dict["set_workdir_with_cd"] = setWorkdirWithCd
+        dict["window"] = window.toOrderedDict()
+        dict["shortcuts"] = shortcuts.map { $0.toOrderedDict() }
+        return dict
     }
 }
 
@@ -284,8 +284,8 @@ class ConfigManager {
         }
 
         do {
-            let json = config.toJSON()
-            let rawData = try json.rawData(options: .prettyPrinted)
+            let dict = config.toOrderedDict()
+            let rawData = try JSONSerialization.data(withJSONObject: dict, options: .prettyPrinted)
             try rawData.write(to: configFilePath, options: .atomic)
         } catch {
             print("Failed to save config: \(error)")

@@ -45,7 +45,7 @@ class MainWindowController: NSWindowController, NSWindowDelegate {
         let shortcutsItem = NSTabViewItem(identifier: "shortcuts")
         shortcutsItem.label = "Shortcuts"
         shortcutsItem.image = NSImage(systemSymbolName: "keyboard", accessibilityDescription: "Shortcuts")
-        shortcutsItem.viewController = PlaceholderViewController(label: "Shortcuts")
+        shortcutsItem.viewController = ShortcutsViewController()
 
         // Preferences tab
         let preferencesItem = NSTabViewItem(identifier: "preferences")

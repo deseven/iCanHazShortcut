@@ -21,7 +21,8 @@ class ShortcutMenuItemTarget: NSObject {
 
 class AppDelegate: NSObject, NSApplicationDelegate {
     var statusItem: NSStatusItem?
-    var registeredHotkeyIDs: [HotkeyID] = []
+    var registeredHotkeyIDs: [Int: HotkeyID] = [:]
+    var failedRegistrations: Set<Int> = []
     var menuItemTargets: [ShortcutMenuItemTarget] = []
     var mainWindowController: MainWindowController?
 
@@ -234,7 +235,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private func registerShortcuts() {
         let config = ConfigManager.shared.config
 
-        for shortcut in config.shortcuts {
+        for (index, shortcut) in config.shortcuts.enumerated() {
             guard shortcut.enabled && !shortcut.shortcut.isEmpty && !shortcut.command.isEmpty else {
                 continue
             }
@@ -243,11 +244,45 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 let hotkeyID = try GlobalHotkeyManager.shared.register(hotkeyString: shortcut.shortcut) { [weak self] in
                     self?.runShortcut(shortcut)
                 }
-                registeredHotkeyIDs.append(hotkeyID)
+                registeredHotkeyIDs[index] = hotkeyID
             } catch {
                 print("Failed to register hotkey '\(shortcut.shortcut)': \(error)")
+                failedRegistrations.insert(index)
             }
         }
+    }
+
+    func registerShortcut(at index: Int) -> Bool {
+        let shortcut = ConfigManager.shared.config.shortcuts[index]
+        guard shortcut.enabled && !shortcut.shortcut.isEmpty && !shortcut.command.isEmpty else {
+            failedRegistrations.remove(index)
+            return true
+        }
+
+        do {
+            let hotkeyID = try GlobalHotkeyManager.shared.register(hotkeyString: shortcut.shortcut) { [weak self] in
+                self?.runShortcut(shortcut)
+            }
+            registeredHotkeyIDs[index] = hotkeyID
+            failedRegistrations.remove(index)
+            return true
+        } catch {
+            print("Failed to register hotkey '\(shortcut.shortcut)': \(error)")
+            failedRegistrations.insert(index)
+            return false
+        }
+    }
+
+    func unregisterShortcut(at index: Int) {
+        if let hotkeyID = registeredHotkeyIDs[index] {
+            try? GlobalHotkeyManager.shared.unregister(hotkeyID)
+            registeredHotkeyIDs.removeValue(forKey: index)
+        }
+        failedRegistrations.remove(index)
+    }
+
+    func isRegistrationFailed(at index: Int) -> Bool {
+        return failedRegistrations.contains(index)
     }
 
     func runShortcut(_ shortcut: ShortcutConfig) {

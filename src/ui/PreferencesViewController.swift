@@ -158,7 +158,7 @@ class PreferencesViewController: NSViewController {
         // ── Note below shell box ──
 
         let noteLabel = NSTextField(wrappingLabelWithString:
-            "• Without shell selection, commands will be executed directly\n" +
+            "• Without shell selected, commands will be executed directly\n" +
             "• Ensure your shell profile (~/.bash_profile, etc) has the correct $PATH set\n" +
             "• Use test run to verify that new shortcuts work"
         )
