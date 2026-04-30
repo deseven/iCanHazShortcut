@@ -4,7 +4,7 @@ import PackageDescription
 let package = Package(
     name: "iCanHazShortcut",
     platforms: [
-        .macOS(.v11)
+        .macOS(.v13)
     ],
     dependencies: [
         .package(url: "https://github.com/SwiftyJSON/SwiftyJSON.git", from: "4.0.0"),

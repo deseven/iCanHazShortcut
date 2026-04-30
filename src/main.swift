@@ -20,9 +20,10 @@ class ShortcutMenuItemTarget: NSObject {
 }
 
 class AppDelegate: NSObject, NSApplicationDelegate {
-    var statusItem: NSStatusItem!
+    var statusItem: NSStatusItem?
     var registeredHotkeyIDs: [HotkeyID] = []
     var menuItemTargets: [ShortcutMenuItemTarget] = []
+    var mainWindowController: MainWindowController?
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         // Load configuration first thing; if migration was triggered but failed, exit
@@ -30,19 +31,53 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             NSApplication.shared.terminate(nil)
         }
 
-        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
-
-        if let button = statusItem.button {
-            button.image = NSImage(named: "status_icon")
-            button.image?.isTemplate = true
+        if ConfigManager.shared.config.showIconInStatusbar {
+            setupStatusItem()
         }
-
-        let menu = NSMenu()
-        buildMenu(menu)
-        statusItem.menu = menu
 
         // Register all shortcuts from config
         registerShortcuts()
+    }
+
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        // If the status bar icon is hidden, re-launching should show the main window
+        if !ConfigManager.shared.config.showIconInStatusbar {
+            showShortcutsTab()
+        }
+        return true
+    }
+
+    // MARK: - Status item management
+
+    private func setupStatusItem() {
+        let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
+        if let button = item.button {
+            button.image = NSImage(named: "status_icon")
+            button.image?.isTemplate = true
+        }
+        let menu = NSMenu()
+        buildMenu(menu)
+        item.menu = menu
+        statusItem = item
+    }
+
+    func showStatusItem() {
+        guard statusItem == nil else { return }
+        setupStatusItem()
+    }
+
+    func hideStatusItem() {
+        guard let item = statusItem else { return }
+        NSStatusBar.system.removeStatusItem(item)
+        statusItem = nil
+    }
+
+    func rebuildMenu() {
+        guard let item = statusItem else { return }
+        menuItemTargets.removeAll()
+        let menu = NSMenu()
+        buildMenu(menu)
+        item.menu = menu
     }
 
     // MARK: - Menu building
@@ -94,6 +129,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 menu.addItem(NSMenuItem.separator())
             }
         }
+
+        // Window navigation items
+        menu.addItem(NSMenuItem(title: "Shortcuts", action: #selector(showShortcutsTab), keyEquivalent: ""))
+        menu.addItem(NSMenuItem(title: "Preferences", action: #selector(showPreferencesTab), keyEquivalent: ","))
+        menu.addItem(NSMenuItem(title: "About", action: #selector(showAboutTab), keyEquivalent: ""))
+        menu.addItem(NSMenuItem.separator())
 
         menu.addItem(NSMenuItem(title: "Quit \(appName)", action: #selector(quitClicked), keyEquivalent: "q"))
     }
@@ -227,6 +268,41 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             shell: config.shell,
             command: command
         )
+    }
+
+    // MARK: - Window management
+
+    private func ensureMainWindow(tab: MainWindowController.Tab) -> MainWindowController {
+        if let controller = mainWindowController {
+            return controller
+        }
+        let controller = MainWindowController()
+        controller.onWindowClosed = { [weak self] in
+            self?.mainWindowController = nil
+        }
+        mainWindowController = controller
+        return controller
+    }
+
+    @objc func showShortcutsTab() {
+        NSApp.setActivationPolicy(.regular)
+        let controller = ensureMainWindow(tab: .shortcuts)
+        controller.showWindow(tab: .shortcuts)
+        NSApp.activate(ignoringOtherApps: true)
+    }
+
+    @objc func showPreferencesTab() {
+        NSApp.setActivationPolicy(.regular)
+        let controller = ensureMainWindow(tab: .preferences)
+        controller.showWindow(tab: .preferences)
+        NSApp.activate(ignoringOtherApps: true)
+    }
+
+    @objc func showAboutTab() {
+        NSApp.setActivationPolicy(.regular)
+        let controller = ensureMainWindow(tab: .about)
+        controller.showWindow(tab: .about)
+        NSApp.activate(ignoringOtherApps: true)
     }
 
     @objc func quitClicked() {

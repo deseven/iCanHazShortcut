@@ -55,30 +55,26 @@ struct ShortcutConfig {
 
 struct ShortcutsTableConfig {
     var shortcutColumn: Bool
-    var categoryColumn: Bool
     var actionColumn: Bool
     var commandColumn: Bool
     var workdirColumn: Bool
     var shortcutColumnWidth: Int
-    var categoryColumnWidth: Int
     var actionColumnWidth: Int
     var commandColumnWidth: Int
     var workdirColumnWidth: Int
 
     static let `default` = ShortcutsTableConfig()
 
-    init(shortcutColumn: Bool = true, categoryColumn: Bool = true, actionColumn: Bool = true,
+    init(shortcutColumn: Bool = true, actionColumn: Bool = true,
          commandColumn: Bool = true, workdirColumn: Bool = true,
-         shortcutColumnWidth: Int = 110, categoryColumnWidth: Int = 100,
+         shortcutColumnWidth: Int = 110,
          actionColumnWidth: Int = 150, commandColumnWidth: Int = 280,
          workdirColumnWidth: Int = 120) {
         self.shortcutColumn = shortcutColumn
-        self.categoryColumn = categoryColumn
         self.actionColumn = actionColumn
         self.commandColumn = commandColumn
         self.workdirColumn = workdirColumn
         self.shortcutColumnWidth = shortcutColumnWidth
-        self.categoryColumnWidth = categoryColumnWidth
         self.actionColumnWidth = actionColumnWidth
         self.commandColumnWidth = commandColumnWidth
         self.workdirColumnWidth = workdirColumnWidth
@@ -86,12 +82,10 @@ struct ShortcutsTableConfig {
 
     init(from json: JSON) {
         self.shortcutColumn = json["shortcut_column"].boolValue
-        self.categoryColumn = json["category_column"].boolValue
         self.actionColumn = json["action_column"].boolValue
         self.commandColumn = json["command_column"].boolValue
         self.workdirColumn = json["workdir_column"].boolValue
         self.shortcutColumnWidth = json["shortcut_column_width"].intValue
-        self.categoryColumnWidth = json["category_column_width"].intValue
         self.actionColumnWidth = json["action_column_width"].intValue
         self.commandColumnWidth = json["command_column_width"].intValue
         self.workdirColumnWidth = json["workdir_column_width"].intValue
@@ -100,12 +94,10 @@ struct ShortcutsTableConfig {
     func toJSON() -> JSON {
         var json = JSON()
         json["shortcut_column"] = JSON(shortcutColumn)
-        json["category_column"] = JSON(categoryColumn)
         json["action_column"] = JSON(actionColumn)
         json["command_column"] = JSON(commandColumn)
         json["workdir_column"] = JSON(workdirColumn)
         json["shortcut_column_width"] = JSON(shortcutColumnWidth)
-        json["category_column_width"] = JSON(categoryColumnWidth)
         json["action_column_width"] = JSON(actionColumnWidth)
         json["command_column_width"] = JSON(commandColumnWidth)
         json["workdir_column_width"] = JSON(workdirColumnWidth)

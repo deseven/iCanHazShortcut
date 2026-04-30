@@ -7,6 +7,7 @@ shortName="ichs"
 ident="info.deseven.icanhazshortcut"
 loc="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 logFile="$loc/build.log"
+logMark=1
 
 bold='\033[1m'
 dimColor='\033[2m'
@@ -31,7 +32,9 @@ mkdir -p "$loc/dist"
 die() {
     echo -e "${redColor}[FAILED]${noColor}" > /dev/tty
     echo -e "  ${redColor}$1${noColor}" > /dev/tty
-    echo -e "  ${dimColor}check build.log for details${noColor}" > /dev/tty
+    echo -e "  ${dimColor}--- error output ---${noColor}" > /dev/tty
+    tail -n +"$logMark" "$logFile" > /dev/tty 2>&1
+    echo -e "  ${dimColor}--- end error output ---${noColor}" > /dev/tty
     exit 1
 }
 
@@ -45,6 +48,7 @@ ok() {
 
 # ── Resolve dependencies ─────────────────────────────────────────────
 step 1 "Resolving dependencies..."
+logMark=$(($(wc -l < "$logFile") + 1))
 {
     echo "--- swift package resolve ---" >> "$logFile"
     swift package resolve 2>&1 >> "$logFile" || die "failed to resolve dependencies"
@@ -53,6 +57,7 @@ ok
 
 # ── Compile ──────────────────────────────────────────────────────────
 step 2 "Compiling Swift sources..."
+logMark=$(($(wc -l < "$logFile") + 1))
 {
     echo "--- swift build ---" >> "$logFile"
     swift build -c release 2>&1 >> "$logFile" || die "failed to compile $shortName"
@@ -61,6 +66,7 @@ ok
 
 # ── Bundle ───────────────────────────────────────────────────────────
 step 3 "Creating APP bundle..."
+logMark=$(($(wc -l < "$logFile") + 1))
 {
     echo "--- app bundle ---" >> "$logFile"
     mkdir -p "$loc/dist/$name.app/Contents/MacOS"
@@ -72,12 +78,14 @@ step 3 "Creating APP bundle..."
     cp "$loc/res/status_icon@2x.png" "$loc/dist/$name.app/Contents/Resources/"
     cp "$loc/res/main.icns" "$loc/dist/$name.app/Contents/Resources/"
     cp "$loc/res/AS.sdef" "$loc/dist/$name.app/Contents/Resources/"
+    cp "$loc/LICENSE" "$loc/dist/$name.app/Contents/Resources/"
     cp "$loc/res/ui/"*.png "$loc/dist/$name.app/Contents/Resources/"
 } >> "$logFile" 2>&1
 ok
 
 # ── Zip ──────────────────────────────────────────────────────────────
 step 4 "Creating distribution ZIP..."
+logMark=$(($(wc -l < "$logFile") + 1))
 {
     echo "--- zip ---" >> "$logFile"
     cd "$loc/dist"
@@ -88,6 +96,7 @@ ok
 
 # ── DMG ──────────────────────────────────────────────────────────────
 step 5 "Creating distribution DMG..."
+logMark=$(($(wc -l < "$logFile") + 1))
 {
     echo "--- create-dmg ---" >> "$logFile"
     dmgStaging="$loc/dist/dmg_staging"

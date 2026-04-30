@@ -203,14 +203,12 @@ class ConfigMigrator {
         config.window.shortcutsTable.actionColumn = parseBool(main["action_column_enabled"]) ?? config.window.shortcutsTable.actionColumn
         config.window.shortcutsTable.commandColumn = parseBool(main["command_column_enabled"]) ?? config.window.shortcutsTable.commandColumn
         config.window.shortcutsTable.workdirColumn = parseBool(main["workdir_column_enabled"]) ?? config.window.shortcutsTable.workdirColumn
-        // category_column didn't exist in old version — keep default
 
         // Shortcuts table column widths
         config.window.shortcutsTable.shortcutColumnWidth = Int(main["shortcut_column_width"] ?? "110") ?? 110
         config.window.shortcutsTable.actionColumnWidth = Int(main["action_column_width"] ?? "150") ?? 150
         config.window.shortcutsTable.commandColumnWidth = Int(main["command_column_width"] ?? "280") ?? 280
         config.window.shortcutsTable.workdirColumnWidth = Int(main["workdir_column_width"] ?? "120") ?? 120
-        // category_column_width didn't exist in old version — keep default
 
         // Parse shortcut sections (preserving order from the INI file)
         var shortcuts: [ShortcutConfig] = []
