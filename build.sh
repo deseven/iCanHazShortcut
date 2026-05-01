@@ -39,7 +39,7 @@ die() {
 }
 
 step() {
-    printf "  ${dimColor}[%d/5]${noColor} ${bold}%s${noColor} " "$1" "$2"
+    printf "  ${dimColor}[%d/8]${noColor} ${bold}%-36s${noColor} " "$1" "$2"
 }
 
 ok() {
@@ -55,24 +55,55 @@ logMark=$(($(wc -l < "$logFile") + 1))
 } >> "$logFile" 2>&1
 ok
 
-# ── Compile ──────────────────────────────────────────────────────────
-step 2 "Compiling Swift sources..."
+# ── Clean build artifacts ────────────────────────────────────────────
+step 2 "Cleaning build artifacts..."
 logMark=$(($(wc -l < "$logFile") + 1))
 {
-    echo "--- swift build ---" >> "$logFile"
-    swift build -c release 2>&1 >> "$logFile" || die "failed to compile $shortName"
+    echo "--- swift package clean ---" >> "$logFile"
+    swift package clean 2>&1 >> "$logFile" || die "failed to clean build artifacts"
+} >> "$logFile" 2>&1
+ok
+
+# ── Compile (arm64) ──────────────────────────────────────────────────
+step 3 "Compiling Swift sources (arm64)..."
+logMark=$(($(wc -l < "$logFile") + 1))
+{
+    echo "--- swift build --arch arm64 ---" >> "$logFile"
+    swift build -c release --arch arm64 2>&1 >> "$logFile" || die "failed to compile $shortName for arm64"
+} >> "$logFile" 2>&1
+ok
+
+# ── Compile (x86_64) ────────────────────────────────────────────────
+step 4 "Compiling Swift sources (x86_64)..."
+logMark=$(($(wc -l < "$logFile") + 1))
+{
+    echo "--- swift build --arch x86_64 ---" >> "$logFile"
+    swift build -c release --arch x86_64 2>&1 >> "$logFile" || die "failed to compile $shortName for x86_64"
+} >> "$logFile" 2>&1
+ok
+
+# ── Create universal binary ─────────────────────────────────────────
+step 5 "Creating universal binary..."
+logMark=$(($(wc -l < "$logFile") + 1))
+{
+    echo "--- lipo create ---" >> "$logFile"
+    lipo -create \
+        "$loc/.build/arm64-apple-macosx/release/$name" \
+        "$loc/.build/x86_64-apple-macosx/release/$name" \
+        -output "$loc/dist/$name" 2>&1 >> "$logFile" || die "failed to create universal binary"
 } >> "$logFile" 2>&1
 ok
 
 # ── Bundle ───────────────────────────────────────────────────────────
-step 3 "Creating APP bundle..."
+step 6 "Creating APP bundle..."
 logMark=$(($(wc -l < "$logFile") + 1))
 {
     echo "--- app bundle ---" >> "$logFile"
     mkdir -p "$loc/dist/$name.app/Contents/MacOS"
     mkdir -p "$loc/dist/$name.app/Contents/Resources"
 
-    cp "$loc/.build/release/$name" "$loc/dist/$name.app/Contents/MacOS/$name"
+    cp "$loc/dist/$name" "$loc/dist/$name.app/Contents/MacOS/$name"
+    rm "$loc/dist/$name"
     cp "$loc/Info.plist" "$loc/dist/$name.app/Contents/Info.plist"
     cp "$loc/res/status_icon.png" "$loc/dist/$name.app/Contents/Resources/"
     cp "$loc/res/status_icon@2x.png" "$loc/dist/$name.app/Contents/Resources/"
@@ -84,7 +115,7 @@ logMark=$(($(wc -l < "$logFile") + 1))
 ok
 
 # ── Zip ──────────────────────────────────────────────────────────────
-step 4 "Creating distribution ZIP..."
+step 7 "Creating distribution ZIP..."
 logMark=$(($(wc -l < "$logFile") + 1))
 {
     echo "--- zip ---" >> "$logFile"
@@ -95,7 +126,7 @@ logMark=$(($(wc -l < "$logFile") + 1))
 ok
 
 # ── DMG ──────────────────────────────────────────────────────────────
-step 5 "Creating distribution DMG..."
+step 8 "Creating distribution DMG..."
 logMark=$(($(wc -l < "$logFile") + 1))
 {
     echo "--- create-dmg ---" >> "$logFile"
