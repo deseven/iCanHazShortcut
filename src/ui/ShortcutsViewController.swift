@@ -97,8 +97,6 @@ class ShortcutsViewController: NSViewController {
 
     private var tableView: ReorderableTableView!
     private var addButton: NSButton!
-    private var editButton: NSButton!
-    private var removeButton: NSButton!
 
     // MARK: - Data
 
@@ -150,6 +148,13 @@ class ShortcutsViewController: NSViewController {
             selector: #selector(columnDidResize(_:)),
             name: NSTableView.columnDidResizeNotification,
             object: tableView
+        )
+
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(windowDidResize(_:)),
+            name: NSWindow.didResizeNotification,
+            object: nil
         )
     }
 
@@ -228,35 +233,35 @@ class ShortcutsViewController: NSViewController {
         dragColumn.resizingMask = []
 
         let toggleColumn = NSTableColumn(identifier: Self.toggleColumnID)
-        toggleColumn.title = "State"
-        toggleColumn.width = 40
-        toggleColumn.minWidth = 40
-        toggleColumn.maxWidth = 40
+        toggleColumn.title = "Control"
+        toggleColumn.width = 70
+        toggleColumn.minWidth = 70
+        toggleColumn.maxWidth = 70
         toggleColumn.resizingMask = []
 
         let shortcutColumn = NSTableColumn(identifier: Self.shortcutColumnID)
         shortcutColumn.width = CGFloat(tableConfig.shortcutColumnWidth)
         shortcutColumn.title = "Shortcut"
         shortcutColumn.isHidden = !tableConfig.shortcutColumn
-        shortcutColumn.resizingMask = [.userResizingMask, .autoresizingMask]
+        shortcutColumn.resizingMask = .userResizingMask
 
         let actionColumn = NSTableColumn(identifier: Self.actionColumnID)
         actionColumn.width = CGFloat(tableConfig.actionColumnWidth)
         actionColumn.title = "Action"
         actionColumn.isHidden = !tableConfig.actionColumn
-        actionColumn.resizingMask = [.userResizingMask, .autoresizingMask]
+        actionColumn.resizingMask = .userResizingMask
 
         let commandColumn = NSTableColumn(identifier: Self.commandColumnID)
         commandColumn.width = CGFloat(tableConfig.commandColumnWidth)
         commandColumn.title = "Command"
         commandColumn.isHidden = !tableConfig.commandColumn
-        commandColumn.resizingMask = [.userResizingMask, .autoresizingMask]
+        commandColumn.resizingMask = .userResizingMask
 
         let workdirColumn = NSTableColumn(identifier: Self.workdirColumnID)
         workdirColumn.width = CGFloat(tableConfig.workdirColumnWidth)
         workdirColumn.title = "Workdir"
         workdirColumn.isHidden = !tableConfig.workdirColumn
-        workdirColumn.resizingMask = [.userResizingMask, .autoresizingMask]
+        workdirColumn.resizingMask = .userResizingMask
 
         tableView.addTableColumn(dragColumn)
         tableView.addTableColumn(toggleColumn)
@@ -264,6 +269,9 @@ class ShortcutsViewController: NSViewController {
         tableView.addTableColumn(actionColumn)
         tableView.addTableColumn(commandColumn)
         tableView.addTableColumn(workdirColumn)
+
+        // Size the last column to fit the table width (fixes oversized columns from config)
+        tableView.sizeLastColumnToFit()
 
         // ── Column Header Context Menu ──
 
@@ -297,7 +305,7 @@ class ShortcutsViewController: NSViewController {
         let scrollView = NSScrollView()
         scrollView.documentView = tableView
         scrollView.hasVerticalScroller = true
-        scrollView.hasHorizontalScroller = false
+        scrollView.hasHorizontalScroller = true
         scrollView.autohidesScrollers = true
         scrollView.borderType = .noBorder
         scrollView.translatesAutoresizingMaskIntoConstraints = false
@@ -305,26 +313,14 @@ class ShortcutsViewController: NSViewController {
         // ── Buttons ──
 
         addButton = makeIconButton(imageName: "bx-plus-circle", toolTip: "Add new shortcut")
-        editButton = makeIconButton(imageName: "bx-pencil-circle", toolTip: "Edit selected shortcut")
-        removeButton = makeIconButton(imageName: "bx-minus-circle", toolTip: "Remove selected shortcut")
-
         addButton.target = self
         addButton.action = #selector(addClicked(_:))
-        editButton.target = self
-        editButton.action = #selector(editClicked(_:))
-        removeButton.target = self
-        removeButton.action = #selector(removeClicked(_:))
-
-        editButton.isEnabled = false
-        removeButton.isEnabled = false
 
         let buttonStack = NSStackView()
         buttonStack.orientation = .horizontal
         buttonStack.spacing = 8
         buttonStack.translatesAutoresizingMaskIntoConstraints = false
         buttonStack.addView(addButton, in: .center)
-        buttonStack.addView(editButton, in: .center)
-        buttonStack.addView(removeButton, in: .center)
 
         // ── Layout ──
 
@@ -360,13 +356,6 @@ class ShortcutsViewController: NSViewController {
         button.bezelStyle = .inline
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
-    }
-
-    private func updateButtonStates() {
-        let selectedRow = tableView.selectedRow
-        let hasValidSelection = selectedRow >= 0 && rows[selectedRow].isCategory == false
-        editButton.isEnabled = hasValidSelection
-        removeButton.isEnabled = hasValidSelection
     }
 
     // MARK: - Drag-and-Drop Helpers
@@ -475,10 +464,9 @@ class ShortcutsViewController: NSViewController {
         openEditor(mode: .add)
     }
 
-    @objc private func editClicked(_ sender: NSButton) {
-        let selectedRow = tableView.selectedRow
-        guard selectedRow >= 0 && selectedRow < rows.count else { return }
-        guard !rows[selectedRow].isCategory, let configIndex = rows[selectedRow].configIndex else { return }
+    @objc private func editInlineClicked(_ sender: NSButton) {
+        let configIndex = sender.tag
+        guard configIndex >= 0 && configIndex < ConfigManager.shared.config.shortcuts.count else { return }
         openEditor(mode: .edit(configIndex: configIndex))
     }
 
@@ -508,8 +496,8 @@ class ShortcutsViewController: NSViewController {
         editor.showOnParent(window)
     }
 
-    @objc private func removeClicked(_ sender: NSButton) {
-        deleteSelectedShortcut()
+    @objc private func deleteInlineClicked(_ sender: NSButton) {
+        deleteShortcut(at: sender.tag)
     }
 
     // MARK: - Delete Shortcut
@@ -518,6 +506,11 @@ class ShortcutsViewController: NSViewController {
         let selectedRow = tableView.selectedRow
         guard selectedRow >= 0 && selectedRow < rows.count else { return }
         guard !rows[selectedRow].isCategory, let configIndex = rows[selectedRow].configIndex else { return }
+        deleteShortcut(at: configIndex)
+    }
+
+    private func deleteShortcut(at configIndex: Int) {
+        guard configIndex >= 0 && configIndex < ConfigManager.shared.config.shortcuts.count else { return }
 
         let shortcut = ConfigManager.shared.config.shortcuts[configIndex]
         let displayName = shortcut.action.isEmpty ? shortcut.command : shortcut.action
@@ -615,10 +608,6 @@ class ShortcutsViewController: NSViewController {
             ConfigManager.shared.config.window.shortcutsTable.workdirColumnWidth = Int(column.width)
         }
 
-        // Ensure the last visible column shrinks if total column width exceeds table width,
-        // preventing horizontal scrolling
-        ensureLastColumnFits()
-
         // Debounce the config save to avoid excessive disk writes during drag
         columnResizeWorkItem?.cancel()
         let workItem = DispatchWorkItem {
@@ -628,24 +617,10 @@ class ShortcutsViewController: NSViewController {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: workItem)
     }
 
-    /// Ensure the last visible data column is sized so that total column width
-    /// does not exceed the table's visible width, preventing horizontal scrolling.
-    private func ensureLastColumnFits() {
-        let tableWidth = tableView.bounds.width
-        let totalColumnWidth = tableView.tableColumns.reduce(0.0) { $0 + $1.width }
-        if totalColumnWidth > tableWidth {
-            let overflow = totalColumnWidth - tableWidth
-            // Find the last visible data column and shrink it
-            let dataColumnIDs = [Self.shortcutColumnID, Self.actionColumnID, Self.commandColumnID, Self.workdirColumnID]
-            for columnID in dataColumnIDs.reversed() {
-                if let column = tableView.tableColumn(withIdentifier: columnID), !column.isHidden {
-                    let newWidth = max(column.minWidth, column.width - overflow)
-                    column.width = newWidth
-                    break
-                }
-            }
-        }
+    @objc private func windowDidResize(_ notification: Notification) {
+        tableView.sizeLastColumnToFit()
     }
+
 }
 
 // MARK: - NSTableViewDataSource
@@ -780,7 +755,7 @@ extension ShortcutsViewController: NSTableViewDelegate {
         case Self.toggleColumnID:
             return makeToggleCell(for: shortcutConfig, configIndex: configIndex)
         case Self.shortcutColumnID:
-            return makeTextCell(text: shortcutConfig.shortcut)
+            return makeTextCell(text: shortcutConfig.shortcut.isEmpty ? "[none]" : shortcutConfig.shortcut)
         case Self.actionColumnID:
             return makeTextCell(text: shortcutConfig.action)
         case Self.commandColumnID:
@@ -790,10 +765,6 @@ extension ShortcutsViewController: NSTableViewDelegate {
         default:
             return nil
         }
-    }
-
-    func tableViewSelectionDidChange(_ notification: Notification) {
-        updateButtonStates()
     }
 
     // MARK: - Cell Factories
@@ -806,39 +777,90 @@ extension ShortcutsViewController: NSTableViewDelegate {
             cellView = NSTableCellView()
             cellView!.identifier = cellIdentifier
 
-            let button = PointerButton(frame: .zero)
-            button.isBordered = false
-            button.imagePosition = .imageOnly
-            button.bezelStyle = .inline
-            button.target = self
-            button.action = #selector(ShortcutsViewController.toggleClicked(_:))
-            button.translatesAutoresizingMaskIntoConstraints = false
-            cellView!.addSubview(button)
+            let stack = NSStackView()
+            stack.orientation = .horizontal
+            stack.spacing = 4
+            stack.alignment = .centerY
+            stack.translatesAutoresizingMaskIntoConstraints = false
+
+            let toggleBtn = PointerButton(frame: .zero)
+            toggleBtn.isBordered = false
+            toggleBtn.imagePosition = .imageOnly
+            toggleBtn.bezelStyle = .inline
+            toggleBtn.target = self
+            toggleBtn.action = #selector(ShortcutsViewController.toggleClicked(_:))
+            toggleBtn.translatesAutoresizingMaskIntoConstraints = false
+
+            let editBtn = PointerButton(frame: .zero)
+            editBtn.isBordered = false
+            editBtn.imagePosition = .imageOnly
+            editBtn.bezelStyle = .inline
+            editBtn.target = self
+            editBtn.action = #selector(editInlineClicked(_:))
+            editBtn.translatesAutoresizingMaskIntoConstraints = false
+
+            let deleteBtn = PointerButton(frame: .zero)
+            deleteBtn.isBordered = false
+            deleteBtn.imagePosition = .imageOnly
+            deleteBtn.bezelStyle = .inline
+            deleteBtn.target = self
+            deleteBtn.action = #selector(deleteInlineClicked(_:))
+            deleteBtn.translatesAutoresizingMaskIntoConstraints = false
+
+            stack.addArrangedSubview(toggleBtn)
+            stack.addArrangedSubview(editBtn)
+            stack.addArrangedSubview(deleteBtn)
+            cellView!.addSubview(stack)
 
             NSLayoutConstraint.activate([
-                button.widthAnchor.constraint(equalToConstant: 24),
-                button.heightAnchor.constraint(equalToConstant: 13),
-                button.centerXAnchor.constraint(equalTo: cellView!.centerXAnchor),
-                button.centerYAnchor.constraint(equalTo: cellView!.centerYAnchor),
+                stack.leadingAnchor.constraint(equalTo: cellView!.leadingAnchor, constant: 4),
+                stack.trailingAnchor.constraint(equalTo: cellView!.trailingAnchor, constant: -4),
+                stack.centerYAnchor.constraint(equalTo: cellView!.centerYAnchor),
             ])
         }
 
-        if let button = cellView?.subviews.first as? PointerButton {
-            let imageName = shortcut.enabled ? "bx-toggle-right" : "bx-toggle-left"
-            let image = (NSImage(named: imageName)?.copy() as? NSImage) ?? NSImage(named: imageName)!
-            image.isTemplate = true
-            image.size = NSSize(width: 24, height: 13)
-            button.image = image
-            button.tag = configIndex
+        // Update per-row state (important for cell reuse)
+        if let stack = cellView?.subviews.first as? NSStackView {
+            let buttons = stack.arrangedSubviews.compactMap { $0 as? PointerButton }
+            if buttons.count >= 3 {
+                let toggleBtn = buttons[0]
+                let editBtn = buttons[1]
+                let deleteBtn = buttons[2]
 
-            let registrationFailed = appDelegate?.isRegistrationFailed(at: configIndex) ?? false
+                // Toggle button
+                let imageName = shortcut.enabled ? "bx-toggle-right" : "bx-toggle-left"
+                let toggleImage = (NSImage(named: imageName)?.copy() as? NSImage) ?? NSImage(named: imageName)!
+                toggleImage.isTemplate = true
+                toggleImage.size = NSSize(width: 24, height: 13)
+                toggleBtn.image = toggleImage
+                toggleBtn.tag = configIndex
 
-            if shortcut.enabled && registrationFailed {
-                button.contentTintColor = .systemRed
-            } else if shortcut.enabled {
-                button.contentTintColor = .systemGreen
-            } else {
-                button.contentTintColor = .tertiaryLabelColor
+                let registrationFailed = appDelegate?.isRegistrationFailed(at: configIndex) ?? false
+                if shortcut.enabled && registrationFailed {
+                    toggleBtn.contentTintColor = .systemRed
+                } else if shortcut.enabled {
+                    toggleBtn.contentTintColor = .labelColor
+                } else {
+                    toggleBtn.contentTintColor = .tertiaryLabelColor
+                }
+
+                // Edit button
+                if let editImage = (NSImage(named: "bx-pencil")?.copy() as? NSImage) {
+                    editImage.isTemplate = true
+                    editImage.size = NSSize(width: 16, height: 16)
+                    editBtn.image = editImage
+                }
+                editBtn.tag = configIndex
+                editBtn.contentTintColor = shortcut.enabled ? .labelColor : .tertiaryLabelColor
+
+                // Delete button
+                if let deleteImage = (NSImage(named: "bx-trash")?.copy() as? NSImage) {
+                    deleteImage.isTemplate = true
+                    deleteImage.size = NSSize(width: 16, height: 16)
+                    deleteBtn.image = deleteImage
+                }
+                deleteBtn.tag = configIndex
+                deleteBtn.contentTintColor = shortcut.enabled ? .labelColor : .tertiaryLabelColor
             }
         }
 

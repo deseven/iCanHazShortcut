@@ -229,7 +229,7 @@ class ShortcutEditorWindowController: NSWindowController, NSWindowDelegate {
         let fieldDefs: [(label: String, placeholder: String, field: NSTextField, required: Bool)] = [
             ("Action",             "e.g. Open Terminal",   actionField,   false),
             ("Category",           "e.g. Apps",            categoryField, false),
-            ("Shortcut",           "e.g. ⌘⇧T",            shortcutField, true),
+            ("Shortcut",           "e.g. ⌘⇧T",            shortcutField, false),
             ("Command",            "e.g. open -a Terminal", commandField,  true),
             ("Working Directory",  "e.g. ~/Projects",      workdirField,  false),
         ]
@@ -366,16 +366,11 @@ class ShortcutEditorWindowController: NSWindowController, NSWindowDelegate {
         let shortcutText = shortcutField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
         let commandText = commandField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        // Validate shortcut
-        if shortcutText.isEmpty {
-            showValidationAlert(message: "Shortcut is required.", informativeText: "Please enter a keyboard shortcut.")
-            return
-        }
-
-        if !GlobalHotkeyManager.isValidHotkeyString(shortcutText) {
+        // Validate shortcut format (only if a shortcut is provided)
+        if !shortcutText.isEmpty && !GlobalHotkeyManager.isValidHotkeyString(shortcutText) {
             showValidationAlert(
                 message: "Invalid shortcut format.",
-                informativeText: "Use Unicode modifier symbols (⌘⇧⌥⌃) followed by a key (e.g. ⌘⇧T, ⌃⌥F12). Special keys like F1-F20 can be used without modifiers."
+                informativeText: "Use Unicode modifier symbols (⌘⇧⌥⌃) followed by a key (e.g. ⌘⇧T, ⌃⌥F12). Special keys like F1-F20 can be used without modifiers. Leave empty for no shortcut."
             )
             return
         }

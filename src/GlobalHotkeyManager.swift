@@ -9,7 +9,7 @@ enum HotkeyError: Error, CustomStringConvertible {
     case registrationFailed(OSStatus)
     case unregistrationFailed(OSStatus)
     case invalidKeyString(String)
-    case keyCodeNotFound(Character)
+    case unknownKey(String)
 
     var description: String {
         switch self {
@@ -18,7 +18,7 @@ enum HotkeyError: Error, CustomStringConvertible {
         case .registrationFailed(let status): return "RegisterEventHotKey failed with status \(status)"
         case .unregistrationFailed(let status): return "UnregisterEventHotKey failed with status \(status)"
         case .invalidKeyString(let str): return "Invalid hotkey string: \"\(str)\""
-        case .keyCodeNotFound(let char): return "Could not resolve key code for character \"\(char)\""
+        case .unknownKey(let key): return "Unknown key: \"\(key)\""
         }
     }
 }
@@ -51,13 +51,49 @@ private class RegisteredHotkey {
     }
 }
 
-// MARK: - Named key codes
+// MARK: - Key code table
 
-/// Mapping of key names (Unicode symbols and text) to Carbon virtual key codes.
-/// Unicode symbols are the canonical format; text names are kept for keys that
-/// have no standard Unicode representation (F-keys, Clear, etc.).
-private let namedKeyCodes: [String: UInt32] = [
-    // Unicode symbols (canonical)
+/// Layout-agnostic mapping of key characters/names to Carbon virtual key codes.
+/// These correspond to physical key positions on the standard Apple keyboard
+/// and are independent of the active input source.
+private let keyCodes: [String: UInt32] = [
+    // Letters
+    "A": 0x00, "S": 0x01, "D": 0x02, "F": 0x03, "H": 0x04,
+    "G": 0x05, "Z": 0x06, "X": 0x07, "C": 0x08, "V": 0x09,
+    "B": 0x0B, "Q": 0x0C, "W": 0x0D, "E": 0x0E, "R": 0x0F,
+    "Y": 0x10, "T": 0x11, "O": 0x1F, "U": 0x20, "I": 0x22,
+    "P": 0x23, "L": 0x25, "J": 0x26, "K": 0x28, "N": 0x2D,
+    "M": 0x2E,
+
+    // Numbers and shifted symbols
+    "1": 0x12, "!": 0x12,
+    "2": 0x13, "@": 0x13,
+    "3": 0x14, "#": 0x14,
+    "4": 0x15, "$": 0x15,
+    "5": 0x17, "%": 0x17,
+    "6": 0x16, "^": 0x16,
+    "7": 0x1A, "&": 0x1A,
+    "8": 0x1C, "*": 0x1C,
+    "9": 0x19, "(": 0x19,
+    "0": 0x1D, ")": 0x1D,
+
+    // Punctuation and shifted symbols
+    "-": 0x1B, "_": 0x1B,
+    "=": 0x18, "+": 0x18,
+    "[": 0x21, "{": 0x21,
+    "]": 0x1E, "}": 0x1E,
+    ";": 0x29, ":": 0x29,
+    "'": 0x27, "\"": 0x27,
+    "\\": 0x2A, "|": 0x2A,
+    ",": 0x2B, "<": 0x2B,
+    "/": 0x2C, "?": 0x2C,
+    ".": 0x2F, ">": 0x2F,
+    "`": 0x32, "~": 0x32,
+
+    // Section sign (Apple keyboard specific)
+    "§": 0x0A, "±": 0x0A,
+
+    // Unicode key symbols (canonical display format)
     "␣":  0x31,  // Space
     "⎋":  0x35,  // Escape
     "↩":  0x24,  // Return
@@ -71,7 +107,7 @@ private let namedKeyCodes: [String: UInt32] = [
     "⌦":  0x75,  // Forward Delete
     "⇥":  0x30,  // Tab
 
-    // Text names (for keys without standard Unicode symbols)
+    // Text key names (for keys without standard Unicode symbols)
     "F1":     0x7A,
     "F2":     0x78,
     "F3":     0x63,
@@ -216,10 +252,8 @@ class GlobalHotkeyManager {
 
     /// Register a global hotkey using a string representation.
     /// Supports Unicode modifier symbols: ⌘ (cmd), ⇧ (shift), ⌥ (option), ⌃ (control)
-    /// The key portion can be:
-    /// - A single printable character resolved via UCKeyTranslate (e.g. "G", "1")
-    /// - A Unicode key symbol from `namedKeyCodes` (e.g. "⎋", "↩", "␣")
-    /// - A text key name from `namedKeyCodes` (e.g. "F19", "Clear")
+    /// The key portion is resolved via a layout-agnostic hardcoded table, so hotkeys
+    /// work regardless of the active keyboard input source.
     /// - Parameters:
     ///   - hotkeyString: String like "⌘⇧G", "⌃⌥F19", or "⇧Clear"
     ///   - handler: Closure to call when the hotkey is pressed
@@ -248,18 +282,9 @@ class GlobalHotkeyManager {
             throw HotkeyError.invalidKeyString(hotkeyString)
         }
 
-        // Try named key lookup first (Unicode symbols and text names like F19, Clear)
-        if let keyCode = namedKeyCodes[keyPart] {
-            return try register(keyCode: keyCode, modifiers: modifiers, handler: handler)
-        }
-
-        // Fall back to UCKeyTranslate for single printable characters
-        guard keyPart.count == 1, let keyChar = keyPart.first else {
-            throw HotkeyError.invalidKeyString(hotkeyString)
-        }
-
-        guard let keyCode = Self.keyCode(for: keyChar) else {
-            throw HotkeyError.keyCodeNotFound(keyChar)
+        // Look up the key in the layout-agnostic table
+        guard let keyCode = keyCodes[keyPart] else {
+            throw HotkeyError.unknownKey(keyPart)
         }
 
         return try register(keyCode: keyCode, modifiers: modifiers, handler: handler)
@@ -306,66 +331,11 @@ class GlobalHotkeyManager {
         return flags
     }
 
-    // MARK: - Key code resolution via UCKeyTranslate
-
-    /// Resolve a character to a Carbon virtual key code using the current keyboard layout.
-    /// This is locale-aware and does not rely on hardcoded tables.
-    static func keyCode(for char: Character) -> UInt32? {
-        let inputSource = TISCopyCurrentKeyboardLayoutInputSource().takeRetainedValue()
-        guard let layoutData = TISGetInputSourceProperty(inputSource, kTISPropertyUnicodeKeyLayoutData) else {
-            return nil
-        }
-        let keyboardLayout = Unmanaged<CFData>.fromOpaque(layoutData).takeUnretainedValue() as Data
-
-        return keyboardLayout.withUnsafeBytes { (rawPtr: UnsafeRawBufferPointer) in
-            guard let basePtr = rawPtr.baseAddress else { return nil as UInt32? }
-            let ucKeyboard = basePtr.assumingMemoryBound(to: UCKeyboardLayout.self)
-
-            let unicodeScalars = String(char).unicodeScalars
-            guard let targetScalar = unicodeScalars.first else { return nil as UInt32? }
-            let targetChar = targetScalar.value
-
-            var deadKeyState: UInt32 = 0
-            var maxStringLength: Int = 4
-            var actualStringLength: Int = 0
-            var unicodeString = [UniChar](repeating: 0, count: maxStringLength)
-
-            // Try key codes 0-127
-            for keyCode in 0..<128 {
-                deadKeyState = 0
-                maxStringLength = 4
-                actualStringLength = 0
-
-                let status = UCKeyTranslate(
-                    ucKeyboard,
-                    UInt16(keyCode),
-                    UInt16(kUCKeyActionDisplay),
-                    0, // No modifiers for base character lookup
-                    UInt32(LMGetKbdType()),
-                    0, // kUCKeyTranslateNoDeadKeysBit
-                    &deadKeyState,
-                    maxStringLength,
-                    &actualStringLength,
-                    &unicodeString
-                )
-
-                if status == noErr && actualStringLength > 0 {
-                    let producedScalar = Int(unicodeString[0])
-                    if producedScalar == targetChar {
-                        return UInt32(keyCode)
-                    }
-                }
-            }
-
-            return nil as UInt32?
-        }
-    }
-
     // MARK: - Validation
 
     /// Validate that a hotkey string conforms to the expected Unicode representation.
     /// A valid string must contain at least one modifier symbol (⌘⇧⌥⌃) followed by
-    /// a single key character or a named key (e.g. F1, ⎋, ↩).
+    /// a key that exists in the layout-agnostic key code table.
     static func isValidHotkeyString(_ string: String) -> Bool {
         guard !string.isEmpty else { return false }
 
@@ -390,17 +360,16 @@ class GlobalHotkeyManager {
         // Must have a key part
         guard !keyPart.isEmpty else { return false }
 
+        // Key must exist in the key code table
+        guard keyCodes[keyPart] != nil else { return false }
+
         // Named keys (F1-F20, ⎋, ↩, etc.) are valid with or without modifiers
-        if namedKeyCodes[keyPart] != nil {
+        if keyPart.count > 1 {
             return true
         }
 
         // Single printable characters require at least one modifier
-        if keyPart.count == 1 {
-            return !modifiers.isEmpty
-        }
-
-        return false
+        return !modifiers.isEmpty
     }
 
     // MARK: - Utility

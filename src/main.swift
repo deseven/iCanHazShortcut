@@ -98,7 +98,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             var uncategorized: [ShortcutConfig] = []
 
             for shortcut in config.shortcuts {
-                guard shortcut.enabled && !shortcut.shortcut.isEmpty && !shortcut.command.isEmpty else {
+                guard shortcut.enabled && !shortcut.command.isEmpty else {
                     continue
                 }
 
@@ -260,7 +260,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     func registerShortcut(at index: Int) -> Bool {
         let shortcut = ConfigManager.shared.config.shortcuts[index]
-        guard shortcut.enabled && !shortcut.shortcut.isEmpty && !shortcut.command.isEmpty else {
+        guard shortcut.enabled && !shortcut.command.isEmpty else {
+            failedRegistrations.remove(index)
+            return true
+        }
+        // No hotkey to register for shortcuts without a key binding
+        guard !shortcut.shortcut.isEmpty else {
             failedRegistrations.remove(index)
             return true
         }
