@@ -156,6 +156,13 @@ class ShortcutsViewController: NSViewController {
             name: NSWindow.didResizeNotification,
             object: nil
         )
+
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(shortcutsDidChange),
+            name: .iCHSShortcutsDidChange,
+            object: nil
+        )
     }
 
     deinit {
@@ -619,6 +626,11 @@ class ShortcutsViewController: NSViewController {
 
     @objc private func windowDidResize(_ notification: Notification) {
         tableView.sizeLastColumnToFit()
+    }
+
+    @objc private func shortcutsDidChange() {
+        buildRows()
+        tableView.reloadData()
     }
 
 }

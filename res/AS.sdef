@@ -3,63 +3,85 @@
 
 <dictionary title="iCanHazShortcut">
     <suite name="iCanHazShortcut Suite" code="iCHS" description="iCanHazShortcut Scripts">
-        <command name="enableAction" code="enableac" description="Enable defined action">
-            <cocoa class="asEnableAction"/>
-            <direct-parameter description="Action">
+        <command name="enableAction" code="enableac" description="Enable shortcut by action name">
+            <cocoa class="ASEnableAction"/>
+            <direct-parameter description="Action name">
                 <type type="text"/>
             </direct-parameter>
         </command>
-        <command name="disableAction" code="disablac" description="Disable defined action">
-            <cocoa class="asDisableAction"/>
-            <direct-parameter description="Action">
+        <command name="disableAction" code="disablac" description="Disable shortcut by action name">
+            <cocoa class="ASDisableAction"/>
+            <direct-parameter description="Action name">
                 <type type="text"/>
             </direct-parameter>
         </command>
-        <command name="toggleAction" code="toggleac" description="Toggle defined action">
-            <cocoa class="asToggleAction"/>
-            <direct-parameter description="Action">
+        <command name="toggleAction" code="toggleac" description="Toggle shortcut by action name">
+            <cocoa class="ASToggleAction"/>
+            <direct-parameter description="Action name">
                 <type type="text"/>
             </direct-parameter>
         </command>
-        <command name="enableID" code="enablesi" description="Enable defined shortcut by ID">
-            <cocoa class="asEnableShortcutID"/>
+        <command name="triggerAction" code="triggrac" description="Trigger shortcut by action name">
+            <cocoa class="ASTriggerAction"/>
+            <direct-parameter description="Action name">
+                <type type="text"/>
+            </direct-parameter>
+        </command>
+        <command name="enableID" code="enablesi" description="Enable shortcut by ID">
+            <cocoa class="ASEnableID"/>
             <direct-parameter description="Shortcut ID">
-                <type type="integer"/>
+                <type type="text"/>
             </direct-parameter>
         </command>
-        <command name="disableID" code="disablsi" description="Disable defined shortcut by ID">
-            <cocoa class="asDisableShortcutID"/>
+        <command name="disableID" code="disablsi" description="Disable shortcut by ID">
+            <cocoa class="ASDisableID"/>
             <direct-parameter description="Shortcut ID">
-                <type type="integer"/>
+                <type type="text"/>
             </direct-parameter>
         </command>
-        <command name="toggleID" code="togglesi" description="Toggle defined shortcut by ID">
-            <cocoa class="asToggleShortcutID"/>
+        <command name="toggleID" code="togglesi" description="Toggle shortcut by ID">
+            <cocoa class="ASToggleID"/>
             <direct-parameter description="Shortcut ID">
-                <type type="integer"/>
-            </direct-parameter>
-        </command>
-        <command name="enable" code="enablesc" description="Enable defined shortcut">
-            <cocoa class="asEnableShortcut"/>
-            <direct-parameter description="Shortcut">
                 <type type="text"/>
             </direct-parameter>
         </command>
-        <command name="disable" code="disablsc" description="Disable defined shortcut">
-            <cocoa class="asDisableShortcut"/>
-            <direct-parameter description="Shortcut">
+        <command name="triggerID" code="triggsid" description="Trigger shortcut by ID">
+            <cocoa class="ASTriggerID"/>
+            <direct-parameter description="Shortcut ID">
                 <type type="text"/>
             </direct-parameter>
         </command>
-        <command name="toggle" code="togglesc" description="Toggle defined shortcut">
-            <cocoa class="asToggleShortcut"/>
-            <direct-parameter description="Shortcut">
+        <command name="enable" code="enablesc" description="Enable shortcut by key combination">
+            <cocoa class="ASEnableShortcut"/>
+            <direct-parameter description="Shortcut key combination (e.g. ⇧⌘1)">
                 <type type="text"/>
             </direct-parameter>
         </command>
-        <command name="list" code="listscts" description="List all shortcuts">
-            <cocoa class="asListShortcuts"/>
-            <result type="text" description="TSV list of shortcuts (id,state,shortcut,action)"/>
+        <command name="disable" code="disablsc" description="Disable shortcut by key combination">
+            <cocoa class="ASDisableShortcut"/>
+            <direct-parameter description="Shortcut key combination (e.g. ⇧⌘1)">
+                <type type="text"/>
+            </direct-parameter>
+        </command>
+        <command name="toggle" code="togglesc" description="Toggle shortcut by key combination">
+            <cocoa class="ASToggleShortcut"/>
+            <direct-parameter description="Shortcut key combination (e.g. ⇧⌘1)">
+                <type type="text"/>
+            </direct-parameter>
+        </command>
+        <command name="trigger" code="triggrsc" description="Trigger shortcut by key combination">
+            <cocoa class="ASTriggerShortcut"/>
+            <direct-parameter description="Shortcut key combination (e.g. ⇧⌘1)">
+                <type type="text"/>
+            </direct-parameter>
+        </command>
+        <command name="list" code="listscts" description="List all shortcuts as TSV">
+            <cocoa class="ASListShortcuts"/>
+            <result type="text" description="TSV list: id, state, shortcut, category, action, command"/>
+        </command>
+        <command name="listJSON" code="listjstv" description="List all shortcuts as JSON">
+            <cocoa class="ASListJSONShortcuts"/>
+            <result type="text" description="JSON array of shortcut objects"/>
         </command>
     </suite>
 </dictionary>
