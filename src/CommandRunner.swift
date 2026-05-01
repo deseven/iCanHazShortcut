@@ -35,7 +35,7 @@ class CommandRunner {
     ///     captures stdout/stderr and calls `completion` on the main thread when done.
     ///   - workingDirectory: Optional working directory. If it starts with `~`, the tilde
     ///     is expanded using `NSString.expandingTildeInPath`.
-    ///   - shell: Optional shell path with optional arguments (e.g. `/bin/bash -l`).
+    ///   - shell: Optional shell path with optional arguments (e.g. `/bin/zsh -l`).
     ///     If provided, the shell is spawned and `command` is written to its stdin.
     ///     If empty, `command` is launched directly as an executable path with arguments.
     ///   - command: The command to execute. If `shell` is set, this string is written to

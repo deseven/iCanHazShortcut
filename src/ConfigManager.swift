@@ -1,9 +1,9 @@
 import Foundation
-import SwiftyJSON
+import TOML
 
 // MARK: - Shortcut Configuration
 
-struct ShortcutConfig {
+struct ShortcutConfig: Codable {
     var shortcut: String
     var category: String
     var action: String
@@ -29,31 +29,11 @@ struct ShortcutConfig {
         self.workdir = workdir
         self.enabled = enabled
     }
-
-    init(from json: JSON) {
-        self.shortcut = json["shortcut"].stringValue
-        self.category = json["category"].stringValue
-        self.action = json["action"].stringValue
-        self.command = json["command"].stringValue
-        self.workdir = json["workdir"].stringValue
-        self.enabled = json["enabled"].boolValue
-    }
-
-    func toOrderedDict() -> NSMutableDictionary {
-        let dict = NSMutableDictionary()
-        dict["shortcut"] = shortcut
-        dict["category"] = category
-        dict["action"] = action
-        dict["command"] = command
-        dict["workdir"] = workdir
-        dict["enabled"] = enabled
-        return dict
-    }
 }
 
 // MARK: - Shortcuts Table Configuration
 
-struct ShortcutsTableConfig {
+struct ShortcutsTableConfig: Codable {
     var shortcutColumn: Bool
     var actionColumn: Bool
     var commandColumn: Bool
@@ -80,34 +60,21 @@ struct ShortcutsTableConfig {
         self.workdirColumnWidth = workdirColumnWidth
     }
 
-    init(from json: JSON) {
-        self.shortcutColumn = json["shortcut_column"].boolValue
-        self.actionColumn = json["action_column"].boolValue
-        self.commandColumn = json["command_column"].boolValue
-        self.workdirColumn = json["workdir_column"].boolValue
-        self.shortcutColumnWidth = json["shortcut_column_width"].intValue
-        self.actionColumnWidth = json["action_column_width"].intValue
-        self.commandColumnWidth = json["command_column_width"].intValue
-        self.workdirColumnWidth = json["workdir_column_width"].intValue
-    }
-
-    func toOrderedDict() -> NSMutableDictionary {
-        let dict = NSMutableDictionary()
-        dict["shortcut_column"] = shortcutColumn
-        dict["action_column"] = actionColumn
-        dict["command_column"] = commandColumn
-        dict["workdir_column"] = workdirColumn
-        dict["shortcut_column_width"] = shortcutColumnWidth
-        dict["action_column_width"] = actionColumnWidth
-        dict["command_column_width"] = commandColumnWidth
-        dict["workdir_column_width"] = workdirColumnWidth
-        return dict
+    enum CodingKeys: String, CodingKey {
+        case shortcutColumn = "shortcut_column"
+        case actionColumn = "action_column"
+        case commandColumn = "command_column"
+        case workdirColumn = "workdir_column"
+        case shortcutColumnWidth = "shortcut_column_width"
+        case actionColumnWidth = "action_column_width"
+        case commandColumnWidth = "command_column_width"
+        case workdirColumnWidth = "workdir_column_width"
     }
 }
 
 // MARK: - Window Configuration
 
-struct WindowConfig {
+struct WindowConfig: Codable {
     var x: Int
     var y: Int
     var width: Int
@@ -125,28 +92,17 @@ struct WindowConfig {
         self.shortcutsTable = shortcutsTable
     }
 
-    init(from json: JSON) {
-        self.x = json["x"].intValue
-        self.y = json["y"].intValue
-        self.width = json["width"].intValue
-        self.height = json["height"].intValue
-        self.shortcutsTable = ShortcutsTableConfig(from: json["shortcuts_table"])
-    }
-
-    func toOrderedDict() -> NSMutableDictionary {
-        let dict = NSMutableDictionary()
-        dict["x"] = x
-        dict["y"] = y
-        dict["width"] = width
-        dict["height"] = height
-        dict["shortcuts_table"] = shortcutsTable.toOrderedDict()
-        return dict
+    enum CodingKeys: String, CodingKey {
+        case x, y, width, height
+        case shortcutsTable = "shortcuts_table"
     }
 }
 
 // MARK: - App Configuration
 
-struct AppConfig {
+struct AppConfig: Codable {
+    static let defaultShell = "/bin/zsh -l"
+
     var configVersion: Int
     var shell: String
     var populateMenuWithActions: Bool
@@ -160,7 +116,7 @@ struct AppConfig {
 
     static let `default` = AppConfig()
 
-    init(configVersion: Int = 3, shell: String = "/bin/bash -l",
+    init(configVersion: Int = 3, shell: String = AppConfig.defaultShell,
          populateMenuWithActions: Bool = true, showHotkeysInMenu: Bool = true,
          checkForUpdates: Bool = true, startOnLogin: Bool = true,
          showIconInStatusbar: Bool = true, setWorkdirWithCd: Bool = true,
@@ -177,32 +133,16 @@ struct AppConfig {
         self.shortcuts = shortcuts
     }
 
-    init(from json: JSON) {
-        self.configVersion = json["config_version"].intValue
-        self.shell = json["shell"].stringValue
-        self.populateMenuWithActions = json["populate_menu_with_actions"].boolValue
-        self.showHotkeysInMenu = json["show_hotkeys_in_menu"].boolValue
-        self.checkForUpdates = json["check_for_updates"].boolValue
-        self.startOnLogin = json["start_on_login"].boolValue
-        self.showIconInStatusbar = json["show_icon_in_statusbar"].boolValue
-        self.setWorkdirWithCd = json["set_workdir_with_cd"].boolValue
-        self.window = WindowConfig(from: json["window"])
-        self.shortcuts = json["shortcuts"].arrayValue.map { ShortcutConfig(from: $0) }
-    }
-
-    func toOrderedDict() -> NSMutableDictionary {
-        let dict = NSMutableDictionary()
-        dict["config_version"] = configVersion
-        dict["shell"] = shell
-        dict["populate_menu_with_actions"] = populateMenuWithActions
-        dict["show_hotkeys_in_menu"] = showHotkeysInMenu
-        dict["check_for_updates"] = checkForUpdates
-        dict["start_on_login"] = startOnLogin
-        dict["show_icon_in_statusbar"] = showIconInStatusbar
-        dict["set_workdir_with_cd"] = setWorkdirWithCd
-        dict["window"] = window.toOrderedDict()
-        dict["shortcuts"] = shortcuts.map { $0.toOrderedDict() }
-        return dict
+    enum CodingKeys: String, CodingKey {
+        case configVersion = "config_version"
+        case shell
+        case populateMenuWithActions = "populate_menu_with_actions"
+        case showHotkeysInMenu = "show_hotkeys_in_menu"
+        case checkForUpdates = "check_for_updates"
+        case startOnLogin = "start_on_login"
+        case showIconInStatusbar = "show_icon_in_statusbar"
+        case setWorkdirWithCd = "set_workdir_with_cd"
+        case window, shortcuts
     }
 }
 
@@ -211,10 +151,17 @@ struct AppConfig {
 class ConfigManager {
     static let shared = ConfigManager()
 
-    private let appName = "iCanHazShortcut"
-    private let configFileName = "ichs-config.json"
+    static let appName = "iCanHazShortcut"
+    static let appShortName = "iCHS"
+    static let appTag = "ichs"
+    static let configFileName = "\(appTag)-config.toml"
 
     var config: AppConfig
+
+    /// Set to `true` when a fresh default config was written without any
+    /// prior config existing (first launch) or when the user chose
+    /// "Start from scratch" during migration.
+    var isFreshStart: Bool = false
 
     private init() {
         config = AppConfig.default
@@ -224,11 +171,11 @@ class ConfigManager {
 
     var configDirectory: URL {
         let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
-        return appSupport.appendingPathComponent(appName)
+        return appSupport.appendingPathComponent(Self.appName)
     }
 
     var configFilePath: URL {
-        return configDirectory.appendingPathComponent(configFileName)
+        return configDirectory.appendingPathComponent(Self.configFileName)
     }
 
     // MARK: - Load / Save
@@ -253,6 +200,8 @@ class ConfigManager {
             if ConfigMigrator.oldConfigExists() {
                 return ConfigMigrator.handleMigration()
             } else {
+                // Fresh start: no old config, no new config
+                isFreshStart = true
                 save()
             }
             return true
@@ -260,9 +209,9 @@ class ConfigManager {
 
         // Load existing config
         do {
-            let data = try Data(contentsOf: configFilePath)
-            let json = try JSON(data: data)
-            config = AppConfig(from: json)
+            let content = try String(contentsOf: configFilePath, encoding: .utf8)
+            let decoder = TOMLDecoder()
+            config = try decoder.decode(AppConfig.self, from: content)
         } catch {
             print("Failed to load config: \(error)")
         }
@@ -284,9 +233,10 @@ class ConfigManager {
         }
 
         do {
-            let dict = config.toOrderedDict()
-            let rawData = try JSONSerialization.data(withJSONObject: dict, options: .prettyPrinted)
-            try rawData.write(to: configFilePath, options: .atomic)
+            let encoder = TOMLEncoder()
+            encoder.outputFormatting = .sortedKeys
+            let data = try encoder.encode(config)
+            try data.write(to: configFilePath, options: .atomic)
         } catch {
             print("Failed to save config: \(error)")
         }

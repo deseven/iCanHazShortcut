@@ -361,6 +361,48 @@ class GlobalHotkeyManager {
         }
     }
 
+    // MARK: - Validation
+
+    /// Validate that a hotkey string conforms to the expected Unicode representation.
+    /// A valid string must contain at least one modifier symbol (⌘⇧⌥⌃) followed by
+    /// a single key character or a named key (e.g. F1, ⎋, ↩).
+    static func isValidHotkeyString(_ string: String) -> Bool {
+        guard !string.isEmpty else { return false }
+
+        var modifiers: NSEvent.ModifierFlags = []
+        var keyPart = ""
+
+        for char in string {
+            switch char {
+            case "⌘":
+                modifiers.insert(.command)
+            case "⇧":
+                modifiers.insert(.shift)
+            case "⌥":
+                modifiers.insert(.option)
+            case "⌃":
+                modifiers.insert(.control)
+            default:
+                keyPart.append(char)
+            }
+        }
+
+        // Must have a key part
+        guard !keyPart.isEmpty else { return false }
+
+        // Named keys (F1-F20, ⎋, ↩, etc.) are valid with or without modifiers
+        if namedKeyCodes[keyPart] != nil {
+            return true
+        }
+
+        // Single printable characters require at least one modifier
+        if keyPart.count == 1 {
+            return !modifiers.isEmpty
+        }
+
+        return false
+    }
+
     // MARK: - Utility
 
     /// Convert a 4-character ASCII string to a FourCharCode (OSType).

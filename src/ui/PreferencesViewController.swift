@@ -10,7 +10,7 @@ class PreferencesViewController: NSViewController {
     private let defaultRadio = NSButton(radioButtonWithTitle: "Default", target: nil, action: nil)
     private let customRadio = NSButton(radioButtonWithTitle: "Custom", target: nil, action: nil)
     private let customShellField = NSTextField()
-    private let defaultDescLabel = NSTextField(labelWithString: "/bin/bash -l")
+    private let defaultDescLabel = NSTextField(labelWithString: AppConfig.defaultShell)
 
     // MARK: - Checkbox Controls
 
@@ -350,7 +350,7 @@ class PreferencesViewController: NSViewController {
         switch config.shell {
         case "":
             noneRadio.state = .on
-        case "/bin/bash -l":
+        case AppConfig.defaultShell:
             defaultRadio.state = .on
         default:
             customRadio.state = .on
@@ -386,7 +386,7 @@ class PreferencesViewController: NSViewController {
         if noneRadio.state == .on {
             ConfigManager.shared.config.shell = ""
         } else if defaultRadio.state == .on {
-            ConfigManager.shared.config.shell = "/bin/bash -l"
+            ConfigManager.shared.config.shell = AppConfig.defaultShell
         } else {
             if let editor = customShellField.currentEditor() {
                 ConfigManager.shared.config.shell = editor.string

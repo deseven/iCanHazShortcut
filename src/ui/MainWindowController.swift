@@ -66,7 +66,7 @@ class MainWindowController: NSWindowController, NSWindowDelegate {
         window.contentViewController = tabViewController
         window.level = .floating
         window.isReleasedWhenClosed = false
-        window.title = "iCanHazShortcut"
+        window.title = ConfigManager.appName
         window.minSize = Self.shortcutsMinSize
         window.maxSize = Self.shortcutsMaxSize
 

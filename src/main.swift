@@ -1,7 +1,7 @@
 import Cocoa
 import Carbon
 
-let appName = "iCanHazShortcut"
+let appName = ConfigManager.appName
 
 // MARK: - Menu item target for shortcut execution
 
@@ -38,6 +38,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         // Register all shortcuts from config
         registerShortcuts()
+
+        // If this is a fresh start (no prior config or user chose "Start from scratch"),
+        // automatically show the main window with the Shortcuts tab active
+        if ConfigManager.shared.isFreshStart {
+            showShortcutsTab()
+        }
     }
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
@@ -285,6 +291,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         return failedRegistrations.contains(index)
     }
 
+    func reregisterAllShortcuts() {
+        GlobalHotkeyManager.shared.unregisterAll()
+        registeredHotkeyIDs.removeAll()
+        failedRegistrations.removeAll()
+        registerShortcuts()
+    }
+
     func runShortcut(_ shortcut: ShortcutConfig) {
         let config = ConfigManager.shared.config
         let runner = CommandRunner()
@@ -349,4 +362,45 @@ let app = NSApplication.shared
 let delegate = AppDelegate()
 app.delegate = delegate
 app.setActivationPolicy(.accessory)
+
+// Build a minimal main menu so standard editing shortcuts (Cmd-C/V/X/A/Z) work in text fields
+let mainMenu = NSMenu()
+let appMenuItem = NSMenuItem()
+mainMenu.addItem(appMenuItem)
+let appSubMenu = NSMenu()
+appSubMenu.addItem(NSMenuItem(title: "About \(appName)", action: #selector(AppDelegate.showAboutTab), keyEquivalent: ""))
+appSubMenu.addItem(NSMenuItem.separator())
+appSubMenu.addItem(NSMenuItem(title: "Preferences…", action: #selector(AppDelegate.showPreferencesTab), keyEquivalent: ","))
+appSubMenu.addItem(NSMenuItem.separator())
+appSubMenu.addItem(NSMenuItem(title: "Hide \(appName)", action: #selector(NSApplication.hide(_:)), keyEquivalent: "h"))
+let hideOthersItem = NSMenuItem(title: "Hide Others", action: #selector(NSApplication.hideOtherApplications(_:)), keyEquivalent: "h")
+hideOthersItem.keyEquivalentModifierMask = [.command, .option]
+appSubMenu.addItem(hideOthersItem)
+appSubMenu.addItem(NSMenuItem(title: "Show All", action: #selector(NSApplication.unhideAllApplications(_:)), keyEquivalent: ""))
+appSubMenu.addItem(NSMenuItem.separator())
+appSubMenu.addItem(NSMenuItem(title: "Quit \(appName)", action: #selector(AppDelegate.quitClicked), keyEquivalent: "q"))
+appMenuItem.submenu = appSubMenu
+
+let editMenuItem = NSMenuItem()
+mainMenu.addItem(editMenuItem)
+let editSubMenu = NSMenu(title: "Edit")
+editSubMenu.addItem(NSMenuItem(title: "Undo", action: Selector(("undo:")), keyEquivalent: "z"))
+editSubMenu.addItem(NSMenuItem(title: "Redo", action: Selector(("redo:")), keyEquivalent: "Z"))
+editSubMenu.addItem(NSMenuItem.separator())
+editSubMenu.addItem(NSMenuItem(title: "Cut", action: #selector(NSText.cut(_:)), keyEquivalent: "x"))
+editSubMenu.addItem(NSMenuItem(title: "Copy", action: #selector(NSText.copy(_:)), keyEquivalent: "c"))
+editSubMenu.addItem(NSMenuItem(title: "Paste", action: #selector(NSText.paste(_:)), keyEquivalent: "v"))
+editSubMenu.addItem(NSMenuItem(title: "Select All", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a"))
+editMenuItem.submenu = editSubMenu
+
+let windowMenuItem = NSMenuItem()
+mainMenu.addItem(windowMenuItem)
+let windowSubMenu = NSMenu(title: "Window")
+windowSubMenu.addItem(NSMenuItem(title: "Minimize", action: #selector(NSWindow.performMiniaturize(_:)), keyEquivalent: "m"))
+windowSubMenu.addItem(NSMenuItem(title: "Zoom", action: #selector(NSWindow.performZoom(_:)), keyEquivalent: ""))
+windowSubMenu.addItem(NSMenuItem(title: "Close", action: #selector(NSWindow.performClose(_:)), keyEquivalent: "w"))
+windowMenuItem.submenu = windowSubMenu
+
+app.mainMenu = mainMenu
+
 app.run()

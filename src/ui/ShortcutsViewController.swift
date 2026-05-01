@@ -17,13 +17,85 @@ private enum ShortcutTableRow {
     }
 }
 
+// MARK: - Reorderable Table View
+
+private class ReorderableTableView: NSTableView {
+    var dragColumnIdentifier: NSUserInterfaceItemIdentifier?
+    var onDeleteKeyPressed: (() -> Void)?
+    private(set) var isDragFromHandle = false
+    private var didPushGrabCursor = false
+
+    override func mouseDown(with event: NSEvent) {
+        let point = convert(event.locationInWindow, from: nil)
+        let row = row(at: point)
+        let column = column(at: point)
+
+        // Reset from any previous interaction, then set if clicking drag handle
+        isDragFromHandle = false
+        if row >= 0 && column >= 0 && column < tableColumns.count,
+           let dragID = dragColumnIdentifier,
+           tableColumns[column].identifier == dragID {
+            isDragFromHandle = true
+        }
+
+        super.mouseDown(with: event)
+
+        // Don't reset isDragFromHandle here — draggingSession callbacks fire after mouseDown returns
+    }
+
+    override func mouseUp(with event: NSEvent) {
+        isDragFromHandle = false
+        super.mouseUp(with: event)
+    }
+
+    // Show closed hand cursor during drag from handle
+    override func draggingSession(_ session: NSDraggingSession, willBeginAt screenPoint: NSPoint) {
+        if isDragFromHandle {
+            NSCursor.closedHand.push()
+            didPushGrabCursor = true
+        }
+    }
+
+    override func draggingSession(_ session: NSDraggingSession, endedAt screenPoint: NSPoint, operation: NSDragOperation) {
+        if didPushGrabCursor {
+            NSCursor.pop()
+            didPushGrabCursor = false
+        }
+        isDragFromHandle = false
+    }
+
+    override func keyDown(with event: NSEvent) {
+        if event.keyCode == 0x33 || event.keyCode == 0x75 {  // Delete or Forward Delete
+            onDeleteKeyPressed?()
+        } else {
+            super.keyDown(with: event)
+        }
+    }
+}
+
+// MARK: - Button with Pointer Cursor
+
+private class PointerButton: NSButton {
+    override func resetCursorRects() {
+        addCursorRect(bounds, cursor: .pointingHand)
+    }
+}
+
+// MARK: - Image View with Grab Cursor
+
+private class GrabImageView: NSImageView {
+    override func resetCursorRects() {
+        addCursorRect(bounds, cursor: .openHand)
+    }
+}
+
 // MARK: - Shortcuts View Controller
 
 class ShortcutsViewController: NSViewController {
 
     // MARK: - UI Elements
 
-    private var tableView: NSTableView!
+    private var tableView: ReorderableTableView!
     private var addButton: NSButton!
     private var editButton: NSButton!
     private var removeButton: NSButton!
@@ -32,12 +104,17 @@ class ShortcutsViewController: NSViewController {
 
     private var rows: [ShortcutTableRow] = []
 
+    // MARK: - Editor
+
+    private var editorWindowController: ShortcutEditorWindowController?
+
     // MARK: - Column resize debounce
 
     private var columnResizeWorkItem: DispatchWorkItem?
 
     // MARK: - Identifiers
 
+    private static let dragColumnID = NSUserInterfaceItemIdentifier("dragColumn")
     private static let toggleColumnID = NSUserInterfaceItemIdentifier("toggleColumn")
     private static let shortcutColumnID = NSUserInterfaceItemIdentifier("shortcutColumn")
     private static let actionColumnID = NSUserInterfaceItemIdentifier("actionColumn")
@@ -45,8 +122,11 @@ class ShortcutsViewController: NSViewController {
     private static let workdirColumnID = NSUserInterfaceItemIdentifier("workdirColumn")
 
     private static let groupCellID = NSUserInterfaceItemIdentifier("GroupCell")
+    private static let dragCellID = NSUserInterfaceItemIdentifier("DragCell")
     private static let toggleCellID = NSUserInterfaceItemIdentifier("ToggleCell")
     private static let textCellID = NSUserInterfaceItemIdentifier("TextCell")
+
+    private static let shortcutPasteboardType = NSPasteboard.PasteboardType("com.ichs.shortcut-row")
 
     // Column menu item tags
     private static let shortcutColumnTag = 1
@@ -119,7 +199,7 @@ class ShortcutsViewController: NSViewController {
 
         // ── Table View ──
 
-        tableView = NSTableView()
+        tableView = ReorderableTableView()
         tableView.delegate = self
         tableView.dataSource = self
         tableView.style = .plain
@@ -130,8 +210,22 @@ class ShortcutsViewController: NSViewController {
         tableView.autoresizingMask = [.width]
         tableView.allowsColumnReordering = false
         tableView.floatsGroupRows = false
+        tableView.dragColumnIdentifier = Self.dragColumnID
+        tableView.registerForDraggedTypes([Self.shortcutPasteboardType])
+        tableView.doubleAction = #selector(tableViewDoubleClicked(_:))
+        tableView.target = self
+        tableView.onDeleteKeyPressed = { [weak self] in
+            self?.deleteSelectedShortcut()
+        }
 
         let tableConfig = ConfigManager.shared.config.window.shortcutsTable
+
+        let dragColumn = NSTableColumn(identifier: Self.dragColumnID)
+        dragColumn.title = ""
+        dragColumn.width = 14
+        dragColumn.minWidth = 14
+        dragColumn.maxWidth = 14
+        dragColumn.resizingMask = []
 
         let toggleColumn = NSTableColumn(identifier: Self.toggleColumnID)
         toggleColumn.title = "State"
@@ -164,6 +258,7 @@ class ShortcutsViewController: NSViewController {
         workdirColumn.isHidden = !tableConfig.workdirColumn
         workdirColumn.resizingMask = [.userResizingMask, .autoresizingMask]
 
+        tableView.addTableColumn(dragColumn)
         tableView.addTableColumn(toggleColumn)
         tableView.addTableColumn(shortcutColumn)
         tableView.addTableColumn(actionColumn)
@@ -211,7 +306,14 @@ class ShortcutsViewController: NSViewController {
 
         addButton = makeIconButton(imageName: "bx-plus-circle", toolTip: "Add new shortcut")
         editButton = makeIconButton(imageName: "bx-pencil-circle", toolTip: "Edit selected shortcut")
-        removeButton = makeIconButton(imageName: "bx-x-circle", toolTip: "Remove selected shortcut")
+        removeButton = makeIconButton(imageName: "bx-minus-circle", toolTip: "Remove selected shortcut")
+
+        addButton.target = self
+        addButton.action = #selector(addClicked(_:))
+        editButton.target = self
+        editButton.action = #selector(editClicked(_:))
+        removeButton.target = self
+        removeButton.action = #selector(removeClicked(_:))
 
         editButton.isEnabled = false
         removeButton.isEnabled = false
@@ -267,8 +369,178 @@ class ShortcutsViewController: NSViewController {
         removeButton.isEnabled = hasValidSelection
     }
 
+    // MARK: - Drag-and-Drop Helpers
+
+    /// Determine the target category and position within that category for a drop at the given row.
+    /// The `excludingConfigIndex` is the config index of the shortcut being dragged (to exclude it from position counting).
+    private func categoryAndPosition(forInsertionAt row: Int, excludingConfigIndex: Int) -> (category: String, position: Int)? {
+        // Determine the scan start row
+        let scanFrom: Int
+        if row >= rows.count {
+            scanFrom = rows.count - 1
+        } else if rows[row].isCategory {
+            // Inserting above a category row = end of previous category
+            scanFrom = row - 1
+        } else {
+            // Inserting above a shortcut row
+            scanFrom = row
+        }
+
+        // Scan upward to find the category row
+        var categoryRow = -1
+        for i in stride(from: scanFrom, through: 0, by: -1) {
+            if rows[i].isCategory {
+                categoryRow = i
+                break
+            }
+        }
+
+        guard categoryRow >= 0 else { return nil }
+
+        let categoryName: String
+        if case .category(let name) = rows[categoryRow] {
+            categoryName = name == "No Category" ? "" : name
+        } else {
+            return nil
+        }
+
+        // Count shortcuts between category row and insertion point, excluding the source
+        let countUpTo = min(row, rows.count)
+        var position = 0
+        for i in (categoryRow + 1)..<countUpTo {
+            if case .shortcut(let configIndex) = rows[i] {
+                if configIndex != excludingConfigIndex {
+                    position += 1
+                }
+            }
+        }
+
+        return (categoryName, position)
+    }
+
+    /// Get the current category and position within that category for a shortcut at the given config index.
+    private func currentPositionInCategory(for configIndex: Int) -> (category: String, position: Int)? {
+        guard configIndex >= 0 && configIndex < ConfigManager.shared.config.shortcuts.count else { return nil }
+        let category = ConfigManager.shared.config.shortcuts[configIndex].category
+
+        var position = 0
+        for i in 0..<configIndex {
+            if ConfigManager.shared.config.shortcuts[i].category == category {
+                position += 1
+            }
+        }
+
+        return (category, position)
+    }
+
+    /// Move a shortcut from its current position in the config array to a new category and position.
+    private func moveShortcut(from sourceConfigIndex: Int, toCategory: String, positionInCategory: Int) {
+        var shortcuts = ConfigManager.shared.config.shortcuts
+        var shortcut = shortcuts.remove(at: sourceConfigIndex)
+        shortcut.category = toCategory
+
+        // Find insertion point: before the positionInCategory-th shortcut in toCategory
+        var insertIndex = shortcuts.count  // default: end of array
+        var countInCategory = 0
+        var lastInCategoryIndex = -1
+        var foundExactPosition = false
+
+        for (index, s) in shortcuts.enumerated() {
+            if s.category == toCategory {
+                lastInCategoryIndex = index
+                if countInCategory == positionInCategory {
+                    insertIndex = index
+                    foundExactPosition = true
+                    break
+                }
+                countInCategory += 1
+            }
+        }
+
+        if !foundExactPosition && lastInCategoryIndex >= 0 {
+            insertIndex = lastInCategoryIndex + 1
+        }
+
+        shortcuts.insert(shortcut, at: insertIndex)
+        ConfigManager.shared.config.shortcuts = shortcuts
+    }
+
     private var appDelegate: AppDelegate? {
         NSApp.delegate as? AppDelegate
+    }
+
+    // MARK: - Button Actions
+
+    @objc private func addClicked(_ sender: NSButton) {
+        openEditor(mode: .add)
+    }
+
+    @objc private func editClicked(_ sender: NSButton) {
+        let selectedRow = tableView.selectedRow
+        guard selectedRow >= 0 && selectedRow < rows.count else { return }
+        guard !rows[selectedRow].isCategory, let configIndex = rows[selectedRow].configIndex else { return }
+        openEditor(mode: .edit(configIndex: configIndex))
+    }
+
+    @objc private func tableViewDoubleClicked(_ sender: NSTableView) {
+        let clickedRow = tableView.clickedRow
+        guard clickedRow >= 0 && clickedRow < rows.count else { return }
+        guard !rows[clickedRow].isCategory, let configIndex = rows[clickedRow].configIndex else { return }
+        openEditor(mode: .edit(configIndex: configIndex))
+    }
+
+    private func openEditor(mode: ShortcutEditorWindowController.Mode) {
+        guard let window = view.window else { return }
+
+        let editor = ShortcutEditorWindowController(mode: mode)
+        editor.onSave = { [weak self] in
+            guard let self else { return }
+            self.buildRows()
+            self.tableView.reloadData()
+            self.appDelegate?.reregisterAllShortcuts()
+            self.appDelegate?.rebuildMenu()
+            ConfigManager.shared.save()
+        }
+        editor.onClose = { [weak self] in
+            self?.editorWindowController = nil
+        }
+        editorWindowController = editor
+        editor.showOnParent(window)
+    }
+
+    @objc private func removeClicked(_ sender: NSButton) {
+        deleteSelectedShortcut()
+    }
+
+    // MARK: - Delete Shortcut
+
+    private func deleteSelectedShortcut() {
+        let selectedRow = tableView.selectedRow
+        guard selectedRow >= 0 && selectedRow < rows.count else { return }
+        guard !rows[selectedRow].isCategory, let configIndex = rows[selectedRow].configIndex else { return }
+
+        let shortcut = ConfigManager.shared.config.shortcuts[configIndex]
+        let displayName = shortcut.action.isEmpty ? shortcut.command : shortcut.action
+
+        let alert = NSAlert()
+        alert.messageText = "Are you sure you want to delete this shortcut?"
+        alert.informativeText = "\"\(displayName)\" will be permanently removed."
+        alert.addButton(withTitle: "Yes")
+        alert.addButton(withTitle: "No")
+        alert.alertStyle = .warning
+        alert.window.initialFirstResponder = alert.buttons.first
+
+        guard let window = view.window else { return }
+        alert.beginSheetModal(for: window) { response in
+            if response == .alertFirstButtonReturn {
+                ConfigManager.shared.config.shortcuts.remove(at: configIndex)
+                self.buildRows()
+                self.tableView.reloadData()
+                self.appDelegate?.reregisterAllShortcuts()
+                self.appDelegate?.rebuildMenu()
+                ConfigManager.shared.save()
+            }
+        }
     }
 
     // MARK: - Toggle Shortcut
@@ -294,8 +566,9 @@ class ShortcutsViewController: NSViewController {
         appDelegate?.rebuildMenu()
 
         // Reload the toggle cell for this row
-        if let row = rows.firstIndex(where: { $0.configIndex == configIndex }) {
-            tableView.reloadData(forRowIndexes: IndexSet(integer: row), columnIndexes: IndexSet(integer: 0))
+        if let row = rows.firstIndex(where: { $0.configIndex == configIndex }),
+           let toggleColumnIndex = tableView.tableColumns.firstIndex(where: { $0.identifier == Self.toggleColumnID }) {
+            tableView.reloadData(forRowIndexes: IndexSet(integer: row), columnIndexes: IndexSet(integer: toggleColumnIndex))
         }
     }
 
@@ -381,6 +654,68 @@ extension ShortcutsViewController: NSTableViewDataSource {
     func numberOfRows(in tableView: NSTableView) -> Int {
         return rows.count
     }
+
+    func tableView(_ tableView: NSTableView, pasteboardWriterForRow row: Int) -> NSPasteboardWriting? {
+        guard let reorderableTableView = tableView as? ReorderableTableView,
+              reorderableTableView.isDragFromHandle else {
+            return nil
+        }
+
+        guard row >= 0 && row < rows.count else { return nil }
+        let item = rows[row]
+        guard !item.isCategory, let configIndex = item.configIndex else { return nil }
+
+        let pasteboardItem = NSPasteboardItem()
+        pasteboardItem.setString(String(configIndex), forType: Self.shortcutPasteboardType)
+        return pasteboardItem
+    }
+
+    func tableView(_ tableView: NSTableView, validateDrop info: NSDraggingInfo, proposedRow row: Int, proposedDropOperation operation: NSTableView.DropOperation) -> NSDragOperation {
+        // Only allow .above drop operation (insert before the row)
+        if operation == .on {
+            tableView.setDropRow(row, dropOperation: .above)
+        }
+
+        // Don't allow dropping before the first row (which is always a category)
+        if row <= 0 {
+            return []
+        }
+
+        // Don't allow dropping at the very end if the last row is a category
+        // (would be ambiguous — no category context below)
+        if row >= rows.count && rows.last?.isCategory == true {
+            return []
+        }
+
+        return .move
+    }
+
+    func tableView(_ tableView: NSTableView, acceptDrop info: NSDraggingInfo, row: Int, dropOperation: NSTableView.DropOperation) -> Bool {
+        guard let pasteboardItem = info.draggingPasteboard.pasteboardItems?.first else { return false }
+        guard let indexString = pasteboardItem.string(forType: Self.shortcutPasteboardType),
+              let sourceConfigIndex = Int(indexString) else { return false }
+
+        guard sourceConfigIndex >= 0 && sourceConfigIndex < ConfigManager.shared.config.shortcuts.count else { return false }
+
+        guard let target = categoryAndPosition(forInsertionAt: row, excludingConfigIndex: sourceConfigIndex) else { return false }
+
+        // Check if dropping at the same position
+        let current = currentPositionInCategory(for: sourceConfigIndex)
+        if current?.category == target.category && current?.position == target.position {
+            return false
+        }
+
+        moveShortcut(from: sourceConfigIndex, toCategory: target.category, positionInCategory: target.position)
+
+        // Rebuild, save, re-register
+        buildRows()
+        tableView.reloadData()
+        appDelegate?.reregisterAllShortcuts()
+        appDelegate?.rebuildMenu()
+        ConfigManager.shared.save()
+
+        return true
+    }
 }
 
 // MARK: - NSTableViewDelegate
@@ -440,6 +775,8 @@ extension ShortcutsViewController: NSTableViewDelegate {
         let shortcutConfig = ConfigManager.shared.config.shortcuts[configIndex]
 
         switch tableColumn?.identifier {
+        case Self.dragColumnID:
+            return makeDragHandleCell()
         case Self.toggleColumnID:
             return makeToggleCell(for: shortcutConfig, configIndex: configIndex)
         case Self.shortcutColumnID:
@@ -469,7 +806,7 @@ extension ShortcutsViewController: NSTableViewDelegate {
             cellView = NSTableCellView()
             cellView!.identifier = cellIdentifier
 
-            let button = NSButton(frame: .zero)
+            let button = PointerButton(frame: .zero)
             button.isBordered = false
             button.imagePosition = .imageOnly
             button.bezelStyle = .inline
@@ -486,7 +823,7 @@ extension ShortcutsViewController: NSTableViewDelegate {
             ])
         }
 
-        if let button = cellView?.subviews.first as? NSButton {
+        if let button = cellView?.subviews.first as? PointerButton {
             let imageName = shortcut.enabled ? "bx-toggle-right" : "bx-toggle-left"
             let image = (NSImage(named: imageName)?.copy() as? NSImage) ?? NSImage(named: imageName)!
             image.isTemplate = true
@@ -531,6 +868,34 @@ extension ShortcutsViewController: NSTableViewDelegate {
         }
 
         cellView!.textField?.stringValue = text
+        return cellView!
+    }
+
+    private func makeDragHandleCell() -> NSTableCellView {
+        let cellIdentifier = Self.dragCellID
+        var cellView = tableView.makeView(withIdentifier: cellIdentifier, owner: self) as? NSTableCellView
+
+        if cellView == nil {
+            cellView = NSTableCellView()
+            cellView!.identifier = cellIdentifier
+
+            let imageView = GrabImageView()
+            if let dragImage = NSImage(systemSymbolName: "line.3.horizontal", accessibilityDescription: "Drag")?.copy() as? NSImage {
+                dragImage.isTemplate = true
+                imageView.image = dragImage
+            }
+            imageView.contentTintColor = .tertiaryLabelColor
+            imageView.translatesAutoresizingMaskIntoConstraints = false
+            cellView!.addSubview(imageView)
+
+            NSLayoutConstraint.activate([
+                imageView.widthAnchor.constraint(equalToConstant: 16),
+                imageView.heightAnchor.constraint(equalToConstant: 16),
+                imageView.centerXAnchor.constraint(equalTo: cellView!.centerXAnchor),
+                imageView.centerYAnchor.constraint(equalTo: cellView!.centerYAnchor),
+            ])
+        }
+
         return cellView!
     }
 }

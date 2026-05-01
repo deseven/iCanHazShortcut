@@ -1,6 +1,6 @@
 import Foundation
 import Cocoa
-import SwiftyJSON
+import TOML
 
 // MARK: - INI Parser
 
@@ -72,7 +72,7 @@ class INIParser {
 // MARK: - Config Migrator
 
 /// Handles migration from the old INI-based config format
-/// (`~/.config/iCanHazShortcut/config.ini`) to the new JSON format
+/// (`~/.config/iCanHazShortcut/config.ini`) to the new TOML format
 /// stored in Application Support.
 class ConfigMigrator {
 
@@ -125,6 +125,7 @@ class ConfigMigrator {
             result = performMigration()
         } else {
             // User chose "Start from scratch"
+            ConfigManager.shared.isFreshStart = true
             ConfigManager.shared.save()
             result = true
         }
@@ -240,9 +241,9 @@ class ConfigMigrator {
 
         // Read back and verify it parses correctly
         do {
-            let data = try Data(contentsOf: ConfigManager.shared.configFilePath)
-            let json = try JSON(data: data)
-            _ = AppConfig(from: json)
+            let content = try String(contentsOf: ConfigManager.shared.configFilePath, encoding: .utf8)
+            let decoder = TOMLDecoder()
+            _ = try decoder.decode(AppConfig.self, from: content)
         } catch {
             throw MigrationError.saveError("Saved config could not be read back: \(error.localizedDescription)")
         }

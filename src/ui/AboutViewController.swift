@@ -80,7 +80,7 @@ class AboutViewController: NSViewController {
         iconImageView.translatesAutoresizingMaskIntoConstraints = false
 
         // App name & version
-        let appName = Bundle.main.infoDictionary?["CFBundleName"] as? String ?? "iCanHazShortcut"
+        let appName = Bundle.main.infoDictionary?["CFBundleName"] as? String ?? ConfigManager.appName
         let appVersion = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "?.?.?"
 
         let nameLabel = NSTextField(labelWithString: appName)
