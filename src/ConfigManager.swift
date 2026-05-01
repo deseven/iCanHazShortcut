@@ -118,7 +118,7 @@ struct AppConfig: Codable {
 
     init(configVersion: Int = 3, shell: String = AppConfig.defaultShell,
          populateMenuWithActions: Bool = true, showHotkeysInMenu: Bool = true,
-         checkForUpdates: Bool = true, startOnLogin: Bool = true,
+         checkForUpdates: Bool = true, startOnLogin: Bool = false,
          showIconInStatusbar: Bool = true, setWorkdirWithCd: Bool = true,
          window: WindowConfig = .default, shortcuts: [ShortcutConfig] = []) {
         self.configVersion = configVersion

@@ -1,5 +1,6 @@
 import Cocoa
 import Carbon
+import LaunchAtLogin
 
 let appName = ConfigManager.appName
 
@@ -31,6 +32,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         if !ConfigManager.shared.load() {
             NSApplication.shared.terminate(nil)
         }
+
+        // Sync launch-at-login state with config (handles migration & fresh start)
+        LaunchAtLogin.isEnabled = ConfigManager.shared.config.startOnLogin
+
+        // Remove old LaunchAgent plist from previous app version (no-op if absent)
+        ConfigMigrator.removeOldLaunchAgent()
 
         if ConfigManager.shared.config.showIconInStatusbar {
             setupStatusItem()

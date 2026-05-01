@@ -256,6 +256,35 @@ class ConfigMigrator {
         try FileManager.default.removeItem(at: oldConfigDir)
     }
 
+    // MARK: - Old LaunchAgent cleanup
+
+    /// Path to the old LaunchAgent plist created by the previous PureBasic version:
+    /// `~/Library/LaunchAgents/info.deseven.icanhazshortcut.plist`
+    private static var oldLaunchAgentPlistPath: URL {
+        let homeDir = FileManager.default.homeDirectoryForCurrentUser
+        return homeDir.appendingPathComponent("Library/LaunchAgents/info.deseven.icanhazshortcut.plist")
+    }
+
+    /// Remove the old LaunchAgent plist that the previous app version used for
+    /// "Start on login" functionality. Unloads the service first, then deletes
+    /// the plist file. Safe to call even if the plist doesn't exist.
+    static func removeOldLaunchAgent() {
+        let plistPath = oldLaunchAgentPlistPath
+        let fileManager = FileManager.default
+
+        guard fileManager.fileExists(atPath: plistPath.path) else { return }
+
+        // Unload the service (ignore errors — it may not be loaded)
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/bin/launchctl")
+        process.arguments = ["unload", plistPath.path]
+        try? process.run()
+        process.waitUntilExit()
+
+        // Remove the plist file
+        try? fileManager.removeItem(at: plistPath)
+    }
+
     // MARK: - Helpers
 
     /// Mapping of old text key names to their Unicode equivalents.

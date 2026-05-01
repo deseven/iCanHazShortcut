@@ -1,4 +1,5 @@
 import Cocoa
+import LaunchAtLogin
 
 // MARK: - Preferences View Controller
 
@@ -306,6 +307,9 @@ class PreferencesViewController: NSViewController {
             } else {
                 appDelegate?.hideStatusItem()
             }
+        } else if sender === startOnLoginCheckbox {
+            LaunchAtLogin.isEnabled = startOnLoginCheckbox.state == .on
+            saveConfig()
         } else {
             saveConfig()
         }
@@ -361,7 +365,7 @@ class PreferencesViewController: NSViewController {
 
         // Checkboxes
         showIconCheckbox.state = config.showIconInStatusbar ? .on : .off
-        startOnLoginCheckbox.state = config.startOnLogin ? .on : .off
+        startOnLoginCheckbox.state = LaunchAtLogin.isEnabled ? .on : .off
         checkForUpdatesCheckbox.state = config.checkForUpdates ? .on : .off
         setWorkdirCheckbox.state = config.setWorkdirWithCd ? .on : .off
 

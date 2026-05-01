@@ -64,7 +64,6 @@ class MainWindowController: NSWindowController, NSWindowDelegate {
         tabViewController.addTabViewItem(aboutItem)
 
         window.contentViewController = tabViewController
-        window.level = .floating
         window.isReleasedWhenClosed = false
         window.title = ConfigManager.appName
         window.minSize = Self.shortcutsMinSize
@@ -162,10 +161,8 @@ class MainWindowController: NSWindowController, NSWindowDelegate {
     // MARK: - NSWindowDelegate
 
     func windowWillClose(_ notification: Notification) {
-        // Save frame if on shortcuts tab
-        if currentTab() == .shortcuts {
-            saveWindowFrame()
-        }
+        // Always save position; only save dimensions on shortcuts tab
+        saveWindowFrame(dimensions: currentTab() == .shortcuts)
         // Return to accessory mode when the window is closed
         NSApp.setActivationPolicy(.accessory)
         // Notify owner to release this controller (deferred to avoid
@@ -177,9 +174,8 @@ class MainWindowController: NSWindowController, NSWindowDelegate {
     }
 
     func windowDidMove(_ notification: Notification) {
-        if currentTab() == .shortcuts {
-            saveWindowFrame()
-        }
+        // Always save position; only save dimensions on shortcuts tab
+        saveWindowFrame(dimensions: currentTab() == .shortcuts)
     }
 
     func windowDidResize(_ notification: Notification) {
@@ -202,13 +198,15 @@ class MainWindowController: NSWindowController, NSWindowDelegate {
 
     // MARK: - Config persistence
 
-    private func saveWindowFrame() {
+    private func saveWindowFrame(dimensions: Bool = true) {
         guard let window = window else { return }
         let frame = window.frame
         ConfigManager.shared.config.window.x = Int(frame.origin.x)
         ConfigManager.shared.config.window.y = Int(frame.origin.y)
-        ConfigManager.shared.config.window.width = Int(frame.width)
-        ConfigManager.shared.config.window.height = Int(frame.height)
+        if dimensions {
+            ConfigManager.shared.config.window.width = Int(frame.width)
+            ConfigManager.shared.config.window.height = Int(frame.height)
+        }
         ConfigManager.shared.save()
     }
 }
