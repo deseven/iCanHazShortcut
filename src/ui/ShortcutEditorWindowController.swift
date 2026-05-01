@@ -6,8 +6,13 @@ private class EditorWindow: NSWindow {
     var onEscape: (() -> Void)?
 
     override func keyDown(with event: NSEvent) {
-        // Escape → cancel
+        // Escape → cancel recording in ShortcutPickerField, or close the editor
         if event.keyCode == 0x35 {
+            // If a ShortcutPickerField is recording, let it handle Escape
+            if let picker = firstResponder as? ShortcutPickerField, picker.isRecording {
+                super.keyDown(with: event)
+                return
+            }
             onEscape?()
             return
         }
@@ -15,6 +20,11 @@ private class EditorWindow: NSWindow {
     }
 
     override func cancelOperation(_ sender: Any?) {
+        // If a ShortcutPickerField is recording, let it handle cancel
+        if let picker = firstResponder as? ShortcutPickerField, picker.isRecording {
+            picker.cancelRecording()
+            return
+        }
         onEscape?()
     }
 }
@@ -72,7 +82,7 @@ class ShortcutEditorWindowController: NSWindowController, NSWindowDelegate {
 
     private let actionField = NSTextField()
     private let categoryField = NSComboBox()
-    private let shortcutField = NSTextField()
+    private let shortcutField = ShortcutPickerField()
     private let commandField = NSTextField()
     private let workdirField = NSTextField()
     private var saveButton: NSButton!
@@ -119,7 +129,6 @@ class ShortcutEditorWindowController: NSWindowController, NSWindowDelegate {
     // MARK: - Presentation
 
     func showOnParent(_ parentWindow: NSWindow) {
-        window?.initialFirstResponder = shortcutField
         parentWindow.beginSheet(window!) { [weak self] _ in
             self?.onClose?()
         }
@@ -226,14 +235,6 @@ class ShortcutEditorWindowController: NSWindowController, NSWindowDelegate {
 
         // ── Form fields (right side) ──
 
-        let fieldDefs: [(label: String, placeholder: String, field: NSTextField, required: Bool)] = [
-            ("Action",             "e.g. Open Terminal",   actionField,   false),
-            ("Category",           "e.g. Apps",            categoryField, false),
-            ("Shortcut",           "e.g. ⌘⇧T",            shortcutField, false),
-            ("Command",            "e.g. open -a Terminal", commandField,  true),
-            ("Working Directory",  "e.g. ~/Projects",      workdirField,  false),
-        ]
-
         let labelWidth: CGFloat = 130
         let fieldHeight: CGFloat = 24
         let rowSpacing: CGFloat = 16
@@ -241,19 +242,25 @@ class ShortcutEditorWindowController: NSWindowController, NSWindowDelegate {
         let topPadding: CGFloat = 24
 
         var constraints: [NSLayoutConstraint] = []
-        var previousBottom: NSLayoutYAxisAnchor = contentView.topAnchor
 
-        for (index, def) in fieldDefs.enumerated() {
-            let labelText = def.required ? "\(def.label) *" : def.label
-            let label = NSTextField(labelWithString: labelText)
+        // Helper to add a labeled text field row
+        func addTextFieldRow(
+            labelText: String,
+            placeholder: String,
+            field: NSTextField,
+            required: Bool,
+            topAnchor: NSLayoutYAxisAnchor,
+            topConstant: CGFloat
+        ) -> NSLayoutYAxisAnchor {
+            let text = required ? "\(labelText) *" : labelText
+            let label = NSTextField(labelWithString: text)
             label.font = NSFont.systemFont(ofSize: NSFont.systemFontSize)
-            label.textColor = def.required ? .labelColor : .secondaryLabelColor
+            label.textColor = required ? .labelColor : .secondaryLabelColor
             label.alignment = .right
             label.translatesAutoresizingMaskIntoConstraints = false
 
-            let field = def.field
             field.translatesAutoresizingMaskIntoConstraints = false
-            field.placeholderString = def.placeholder
+            field.placeholderString = placeholder
             field.font = NSFont.systemFont(ofSize: NSFont.systemFontSize)
             field.usesSingleLineMode = true
             field.lineBreakMode = .byTruncatingTail
@@ -263,8 +270,6 @@ class ShortcutEditorWindowController: NSWindowController, NSWindowDelegate {
             contentView.addSubview(label)
             contentView.addSubview(field)
 
-            let topConstant: CGFloat = index == 0 ? topPadding : rowSpacing
-
             constraints += [
                 label.leadingAnchor.constraint(equalTo: separator.trailingAnchor, constant: sidePadding),
                 label.widthAnchor.constraint(equalToConstant: labelWidth),
@@ -273,11 +278,67 @@ class ShortcutEditorWindowController: NSWindowController, NSWindowDelegate {
                 field.leadingAnchor.constraint(equalTo: label.trailingAnchor, constant: hSpacing),
                 field.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -sidePadding),
                 field.heightAnchor.constraint(equalToConstant: fieldHeight),
-                field.topAnchor.constraint(equalTo: previousBottom, constant: topConstant),
+                field.topAnchor.constraint(equalTo: topAnchor, constant: topConstant),
             ]
 
-            previousBottom = field.bottomAnchor
+            return field.bottomAnchor
         }
+
+        // Action row
+        var previousBottom = addTextFieldRow(
+            labelText: "Action", placeholder: "e.g. Open Terminal",
+            field: actionField, required: false,
+            topAnchor: contentView.topAnchor, topConstant: topPadding
+        )
+
+        // Category row
+        previousBottom = addTextFieldRow(
+            labelText: "Category", placeholder: "e.g. Apps",
+            field: categoryField, required: false,
+            topAnchor: previousBottom, topConstant: rowSpacing
+        )
+
+        // Shortcut picker row
+        do {
+            let shortcutLabel = NSTextField(labelWithString: "Shortcut")
+            shortcutLabel.font = NSFont.systemFont(ofSize: NSFont.systemFontSize)
+            shortcutLabel.textColor = .secondaryLabelColor
+            shortcutLabel.alignment = .right
+            shortcutLabel.translatesAutoresizingMaskIntoConstraints = false
+
+            shortcutField.translatesAutoresizingMaskIntoConstraints = false
+            shortcutField.pickerDelegate = self
+
+            contentView.addSubview(shortcutLabel)
+            contentView.addSubview(shortcutField)
+
+            constraints += [
+                shortcutLabel.leadingAnchor.constraint(equalTo: separator.trailingAnchor, constant: sidePadding),
+                shortcutLabel.widthAnchor.constraint(equalToConstant: labelWidth),
+                shortcutLabel.centerYAnchor.constraint(equalTo: shortcutField.centerYAnchor),
+
+                shortcutField.leadingAnchor.constraint(equalTo: shortcutLabel.trailingAnchor, constant: hSpacing),
+                shortcutField.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -sidePadding),
+                shortcutField.heightAnchor.constraint(equalToConstant: fieldHeight),
+                shortcutField.topAnchor.constraint(equalTo: previousBottom, constant: rowSpacing),
+            ]
+
+            previousBottom = shortcutField.bottomAnchor
+        }
+
+        // Command row
+        previousBottom = addTextFieldRow(
+            labelText: "Command", placeholder: "e.g. open -a Terminal",
+            field: commandField, required: true,
+            topAnchor: previousBottom, topConstant: rowSpacing
+        )
+
+        // Working Directory row
+        previousBottom = addTextFieldRow(
+            labelText: "Working Directory", placeholder: "e.g. ~/Projects",
+            field: workdirField, required: false,
+            topAnchor: previousBottom, topConstant: rowSpacing
+        )
 
         // ── Configure category combo box ──
 
@@ -322,6 +383,9 @@ class ShortcutEditorWindowController: NSWindowController, NSWindowDelegate {
         workdirField.nextKeyView = saveButton
         saveButton.nextKeyView = cancelButton
         cancelButton.nextKeyView = actionField
+
+        // Set initial first responder to action field
+        window?.initialFirstResponder = actionField
     }
 
     private func makeIconButton(imageName: String, toolTip: String) -> NSButton {
@@ -347,7 +411,7 @@ class ShortcutEditorWindowController: NSWindowController, NSWindowDelegate {
         let shortcut = ConfigManager.shared.config.shortcuts[configIndex]
         actionField.stringValue = shortcut.action
         categoryField.stringValue = shortcut.category
-        shortcutField.stringValue = shortcut.shortcut
+        shortcutField.setStringValue(shortcut.shortcut)
         commandField.stringValue = shortcut.command
         workdirField.stringValue = shortcut.workdir
     }
@@ -363,17 +427,10 @@ class ShortcutEditorWindowController: NSWindowController, NSWindowDelegate {
     }
 
     @objc private func saveClicked(_ sender: NSButton?) {
-        let shortcutText = shortcutField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        let shortcutText = shortcutField.stringValue
         let commandText = commandField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        // Validate shortcut format (only if a shortcut is provided)
-        if !shortcutText.isEmpty && !GlobalHotkeyManager.isValidHotkeyString(shortcutText) {
-            showValidationAlert(
-                message: "Invalid shortcut format.",
-                informativeText: "Use Unicode modifier symbols (⌘⇧⌥⌃) followed by a key (e.g. ⌘⇧T, ⌃⌥F12). Special keys like F1-F20 can be used without modifiers. Leave empty for no shortcut."
-            )
-            return
-        }
+        // Shortcut picker only produces valid shortcuts, no format validation needed
 
         // Validate command
         if commandText.isEmpty {
@@ -784,5 +841,14 @@ extension ShortcutEditorWindowController: NSTextFieldDelegate {
             return true
         }
         return false
+    }
+}
+
+// MARK: - ShortcutPickerFieldDelegate
+
+extension ShortcutEditorWindowController: ShortcutPickerFieldDelegate {
+    func shortcutPickerDidChange(_ picker: ShortcutPickerField) {
+        // No additional action needed — the picker updates its own display.
+        // The value is read directly from `shortcutField.stringValue` on save.
     }
 }

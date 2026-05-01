@@ -123,6 +123,7 @@ class AboutViewController: NSViewController {
         aescolasticoLabel.translatesAutoresizingMaskIntoConstraints = false
 
         // Social link buttons
+        let kofiButton = makeIconButton(imageName: "bx-kofi", url: "https://ko-fi.com/deseven")
         let githubButton = makeIconButton(imageName: "bx-github", url: "https://github.com/deseven/iCanHazShortcut")
         let redditButton = makeIconButton(imageName: "bx-reddit", url: "https://www.reddit.com/r/iCanHazApps")
         let telegramButton = makeIconButton(imageName: "bx-telegram", url: "https://t.me/icanhazshortcut")
@@ -131,6 +132,7 @@ class AboutViewController: NSViewController {
         socialStack.orientation = .horizontal
         socialStack.spacing = 16
         socialStack.translatesAutoresizingMaskIntoConstraints = false
+        socialStack.addView(kofiButton, in: .center)
         socialStack.addView(githubButton, in: .center)
         socialStack.addView(redditButton, in: .center)
         socialStack.addView(telegramButton, in: .center)
@@ -191,7 +193,7 @@ class AboutViewController: NSViewController {
             aescolasticoLabel.centerXAnchor.constraint(equalTo: leftPanel.centerXAnchor),
 
             // Social icons
-            socialStack.topAnchor.constraint(equalTo: aescolasticoLabel.bottomAnchor, constant: sectionGap),
+            socialStack.topAnchor.constraint(equalTo: aescolasticoLabel.bottomAnchor, constant: sectionGap + 5),
             socialStack.centerXAnchor.constraint(equalTo: leftPanel.centerXAnchor),
             socialStack.bottomAnchor.constraint(lessThanOrEqualTo: leftPanel.bottomAnchor, constant: -16),
         ])

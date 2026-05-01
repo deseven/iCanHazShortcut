@@ -102,6 +102,13 @@ class MainWindowController: NSWindowController, NSWindowDelegate {
     }
 
     func showWindow(tab: Tab) {
+        // If a sheet is attached (e.g. shortcut editor or test run),
+        // just activate the window without switching tabs
+        if let window = window, window.attachedSheet != nil {
+            window.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+            return
+        }
         selectTab(tab)
         window?.makeKeyAndOrderFront(nil)
     }
