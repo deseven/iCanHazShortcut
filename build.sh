@@ -17,17 +17,21 @@ noColor='\033[0m'
 
 cd "$loc"
 
-# initialize build log
-echo "=== iCanHazShortcut build log ===" > "$logFile"
-echo "Date: $(date)" >> "$logFile"
-echo "" >> "$logFile"
+# ── Determine build mode ─────────────────────────────────────────────
+mode="dev"
+case "${1:-}" in
+    dev-release) mode="dev-release" ;;
+    release)     mode="release" ;;
+    *)           mode="dev" ;;
+esac
 
-# clean previous artifacts
-rm -rf "$loc/dist/$name.app"
-rm -rf "$loc/dist/$shortName.zip"
-rm -rf "$loc/dist/$shortName.dmg"
-rm -rf "$loc/dist/$name"
-mkdir -p "$loc/dist"
+if [ "$mode" = "release" ]; then
+    buildConfig="release"
+else
+    buildConfig="debug"
+fi
+
+# ── Helpers ──────────────────────────────────────────────────────────
 
 die() {
     echo -e "${redColor}[FAILED]${noColor}" > /dev/tty
@@ -38,72 +42,86 @@ die() {
     exit 1
 }
 
+stepNum=0
+totalSteps=0
+
 step() {
-    printf "  ${dimColor}[%d/8]${noColor} ${bold}%-36s${noColor} " "$1" "$2"
+    stepNum=$((stepNum + 1))
+    printf "  ${dimColor}[%d/%d]${noColor} ${bold}%-36s${noColor} " "$stepNum" "$totalSteps" "$1"
 }
 
 ok() {
     echo -e "${greenColor}[OK]${noColor}"
 }
 
-# ── Resolve dependencies ─────────────────────────────────────────────
-step 1 "Resolving dependencies..."
-logMark=$(($(wc -l < "$logFile") + 1))
-{
-    echo "--- swift package resolve ---" >> "$logFile"
-    swift package resolve 2>&1 >> "$logFile" || die "failed to resolve dependencies"
-} >> "$logFile" 2>&1
-ok
+run_step() {
+    local label="$1"
+    local error_msg="$2"
+    shift 2
+    local func="$1"
+    shift
 
-# ── Clean build artifacts ────────────────────────────────────────────
-step 2 "Cleaning build artifacts..."
-logMark=$(($(wc -l < "$logFile") + 1))
-{
-    echo "--- swift package clean ---" >> "$logFile"
-    swift package clean 2>&1 >> "$logFile" || die "failed to clean build artifacts"
-} >> "$logFile" 2>&1
-ok
+    step "$label"
+    logMark=$(($(wc -l < "$logFile") + 1))
+    {
+        echo "--- $label ---"
+        "$func" "$@" || die "$error_msg"
+    } >> "$logFile" 2>&1
+    ok
+}
 
-# ── Compile (arm64) ──────────────────────────────────────────────────
-step 3 "Compiling Swift sources (arm64)..."
-logMark=$(($(wc -l < "$logFile") + 1))
-{
-    echo "--- swift build --arch arm64 ---" >> "$logFile"
-    swift build -c release --arch arm64 2>&1 >> "$logFile" || die "failed to compile $shortName for arm64"
-} >> "$logFile" 2>&1
-ok
+# ── Step functions ───────────────────────────────────────────────────
 
-# ── Compile (x86_64) ────────────────────────────────────────────────
-step 4 "Compiling Swift sources (x86_64)..."
-logMark=$(($(wc -l < "$logFile") + 1))
-{
-    echo "--- swift build --arch x86_64 ---" >> "$logFile"
-    swift build -c release --arch x86_64 2>&1 >> "$logFile" || die "failed to compile $shortName for x86_64"
-} >> "$logFile" 2>&1
-ok
+do_init_log() {
+    echo "=== iCanHazShortcut build log ===" > "$logFile"
+    echo "Date: $(date)" >> "$logFile"
+    echo "Mode: $mode" >> "$logFile"
+    echo "" >> "$logFile"
+}
 
-# ── Create universal binary ─────────────────────────────────────────
-step 5 "Creating universal binary..."
-logMark=$(($(wc -l < "$logFile") + 1))
-{
-    echo "--- lipo create ---" >> "$logFile"
+do_clean_dist() {
+    rm -rf "$loc/dist/$name.app"
+    rm -rf "$loc/dist/$shortName.zip"
+    rm -rf "$loc/dist/$shortName-dev.zip"
+    rm -rf "$loc/dist/$shortName.dmg"
+    rm -rf "$loc/dist/$name"
+    mkdir -p "$loc/dist"
+}
+
+do_resolve_deps() {
+    swift package resolve
+}
+
+do_clean_build() {
+    swift package clean
+}
+
+do_compile_arm64() {
+    swift build -c "$buildConfig" --arch arm64
+}
+
+do_compile_x86_64() {
+    swift build -c "$buildConfig" --arch x86_64
+}
+
+do_create_universal() {
     lipo -create \
-        "$loc/.build/arm64-apple-macosx/release/$name" \
-        "$loc/.build/x86_64-apple-macosx/release/$name" \
-        -output "$loc/dist/$name" 2>&1 >> "$logFile" || die "failed to create universal binary"
-} >> "$logFile" 2>&1
-ok
+        "$loc/.build/arm64-apple-macosx/$buildConfig/$name" \
+        "$loc/.build/x86_64-apple-macosx/$buildConfig/$name" \
+        -output "$loc/dist/$name"
+}
 
-# ── Bundle ───────────────────────────────────────────────────────────
-step 6 "Creating APP bundle..."
-logMark=$(($(wc -l < "$logFile") + 1))
-{
-    echo "--- app bundle ---" >> "$logFile"
+do_create_bundle() {
     mkdir -p "$loc/dist/$name.app/Contents/MacOS"
     mkdir -p "$loc/dist/$name.app/Contents/Resources"
 
-    cp "$loc/dist/$name" "$loc/dist/$name.app/Contents/MacOS/$name"
-    rm "$loc/dist/$name"
+    if [ "$mode" = "dev" ]; then
+        cp "$loc/.build/arm64-apple-macosx/$buildConfig/$name" "$loc/dist/$name.app/Contents/MacOS/$name"
+    else
+        cp "$loc/dist/$name" "$loc/dist/$name.app/Contents/MacOS/$name"
+        rm "$loc/dist/$name"
+    fi
+
     cp "$loc/Info.plist" "$loc/dist/$name.app/Contents/Info.plist"
     cp "$loc/res/status_icon.png" "$loc/dist/$name.app/Contents/Resources/"
     cp "$loc/res/status_icon@2x.png" "$loc/dist/$name.app/Contents/Resources/"
@@ -111,26 +129,17 @@ logMark=$(($(wc -l < "$logFile") + 1))
     cp "$loc/res/AS.sdef" "$loc/dist/$name.app/Contents/Resources/"
     cp "$loc/LICENSE" "$loc/dist/$name.app/Contents/Resources/"
     cp "$loc/res/ui/"*.png "$loc/dist/$name.app/Contents/Resources/"
-} >> "$logFile" 2>&1
-ok
+}
 
-# ── Zip ──────────────────────────────────────────────────────────────
-step 7 "Creating distribution ZIP..."
-logMark=$(($(wc -l < "$logFile") + 1))
-{
-    echo "--- zip ---" >> "$logFile"
+do_create_zip() {
+    local zipName="$1"
     cd "$loc/dist"
-    zip -r9 "$shortName.zip" "$name.app" 2>&1 >> "$logFile" || die "failed to pack $shortName"
+    zip -r9 "$zipName" "$name.app"
     cd "$loc"
-} >> "$logFile" 2>&1
-ok
+}
 
-# ── DMG ──────────────────────────────────────────────────────────────
-step 8 "Creating distribution DMG..."
-logMark=$(($(wc -l < "$logFile") + 1))
-{
-    echo "--- create-dmg ---" >> "$logFile"
-    dmgStaging="$loc/dist/dmg_staging"
+do_create_dmg() {
+    local dmgStaging="$loc/dist/dmg_staging"
     rm -rf "$dmgStaging"
     mkdir -p "$dmgStaging"
     cp -R "$loc/dist/$name.app" "$dmgStaging/"
@@ -144,13 +153,67 @@ logMark=$(($(wc -l < "$logFile") + 1))
         --icon "$name.app" 192 344 \
         --app-drop-link 448 344 \
         "$loc/dist/$shortName.dmg" \
-        "$dmgStaging" \
-        2>&1 >> "$logFile" \
-        || die "failed to create dmg"
+        "$dmgStaging"
     rm -rf "$dmgStaging"
-} >> "$logFile" 2>&1
-ok
+}
 
+do_upload() {
+    share "$1"
+}
+
+# ── Calculate total steps per mode ───────────────────────────────────
+case "$mode" in
+    dev)         totalSteps=4 ;;
+    dev-release) totalSteps=8 ;;
+    release)     totalSteps=8 ;;
+esac
+
+# ── Build ────────────────────────────────────────────────────────────
+
+do_init_log
+do_clean_dist
+
+run_step "Resolving dependencies..."            "failed to resolve dependencies"           do_resolve_deps
+run_step "Cleaning build artifacts..."           "failed to clean build artifacts"          do_clean_build
+run_step "Compiling Swift sources (arm64)..."    "failed to compile $shortName for arm64"   do_compile_arm64
+
+if [ "$mode" != "dev" ]; then
+    run_step "Compiling Swift sources (x86_64)..." "failed to compile $shortName for x86_64" do_compile_x86_64
+    run_step "Creating universal binary..."        "failed to create universal binary"        do_create_universal
+fi
+
+run_step "Creating APP bundle..."                 "failed to create app bundle"              do_create_bundle
+
+if [ "$mode" != "dev" ]; then
+    if [ "$mode" = "release" ]; then
+        run_step "Creating distribution ZIP..."    "failed to pack $shortName.zip"            do_create_zip "$shortName.zip"
+    else
+        run_step "Creating dev ZIP..."             "failed to pack $shortName-dev.zip"        do_create_zip "$shortName-dev.zip"
+        run_step "Uploading dev build..."          "failed to upload dev build"               do_upload "$loc/dist/$shortName-dev.zip"
+    fi
+fi
+
+if [ "$mode" = "release" ]; then
+    run_step "Creating distribution DMG..."        "failed to create dmg"                     do_create_dmg
+fi
+
+# ── Post-build ───────────────────────────────────────────────────────
 echo ""
 echo -e "  ${greenColor}${bold}Build complete!${noColor}"
-echo -e "  ${dimColor}artifacts: dist/$name.app  dist/$shortName.zip  dist/$shortName.dmg${noColor}"
+
+case "$mode" in
+    dev)
+        echo -e "  ${dimColor}mode: development${noColor}"
+        echo -e "  ${dimColor}artifacts: dist/$name.app${noColor}"
+        echo -e "  ${dimColor}launching...${noColor}"
+        "$loc/dist/$name.app/Contents/MacOS/$name"
+        ;;
+    dev-release)
+        echo -e "  ${dimColor}mode: development release${noColor}"
+        echo -e "  ${dimColor}artifacts: dist/$name.app  dist/$shortName-dev.zip${noColor}"
+        ;;
+    release)
+        echo -e "  ${dimColor}mode: release${noColor}"
+        echo -e "  ${dimColor}artifacts: dist/$name.app  dist/$shortName.zip  dist/$shortName.dmg${noColor}"
+        ;;
+esac
