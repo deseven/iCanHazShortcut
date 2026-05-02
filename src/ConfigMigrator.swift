@@ -193,23 +193,13 @@ class ConfigMigrator {
         config.showIconInStatusbar = parseBool(main["show_icon_in_statusbar"]) ?? config.showIconInStatusbar
         config.setWorkdirWithCd = parseBool(main["set_workdir_with_cd"]) ?? config.setWorkdirWithCd
 
-        // Window settings
-        config.window.x = Int(main["window_x"] ?? "-1") ?? -1
-        config.window.y = Int(main["window_y"] ?? "-1") ?? -1
-        config.window.width = Int(main["window_width"] ?? "800") ?? 800
-        config.window.height = Int(main["window_height"] ?? "600") ?? 600
-
         // Shortcuts table column visibility
         config.window.shortcutsTable.shortcutColumn = parseBool(main["shortcut_column_enabled"]) ?? config.window.shortcutsTable.shortcutColumn
         config.window.shortcutsTable.actionColumn = parseBool(main["action_column_enabled"]) ?? config.window.shortcutsTable.actionColumn
         config.window.shortcutsTable.commandColumn = parseBool(main["command_column_enabled"]) ?? config.window.shortcutsTable.commandColumn
         config.window.shortcutsTable.workdirColumn = parseBool(main["workdir_column_enabled"]) ?? config.window.shortcutsTable.workdirColumn
 
-        // Shortcuts table column widths
-        config.window.shortcutsTable.shortcutColumnWidth = Int(main["shortcut_column_width"] ?? "110") ?? 110
-        config.window.shortcutsTable.actionColumnWidth = Int(main["action_column_width"] ?? "150") ?? 150
-        config.window.shortcutsTable.commandColumnWidth = Int(main["command_column_width"] ?? "280") ?? 280
-        config.window.shortcutsTable.workdirColumnWidth = Int(main["workdir_column_width"] ?? "120") ?? 120
+        // Window position/size and column widths are reset to defaults
 
         // Parse shortcut sections (preserving order from the INI file)
         var shortcuts: [ShortcutConfig] = []

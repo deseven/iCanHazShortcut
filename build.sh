@@ -143,7 +143,6 @@ logMark=$(($(wc -l < "$logFile") + 1))
         --icon-size 128 \
         --icon "$name.app" 192 344 \
         --app-drop-link 448 344 \
-        --sandbox-safe \
         "$loc/dist/$shortName.dmg" \
         "$dmgStaging" \
         2>&1 >> "$logFile" \

@@ -46,7 +46,7 @@ struct ShortcutsTableConfig: Codable {
     static let `default` = ShortcutsTableConfig()
 
     init(shortcutColumn: Bool = true, actionColumn: Bool = true,
-         commandColumn: Bool = true, workdirColumn: Bool = true,
+         commandColumn: Bool = true, workdirColumn: Bool = false,
          shortcutColumnWidth: Int = 110,
          actionColumnWidth: Int = 150, commandColumnWidth: Int = 280,
          workdirColumnWidth: Int = 120) {

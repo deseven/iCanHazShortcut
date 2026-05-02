@@ -16,7 +16,7 @@ class MainWindowController: NSWindowController, NSWindowDelegate {
     var onWindowClosed: (() -> Void)?
 
     // Shortcuts tab is the only resizable tab
-    private static let shortcutsMinSize = NSSize(width: 600, height: 300)
+    private static let shortcutsMinSize = NSSize(width: 600, height: 400)
     private static let shortcutsMaxSize = NSSize(width: 1280, height: 720)
 
     // Fixed sizes for non-resizable tabs
@@ -83,6 +83,7 @@ class MainWindowController: NSWindowController, NSWindowDelegate {
 
         // Position and size: center if x or y is -1, otherwise restore full frame from config
         if windowConfig.x == -1 || windowConfig.y == -1 {
+            window.setContentSize(NSSize(width: CGFloat(windowConfig.width), height: CGFloat(windowConfig.height)))
             window.center()
         } else {
             window.setFrame(
