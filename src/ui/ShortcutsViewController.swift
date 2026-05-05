@@ -494,6 +494,7 @@ class ShortcutsViewController: NSViewController {
             self.tableView.reloadData()
             self.appDelegate?.reregisterAllShortcuts()
             self.appDelegate?.rebuildMenu()
+            ConfigManager.shared.backupConfig()
             ConfigManager.shared.save()
         }
         editor.onClose = { [weak self] in
@@ -538,6 +539,7 @@ class ShortcutsViewController: NSViewController {
                 self.tableView.reloadData()
                 self.appDelegate?.reregisterAllShortcuts()
                 self.appDelegate?.rebuildMenu()
+                ConfigManager.shared.backupConfig()
                 ConfigManager.shared.save()
             }
         }
@@ -560,6 +562,7 @@ class ShortcutsViewController: NSViewController {
         }
 
         // Save config
+        ConfigManager.shared.backupConfig()
         ConfigManager.shared.save()
 
         // Rebuild menu (enabled shortcuts appear in the status bar menu)
@@ -699,6 +702,7 @@ extension ShortcutsViewController: NSTableViewDataSource {
         tableView.reloadData()
         appDelegate?.reregisterAllShortcuts()
         appDelegate?.rebuildMenu()
+        ConfigManager.shared.backupConfig()
         ConfigManager.shared.save()
 
         return true

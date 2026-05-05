@@ -105,6 +105,8 @@ class ConfigMigrator {
         // (accessory mode apps can't be activated or focused)
         NSApp.setActivationPolicy(.regular)
         NSApp.activate(ignoringOtherApps: true)
+        // Let the run loop process the activation so the dialog pops up immediately
+        RunLoop.current.run(until: Date())
 
         // Show migration choice dialog
         let alert = NSAlert()

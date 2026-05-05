@@ -102,6 +102,11 @@ class MainWindowController: NSWindowController, NSWindowDelegate {
         tabViewController.selectedTabViewItemIndex = tab.rawValue
     }
 
+    /// Returns the view controller for the given tab.
+    func viewController(for tab: Tab) -> NSViewController? {
+        return tabViewController.tabViewItems[tab.rawValue].viewController
+    }
+
     func showWindow(tab: Tab) {
         // If a sheet is attached (e.g. shortcut editor or test run),
         // just activate the window without switching tabs

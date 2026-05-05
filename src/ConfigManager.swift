@@ -111,6 +111,7 @@ struct AppConfig: Codable {
     var startOnLogin: Bool
     var showIconInStatusbar: Bool
     var setWorkdirWithCd: Bool
+    var skippedUpdate: String?
     var window: WindowConfig
     var shortcuts: [ShortcutConfig]
 
@@ -120,6 +121,7 @@ struct AppConfig: Codable {
          populateMenuWithActions: Bool = true, showHotkeysInMenu: Bool = true,
          checkForUpdates: Bool = true, startOnLogin: Bool = false,
          showIconInStatusbar: Bool = true, setWorkdirWithCd: Bool = true,
+         skippedUpdate: String? = nil,
          window: WindowConfig = .default, shortcuts: [ShortcutConfig] = []) {
         self.configVersion = configVersion
         self.shell = shell
@@ -129,6 +131,7 @@ struct AppConfig: Codable {
         self.startOnLogin = startOnLogin
         self.showIconInStatusbar = showIconInStatusbar
         self.setWorkdirWithCd = setWorkdirWithCd
+        self.skippedUpdate = skippedUpdate
         self.window = window
         self.shortcuts = shortcuts
     }
@@ -142,6 +145,7 @@ struct AppConfig: Codable {
         case startOnLogin = "start_on_login"
         case showIconInStatusbar = "show_icon_in_statusbar"
         case setWorkdirWithCd = "set_workdir_with_cd"
+        case skippedUpdate = "skipped_update"
         case window, shortcuts
     }
 }
@@ -155,6 +159,7 @@ class ConfigManager {
     static let appShortName = "iCHS"
     static let appTag = "ichs"
     static let configFileName = "\(appTag)-config.toml"
+    static let maxBackups = 30
 
     var config: AppConfig
 
@@ -176,6 +181,10 @@ class ConfigManager {
 
     var configFilePath: URL {
         return configDirectory.appendingPathComponent(Self.configFileName)
+    }
+
+    var backupsDirectory: URL {
+        return configDirectory.appendingPathComponent("backups")
     }
 
     // MARK: - Load / Save
@@ -239,6 +248,73 @@ class ConfigManager {
             try data.write(to: configFilePath, options: .atomic)
         } catch {
             print("Failed to save config: \(error)")
+        }
+    }
+
+    // MARK: - Backup
+
+    /// Create a timestamped backup of the current config file, then prune
+    /// old backups so only the last `maxBackups` are retained.
+    func backupConfig() {
+        let fileManager = FileManager.default
+
+        // Only back up if a config file already exists
+        guard fileManager.fileExists(atPath: configFilePath.path) else { return }
+
+        // Ensure backups directory exists
+        do {
+            try fileManager.createDirectory(at: backupsDirectory, withIntermediateDirectories: true)
+        } catch {
+            print("Failed to create backups directory: \(error)")
+            return
+        }
+
+        // Build timestamped file name: ichs-config-yyyymmdd-hhiiss.toml
+        let now = Date()
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyyMMdd-HHmmss"
+        let timestamp = formatter.string(from: now)
+        let backupFileName = "\(Self.appTag)-config-\(timestamp).toml"
+        let backupPath = backupsDirectory.appendingPathComponent(backupFileName)
+
+        // Skip if a backup with this timestamp already exists (e.g. multiple saves within the same second)
+        guard !fileManager.fileExists(atPath: backupPath.path) else { return }
+
+        do {
+            try fileManager.copyItem(at: configFilePath, to: backupPath)
+        } catch {
+            print("Failed to create config backup: \(error)")
+            return
+        }
+
+        pruneBackups()
+    }
+
+    /// Remove the oldest backups, keeping only the last `maxBackups`.
+    private func pruneBackups() {
+        let fileManager = FileManager.default
+
+        let backupFiles: [URL]
+        do {
+            backupFiles = try fileManager.contentsOfDirectory(at: backupsDirectory, includingPropertiesForKeys: [.creationDateKey])
+                .filter { $0.pathExtension == "toml" && $0.lastPathComponent.hasPrefix("\(Self.appTag)-config-") }
+        } catch {
+            print("Failed to list backup files: \(error)")
+            return
+        }
+
+        guard backupFiles.count > Self.maxBackups else { return }
+
+        // Sort by name descending (newest first, since names contain timestamps)
+        let sorted = backupFiles.sorted { $0.lastPathComponent > $1.lastPathComponent }
+        let toDelete = sorted.dropFirst(Self.maxBackups)
+
+        for file in toDelete {
+            do {
+                try fileManager.removeItem(at: file)
+            } catch {
+                print("Failed to delete old backup \(file.lastPathComponent): \(error)")
+            }
         }
     }
 }

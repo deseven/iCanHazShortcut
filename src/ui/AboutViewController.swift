@@ -50,9 +50,36 @@ private class LinkButton: NSButton {
     }
 }
 
+// MARK: - Action Link Button
+
+/// A borderless button that performs an action when clicked (no URL).
+private class ActionLinkButton: NSButton {
+    init(title: String, target: AnyObject?, action: Selector?) {
+        super.init(frame: .zero)
+        self.title = title
+        self.isBordered = false
+        self.font = NSFont.systemFont(ofSize: NSFont.systemFontSize, weight: .medium)
+        self.contentTintColor = .linkColor
+        self.alignment = .center
+        self.translatesAutoresizingMaskIntoConstraints = false
+        self.target = target
+        self.action = action
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    override func resetCursorRects() {
+        addCursorRect(bounds, cursor: .pointingHand)
+    }
+}
+
 // MARK: - About View Controller
 
 class AboutViewController: NSViewController {
+
+    private var checkUpdatesButton: ActionLinkButton!
 
     override func loadView() {
         view = NSView()
@@ -89,10 +116,17 @@ class AboutViewController: NSViewController {
         nameLabel.translatesAutoresizingMaskIntoConstraints = false
 
         let versionLabel = NSTextField(labelWithString: appVersion)
-        versionLabel.font = NSFont.systemFont(ofSize: 13, weight: .regular)
+        versionLabel.font = NSFont.systemFont(ofSize: 13, weight: .bold)
         versionLabel.textColor = .secondaryLabelColor
         versionLabel.alignment = .center
         versionLabel.translatesAutoresizingMaskIntoConstraints = false
+
+        // "check for updates" link
+        checkUpdatesButton = ActionLinkButton(
+            title: "check for updates",
+            target: self,
+            action: #selector(checkForUpdatesClicked)
+        )
 
         // "created by" section
         let createdByLabel = NSTextField(labelWithString: "created by")
@@ -139,7 +173,7 @@ class AboutViewController: NSViewController {
 
         // Add all subviews to left panel
         let leftSubviews: [NSView] = [
-            iconImageView, nameLabel, versionLabel,
+            iconImageView, nameLabel, versionLabel, checkUpdatesButton,
             createdByLabel, desevenLink,
             iconsByLabel, boxiconsLink, denborodaLabel, aescolasticoLabel,
             socialStack
@@ -168,8 +202,12 @@ class AboutViewController: NSViewController {
             versionLabel.topAnchor.constraint(equalTo: nameLabel.bottomAnchor, constant: tightGap),
             versionLabel.centerXAnchor.constraint(equalTo: leftPanel.centerXAnchor),
 
+            // Check for updates
+            checkUpdatesButton.topAnchor.constraint(equalTo: versionLabel.bottomAnchor, constant: tightGap),
+            checkUpdatesButton.centerXAnchor.constraint(equalTo: leftPanel.centerXAnchor),
+
             // "created by"
-            createdByLabel.topAnchor.constraint(equalTo: versionLabel.bottomAnchor, constant: sectionGap),
+            createdByLabel.topAnchor.constraint(equalTo: checkUpdatesButton.bottomAnchor, constant: sectionGap),
             createdByLabel.centerXAnchor.constraint(equalTo: leftPanel.centerXAnchor),
 
             // deseven link
@@ -268,6 +306,79 @@ class AboutViewController: NSViewController {
             scrollView.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -outerPad),
             scrollView.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -outerPad),
         ])
+    }
+
+    // MARK: - Update Check
+
+    @objc private func checkForUpdatesClicked() {
+        guard !UpdateManager.shared.isChecking else { return }
+
+        checkUpdatesButton.title = "checking for updates..."
+        checkUpdatesButton.isEnabled = false
+
+        UpdateManager.shared.checkForUpdates(manual: true) { [weak self] result in
+            guard let self else { return }
+            self.checkUpdatesButton.title = "check for updates"
+            self.checkUpdatesButton.isEnabled = true
+
+            switch result {
+            case .success(let updateInfo):
+                if let updateInfo = updateInfo {
+                    self.showUpdateDialog(updateInfo: updateInfo)
+                } else {
+                    let alert = NSAlert()
+                    alert.messageText = "You have the latest available version!"
+                    alert.alertStyle = .informational
+                    alert.addButton(withTitle: "OK")
+                    alert.beginSheetModal(for: self.view.window!)
+                }
+            case .failure(let error):
+                let alert = NSAlert()
+                alert.messageText = "Failed to check for updates"
+                alert.informativeText = error.localizedDescription
+                alert.alertStyle = .warning
+                alert.addButton(withTitle: "OK")
+                alert.beginSheetModal(for: self.view.window!)
+            }
+        }
+    }
+
+    func showUpdateDialog(updateInfo: UpdateInfo) {
+        guard let window = view.window else { return }
+
+        let dialogVC = UpdateDialogViewController(
+            updateInfo: updateInfo,
+            onUpdate: {
+                Task {
+                    do {
+                        try await UpdateManager.shared.downloadAndInstall(updateInfo)
+                    } catch {
+                        let alert = NSAlert()
+                        alert.messageText = "Update failed"
+                        alert.informativeText = error.localizedDescription
+                        alert.alertStyle = .warning
+                        alert.addButton(withTitle: "OK")
+                        alert.runModal()
+                    }
+                }
+            },
+            onSkip: {
+                ConfigManager.shared.config.skippedUpdate = updateInfo.version
+                ConfigManager.shared.save()
+            }
+        )
+
+        let sheetWindow = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 480, height: 340),
+            styleMask: [.titled, .closable],
+            backing: .buffered,
+            defer: false
+        )
+        sheetWindow.isReleasedWhenClosed = false
+        sheetWindow.contentViewController = dialogVC
+        sheetWindow.title = "Update Available"
+
+        window.beginSheet(sheetWindow)
     }
 
     // MARK: - Helpers

@@ -51,6 +51,37 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         if ConfigManager.shared.isFreshStart {
             showShortcutsTab()
         }
+
+        // Set up automatic update checking
+        setupUpdateChecker()
+    }
+
+    // MARK: - Update checking
+
+    private func setupUpdateChecker() {
+        UpdateManager.shared.onAutomaticUpdateFound = { [weak self] updateInfo in
+            self?.showUpdateDialog(updateInfo: updateInfo)
+        }
+
+        // Always start the timer; the checkForUpdates preference is evaluated
+        // at each check so toggling the checkbox takes effect immediately.
+        UpdateManager.shared.startPeriodicChecks()
+    }
+
+    func showUpdateDialog(updateInfo: UpdateInfo) {
+        // Switch to regular mode so the dock icon appears
+        NSApp.setActivationPolicy(.regular)
+        // Ensure the main window is visible on the About tab
+        let controller = ensureMainWindow(tab: .about)
+        controller.showWindow(tab: .about)
+        // Bounce the dock icon to notify the user without stealing focus
+        NSApp.requestUserAttention(.criticalRequest)
+
+        // Get the AboutViewController and present the update dialog as a sheet
+        guard let aboutVC = controller.viewController(for: .about) as? AboutViewController else {
+            return
+        }
+        aboutVC.showUpdateDialog(updateInfo: updateInfo)
     }
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
