@@ -212,6 +212,7 @@ class ConfigManager {
                 // Fresh start: no old config, no new config
                 isFreshStart = true
                 save()
+                Log.info("new config created")
             }
             return true
         }
@@ -221,6 +222,7 @@ class ConfigManager {
             let content = try String(contentsOf: configFilePath, encoding: .utf8)
             let decoder = TOMLDecoder()
             config = try decoder.decode(AppConfig.self, from: content)
+            Log.info("config loaded: \(config.shortcuts.count) shortcut(s)")
         } catch {
             print("Failed to load config: \(error)")
         }
@@ -246,6 +248,7 @@ class ConfigManager {
             encoder.outputFormatting = .sortedKeys
             let data = try encoder.encode(config)
             try data.write(to: configFilePath, options: .atomic)
+            Log.info("config saved")
         } catch {
             print("Failed to save config: \(error)")
         }
@@ -282,6 +285,7 @@ class ConfigManager {
 
         do {
             try fileManager.copyItem(at: configFilePath, to: backupPath)
+            Log.info("backup created: \(backupFileName)")
         } catch {
             print("Failed to create config backup: \(error)")
             return

@@ -494,6 +494,8 @@ class ShortcutEditorWindowController: NSWindowController, NSWindowDelegate {
         let shell = ConfigManager.shared.config.shell
         let workdir = workdirField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
 
+        Log.info("test run: command=\"\(commandText)\", shell=\"\(shell)\", workdir=\"\(workdir)\"")
+
         commandRunner.run(
             test: true,
             workingDirectory: workdir,

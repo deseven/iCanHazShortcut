@@ -170,6 +170,8 @@ class UpdateManager {
         guard !_isChecking else { return false }
         _isChecking = true
 
+        Log.info("checking for updates (\(manual ? "manual" : "automatic"))")
+
         Task {
             do {
                 let releases = try await fetchReleases()
@@ -184,6 +186,7 @@ class UpdateManager {
                     }
 
                 guard let release = latestRelease, let version = release.parsedVersion else {
+                    Log.info("no update available")
                     await MainActor.run {
                         _isChecking = false
                         completion(.success(nil))
@@ -192,6 +195,7 @@ class UpdateManager {
                 }
 
                 guard SemVer(version) > SemVer(currentVersion) else {
+                    Log.info("no update available (current: v\(currentVersion), latest: v\(version))")
                     await MainActor.run {
                         _isChecking = false
                         completion(.success(nil))
@@ -201,6 +205,7 @@ class UpdateManager {
 
                 // For automatic checks, respect the skipped version setting
                 if !manual && ConfigManager.shared.config.skippedUpdate == version {
+                    Log.info("update v\(version) skipped by user")
                     await MainActor.run {
                         _isChecking = false
                         completion(.success(nil))
@@ -216,11 +221,13 @@ class UpdateManager {
                     downloadURL: asset.browserDownloadURL
                 )
 
+                Log.info("update available: v\(version)")
                 await MainActor.run {
                     _isChecking = false
                     completion(.success(updateInfo))
                 }
             } catch {
+                Log.info("update check failed: \(error.localizedDescription)")
                 await MainActor.run {
                     _isChecking = false
                     completion(.failure(error))

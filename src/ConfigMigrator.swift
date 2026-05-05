@@ -146,6 +146,7 @@ class ConfigMigrator {
     private static func performMigration() -> Bool {
         do {
             let shortcutCount = try migrate()
+            Log.info("migration performed: \(shortcutCount) shortcut(s) migrated")
 
             // Ask about removing old config
             let cleanupAlert = NSAlert()

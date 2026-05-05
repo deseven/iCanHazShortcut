@@ -79,8 +79,10 @@ private func applyStateChange(at index: Int, enabled: Bool) {
 private func triggerShortcut(at index: Int) {
     let shortcuts = ConfigManager.shared.config.shortcuts
     guard index >= 0, index < shortcuts.count else { return }
+    let shortcut = shortcuts[index]
+    Log.info("applescript triggered: \(shortcut.action.isEmpty ? shortcut.command : shortcut.action)")
     guard let appDelegate = NSApp.delegate as? AppDelegate else { return }
-    appDelegate.runShortcut(shortcuts[index])
+    appDelegate.runShortcut(shortcut)
 }
 
 // MARK: - Action-based commands

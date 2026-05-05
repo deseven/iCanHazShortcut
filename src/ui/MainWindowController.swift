@@ -27,6 +27,8 @@ class MainWindowController: NSWindowController, NSWindowDelegate {
     private var shortcutsFrame: NSRect?
     // Track previous tab to know when we're leaving shortcuts
     private var previousTab: Tab = .shortcuts
+    // Debounce timer for window frame saves
+    private var windowFrameSaveTimer: Timer?
 
     init() {
         let windowConfig = ConfigManager.shared.config.window
@@ -220,7 +222,12 @@ class MainWindowController: NSWindowController, NSWindowDelegate {
             ConfigManager.shared.config.window.width = Int(frame.width)
             ConfigManager.shared.config.window.height = Int(frame.height)
         }
-        ConfigManager.shared.save()
+
+        // Debounce: only save to disk after 1 second of inactivity
+        windowFrameSaveTimer?.invalidate()
+        windowFrameSaveTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: false) { _ in
+            ConfigManager.shared.save()
+        }
     }
 }
 

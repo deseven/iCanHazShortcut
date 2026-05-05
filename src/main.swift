@@ -16,6 +16,7 @@ class ShortcutMenuItemTarget: NSObject {
     }
 
     @objc func execute() {
+        Log.info("menu item triggered: \(shortcut.action.isEmpty ? shortcut.command : shortcut.action)")
         appDelegate?.runShortcut(shortcut)
     }
 }
@@ -28,6 +29,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var mainWindowController: MainWindowController?
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
+        let version = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "unknown"
+        Log.info("started \(ConfigManager.appName) v\(version)")
+
         // Load configuration first thing; if migration was triggered but failed, exit
         if !ConfigManager.shared.load() {
             NSApplication.shared.terminate(nil)
@@ -353,6 +357,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             workdir = ""
         }
 
+        Log.info("shortcut triggered: \(shortcut.action.isEmpty ? shortcut.command : shortcut.action)")
+
         runner.run(
             test: false,
             workingDirectory: workdir,
@@ -398,6 +404,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc func quitClicked() {
         NSApplication.shared.terminate(nil)
+    }
+
+    func applicationWillTerminate(_ notification: Notification) {
+        Log.info("shutting down")
     }
 }
 
