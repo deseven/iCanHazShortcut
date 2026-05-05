@@ -101,7 +101,7 @@ struct WindowConfig: Codable {
 // MARK: - App Configuration
 
 struct AppConfig: Codable {
-    static let defaultShell = "/bin/zsh -l"
+    static let defaultShell = "/bin/bash -l"
 
     var configVersion: Int
     var shell: String

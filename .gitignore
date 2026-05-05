@@ -9,3 +9,4 @@ project.cfg
 .build/
 .swiftpm/
 Package.resolved
+.env
