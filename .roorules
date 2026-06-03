@@ -1,6 +1,6 @@
 This project is a macOS helper app that allows you to bind any command to any global hotkey. It uses swift 5 and a simple build system (`build.sh`). The UI uses direct Cocoa calls, no XIB.
 
-Since it's currently in development, refactor what is needed, depending on the task. Backwards compatibility is also not an issue whatsoever.
+The app has reached the stable state, new features need to be added maintaining backwards config compatibility.
 
 Modern UI stuff could be used since we're targeting macOS 13 or higher. Feel free to do research using one-liners with `swift -e` if needed.
 

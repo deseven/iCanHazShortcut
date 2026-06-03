@@ -160,7 +160,7 @@ class AboutViewController: NSViewController {
         let kofiButton = makeIconButton(imageName: "bx-kofi", url: "https://ko-fi.com/deseven")
         let githubButton = makeIconButton(imageName: "bx-github", url: "https://github.com/deseven/iCanHazShortcut")
         let redditButton = makeIconButton(imageName: "bx-reddit", url: "https://www.reddit.com/r/iCanHazApps")
-        let telegramButton = makeIconButton(imageName: "bx-telegram", url: "https://t.me/icanhazshortcut")
+        let telegramButton = makeIconButton(imageName: "bx-telegram", url: "https://t.me/icanhazapps")
 
         let socialStack = NSStackView()
         socialStack.orientation = .horizontal
