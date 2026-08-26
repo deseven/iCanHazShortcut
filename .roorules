@@ -6,4 +6,6 @@ Modern UI stuff could be used since we're targeting macOS 13 or higher. Feel fre
 
 Use `build.sh` to build the project and check for possible compilation errors (it's a wrapper around `swift build` that does everything to make a proper app bundle).
 
+`build.sh test` runs the unit test suite (Swift Testing, `tests/` directory, launched via `swift test`). After changing logic in `src/`, run `./build.sh test` to verify nothing broke.
+
 Don't overthink. Ask if something is unclear. If encountered a difficult problem first explain it and ask advice from the user.

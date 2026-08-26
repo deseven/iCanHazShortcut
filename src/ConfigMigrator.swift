@@ -78,8 +78,15 @@ class ConfigMigrator {
 
     // MARK: - Old config paths
 
+    /// Override for the old config file path. Used exclusively by unit tests
+    /// to point at a temp file; always `nil` in the app.
+    static var oldConfigPathOverride: URL?
+
     /// Path to the old config file: `~/.config/iCanHazShortcut/config.ini`
     static var oldConfigPath: URL {
+        if let override = oldConfigPathOverride {
+            return override
+        }
         let homeDir = FileManager.default.homeDirectoryForCurrentUser
         return homeDir.appendingPathComponent(".config/iCanHazShortcut/config.ini")
     }
@@ -300,9 +307,9 @@ class ConfigMigrator {
     ]
 
     /// Convert old text key names in a shortcut string to Unicode symbols.
-    /// Modifier symbols (⌘⇧⌥⌃) are preserved as-is. Text key names that have
-    /// no Unicode equivalent (F1–F20, Clear) are left unchanged.
-    private static func convertShortcutString(_ shortcut: String) -> String {
+    /// Modifier symbols (⌘⌥⌃) are preserved as-is. Text key names that have
+    /// no Unicode equivalent (F1-20, Clear) are left unchanged.
+    static func convertShortcutString(_ shortcut: String) -> String {
         var result = shortcut
         for (name, symbol) in keyNameToUnicode {
             result = result.replacingOccurrences(of: name, with: symbol)
@@ -312,7 +319,7 @@ class ConfigMigrator {
 
     /// Parse a boolean string value from the old INI format.
     /// Supports: yes/no, true/false, 1/0 (case-insensitive).
-    private static func parseBool(_ value: String?) -> Bool? {
+    static func parseBool(_ value: String?) -> Bool? {
         guard let value = value?.lowercased() else { return nil }
         switch value {
         case "yes", "true", "1":  return true

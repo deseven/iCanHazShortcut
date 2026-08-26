@@ -2,8 +2,6 @@ import Cocoa
 import Carbon
 import LaunchAtLogin
 
-let appName = ConfigManager.appName
-
 // MARK: - Menu item target for shortcut execution
 
 class ShortcutMenuItemTarget: NSObject {
@@ -194,7 +192,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(NSMenuItem(title: "About", action: #selector(showAboutTab), keyEquivalent: ""))
         menu.addItem(NSMenuItem.separator())
 
-        menu.addItem(NSMenuItem(title: "Quit \(appName)", action: #selector(quitClicked), keyEquivalent: "q"))
+        menu.addItem(NSMenuItem(title: "Quit \(ConfigManager.appName)", action: #selector(quitClicked), keyEquivalent: "q"))
     }
 
     private func createMenuItem(for shortcut: ShortcutConfig) -> NSMenuItem {
@@ -431,49 +429,57 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 }
 
-let app = NSApplication.shared
-let delegate = AppDelegate()
-app.delegate = delegate
-app.setActivationPolicy(.accessory)
+// MARK: - Entry point
 
-// Build a minimal main menu so standard editing shortcuts (Cmd-C/V/X/A/Z) work in text fields
-let mainMenu = NSMenu()
-let appMenuItem = NSMenuItem()
-mainMenu.addItem(appMenuItem)
-let appSubMenu = NSMenu()
-appSubMenu.addItem(NSMenuItem(title: "About \(appName)", action: #selector(AppDelegate.showAboutTab), keyEquivalent: ""))
-appSubMenu.addItem(NSMenuItem.separator())
-appSubMenu.addItem(NSMenuItem(title: "Preferences…", action: #selector(AppDelegate.showPreferencesTab), keyEquivalent: ","))
-appSubMenu.addItem(NSMenuItem.separator())
-appSubMenu.addItem(NSMenuItem(title: "Hide \(appName)", action: #selector(NSApplication.hide(_:)), keyEquivalent: "h"))
-let hideOthersItem = NSMenuItem(title: "Hide Others", action: #selector(NSApplication.hideOtherApplications(_:)), keyEquivalent: "h")
-hideOthersItem.keyEquivalentModifierMask = [.command, .option]
-appSubMenu.addItem(hideOthersItem)
-appSubMenu.addItem(NSMenuItem(title: "Show All", action: #selector(NSApplication.unhideAllApplications(_:)), keyEquivalent: ""))
-appSubMenu.addItem(NSMenuItem.separator())
-appSubMenu.addItem(NSMenuItem(title: "Quit \(appName)", action: #selector(AppDelegate.quitClicked), keyEquivalent: "q"))
-appMenuItem.submenu = appSubMenu
+@main
+enum AppEntry {
+    static func main() {
+        let appName = ConfigManager.appName
+        let app = NSApplication.shared
+        let delegate = AppDelegate()
+        app.delegate = delegate
+        app.setActivationPolicy(.accessory)
 
-let editMenuItem = NSMenuItem()
-mainMenu.addItem(editMenuItem)
-let editSubMenu = NSMenu(title: "Edit")
-editSubMenu.addItem(NSMenuItem(title: "Undo", action: Selector(("undo:")), keyEquivalent: "z"))
-editSubMenu.addItem(NSMenuItem(title: "Redo", action: Selector(("redo:")), keyEquivalent: "Z"))
-editSubMenu.addItem(NSMenuItem.separator())
-editSubMenu.addItem(NSMenuItem(title: "Cut", action: #selector(NSText.cut(_:)), keyEquivalent: "x"))
-editSubMenu.addItem(NSMenuItem(title: "Copy", action: #selector(NSText.copy(_:)), keyEquivalent: "c"))
-editSubMenu.addItem(NSMenuItem(title: "Paste", action: #selector(NSText.paste(_:)), keyEquivalent: "v"))
-editSubMenu.addItem(NSMenuItem(title: "Select All", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a"))
-editMenuItem.submenu = editSubMenu
+        // Build a minimal main menu so standard editing shortcuts (Cmd-C/V/X/A/Z) work in text fields
+        let mainMenu = NSMenu()
+        let appMenuItem = NSMenuItem()
+        mainMenu.addItem(appMenuItem)
+        let appSubMenu = NSMenu()
+        appSubMenu.addItem(NSMenuItem(title: "About \(appName)", action: #selector(AppDelegate.showAboutTab), keyEquivalent: ""))
+        appSubMenu.addItem(NSMenuItem.separator())
+        appSubMenu.addItem(NSMenuItem(title: "Preferences…", action: #selector(AppDelegate.showPreferencesTab), keyEquivalent: ","))
+        appSubMenu.addItem(NSMenuItem.separator())
+        appSubMenu.addItem(NSMenuItem(title: "Hide \(appName)", action: #selector(NSApplication.hide(_:)), keyEquivalent: "h"))
+        let hideOthersItem = NSMenuItem(title: "Hide Others", action: #selector(NSApplication.hideOtherApplications(_:)), keyEquivalent: "h")
+        hideOthersItem.keyEquivalentModifierMask = [.command, .option]
+        appSubMenu.addItem(hideOthersItem)
+        appSubMenu.addItem(NSMenuItem(title: "Show All", action: #selector(NSApplication.unhideAllApplications(_:)), keyEquivalent: ""))
+        appSubMenu.addItem(NSMenuItem.separator())
+        appSubMenu.addItem(NSMenuItem(title: "Quit \(appName)", action: #selector(AppDelegate.quitClicked), keyEquivalent: "q"))
+        appMenuItem.submenu = appSubMenu
 
-let windowMenuItem = NSMenuItem()
-mainMenu.addItem(windowMenuItem)
-let windowSubMenu = NSMenu(title: "Window")
-windowSubMenu.addItem(NSMenuItem(title: "Minimize", action: #selector(NSWindow.performMiniaturize(_:)), keyEquivalent: "m"))
-windowSubMenu.addItem(NSMenuItem(title: "Zoom", action: #selector(NSWindow.performZoom(_:)), keyEquivalent: ""))
-windowSubMenu.addItem(NSMenuItem(title: "Close", action: #selector(NSWindow.performClose(_:)), keyEquivalent: "w"))
-windowMenuItem.submenu = windowSubMenu
+        let editMenuItem = NSMenuItem()
+        mainMenu.addItem(editMenuItem)
+        let editSubMenu = NSMenu(title: "Edit")
+        editSubMenu.addItem(NSMenuItem(title: "Undo", action: Selector(("undo:")), keyEquivalent: "z"))
+        editSubMenu.addItem(NSMenuItem(title: "Redo", action: Selector(("redo:")), keyEquivalent: "Z"))
+        editSubMenu.addItem(NSMenuItem.separator())
+        editSubMenu.addItem(NSMenuItem(title: "Cut", action: #selector(NSText.cut(_:)), keyEquivalent: "x"))
+        editSubMenu.addItem(NSMenuItem(title: "Copy", action: #selector(NSText.copy(_:)), keyEquivalent: "c"))
+        editSubMenu.addItem(NSMenuItem(title: "Paste", action: #selector(NSText.paste(_:)), keyEquivalent: "v"))
+        editSubMenu.addItem(NSMenuItem(title: "Select All", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a"))
+        editMenuItem.submenu = editSubMenu
 
-app.mainMenu = mainMenu
+        let windowMenuItem = NSMenuItem()
+        mainMenu.addItem(windowMenuItem)
+        let windowSubMenu = NSMenu(title: "Window")
+        windowSubMenu.addItem(NSMenuItem(title: "Minimize", action: #selector(NSWindow.performMiniaturize(_:)), keyEquivalent: "m"))
+        windowSubMenu.addItem(NSMenuItem(title: "Zoom", action: #selector(NSWindow.performZoom(_:)), keyEquivalent: ""))
+        windowSubMenu.addItem(NSMenuItem(title: "Close", action: #selector(NSWindow.performClose(_:)), keyEquivalent: "w"))
+        windowMenuItem.submenu = windowSubMenu
 
-app.run()
+        app.mainMenu = mainMenu
+
+        app.run()
+    }
+}

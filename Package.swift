@@ -19,5 +19,13 @@ let package = Package(
             ],
             path: "src"
         ),
+        .testTarget(
+            name: "iCanHazShortcutTests",
+            dependencies: [
+                .target(name: "iCanHazShortcut"),
+                .product(name: "TOML", package: "swift-toml"),
+            ],
+            path: "tests"
+        ),
     ]
 )

@@ -47,6 +47,7 @@ tell application "iCanHazShortcut" to listJSON
 ```shell
 ./build.sh            # debug build (default)
 ./build.sh release    # release build with signing & notarization
+./build.sh test       # run the unit test suite only
 ```
 
 For code signing and notarization, copy `.env.example` to `.env` and fill in the required variables.

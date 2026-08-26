@@ -185,7 +185,14 @@ class ConfigManager {
 
     // MARK: - Path Helpers
 
+    /// Override for the config directory. Used exclusively by unit tests to
+    /// isolate the config in a temp directory; always `nil` in the app.
+    static var configDirectoryOverride: URL?
+
     var configDirectory: URL {
+        if let override = Self.configDirectoryOverride {
+            return override
+        }
         let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
         return appSupport.appendingPathComponent(Self.appName)
     }
