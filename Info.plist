@@ -15,7 +15,7 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleVersion</key>
-	<string>2.0.0</string>
+	<string>2.0.1</string>
 	<key>CFBundleName</key>
 	<string>iCanHazShortcut</string>
 	<key>CSResourcesFileMapped</key>
