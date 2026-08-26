@@ -160,7 +160,7 @@ class AboutViewController: NSViewController {
         let kofiButton = makeIconButton(imageName: "bx-kofi", url: "https://ko-fi.com/deseven")
         let githubButton = makeIconButton(imageName: "bx-github", url: "https://github.com/deseven/iCanHazShortcut")
         let redditButton = makeIconButton(imageName: "bx-reddit", url: "https://www.reddit.com/r/iCanHazApps")
-        let telegramButton = makeIconButton(imageName: "bx-telegram", url: "https://t.me/icanhazapps")
+        let discordButton = makeIconButton(imageName: "bx-discord", url: "https://discord.gg/YE9KyTXRPt")
 
         let socialStack = NSStackView()
         socialStack.orientation = .horizontal
@@ -169,7 +169,7 @@ class AboutViewController: NSViewController {
         socialStack.addView(kofiButton, in: .center)
         socialStack.addView(githubButton, in: .center)
         socialStack.addView(redditButton, in: .center)
-        socialStack.addView(telegramButton, in: .center)
+        socialStack.addView(discordButton, in: .center)
 
         // Add all subviews to left panel
         let leftSubviews: [NSView] = [
