@@ -230,42 +230,15 @@ class MainWindowController: NSWindowController, NSWindowDelegate {
         }
     }
 }
-
+ 
 // MARK: - Tab View Controller
-
+ 
 /// Custom NSTabViewController that notifies when the selected tab changes.
 private class TabViewController: NSTabViewController {
     var onTabChanged: (() -> Void)?
-
+ 
     override func tabView(_ tabView: NSTabView, didSelect tabViewItem: NSTabViewItem?) {
         super.tabView(tabView, didSelect: tabViewItem)
         onTabChanged?()
-    }
-}
-
-// MARK: - Placeholder View Controller
-
-/// Simple placeholder view controller for tabs that haven't been fully implemented yet.
-private class PlaceholderViewController: NSViewController {
-
-    init(label: String) {
-        super.init(nibName: nil, bundle: nil)
-
-        let textField = NSTextField(labelWithString: label)
-        textField.font = NSFont.systemFont(ofSize: 20, weight: .medium)
-        textField.textColor = .tertiaryLabelColor
-        textField.alignment = .center
-
-        view = NSView()
-        view.addSubview(textField)
-        textField.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            textField.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            textField.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-        ])
-    }
-
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
     }
 }
