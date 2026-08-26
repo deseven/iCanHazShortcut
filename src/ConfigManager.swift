@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 import TOML
 
@@ -161,6 +162,10 @@ class ConfigManager {
     static let configFileName = "\(appTag)-config.toml"
     static let maxBackups = 30
 
+    /// All config access and mutation is UI-driven (buttons, menus, AppleScript)
+    /// and runs on the main thread. Value semantics make concurrent reads safe,
+    /// but read-modify-write cycles from background threads could lose updates —
+    /// this invariant is enforced by `assertMainThread()` in mutation paths.
     var config: AppConfig
 
     /// Set to `true` when a fresh default config was written without any
@@ -170,6 +175,12 @@ class ConfigManager {
 
     private init() {
         config = AppConfig.default
+    }
+
+    /// Guard against accidental config mutation from background threads.
+    /// Fires in debug builds only.
+    private func assertMainThread() {
+        assert(Thread.isMainThread, "ConfigManager must only be used from the main thread")
     }
 
     // MARK: - Path Helpers
@@ -189,9 +200,18 @@ class ConfigManager {
 
     // MARK: - Load / Save
 
-    /// Load the configuration. Returns `false` if a migration was attempted
-    /// but failed — the caller should terminate the app in that case.
-    func load() -> Bool {
+    /// Load the configuration.
+    /// - Returns: `.ok` on success, `.migrationFailed` if a migration was
+    ///   attempted but failed (the caller should terminate the app), or
+    ///   `.loadFailed` if an existing config could not be read.
+    enum LoadResult {
+        case ok
+        case migrationFailed
+        case loadFailed
+    }
+
+    func load() -> LoadResult {
+        assertMainThread()
         let fileManager = FileManager.default
 
         // Ensure config directory exists
@@ -199,22 +219,22 @@ class ConfigManager {
             do {
                 try fileManager.createDirectory(at: configDirectory, withIntermediateDirectories: true)
             } catch {
-                print("Failed to create config directory: \(error)")
-                return true
+                Log.error("Failed to create config directory: \(error)")
+                return .loadFailed
             }
         }
 
         // If config file doesn't exist, check for old config to migrate
         if !fileManager.fileExists(atPath: configFilePath.path) {
             if ConfigMigrator.oldConfigExists() {
-                return ConfigMigrator.handleMigration()
+                return ConfigMigrator.handleMigration() ? .ok : .migrationFailed
             } else {
                 // Fresh start: no old config, no new config
                 isFreshStart = true
                 save()
                 Log.info("new config created")
             }
-            return true
+            return .ok
         }
 
         // Load existing config
@@ -224,13 +244,19 @@ class ConfigManager {
             config = try decoder.decode(AppConfig.self, from: content)
             Log.info("config loaded: \(config.shortcuts.count) shortcut(s)")
         } catch {
-            print("Failed to load config: \(error)")
+            Log.error("Failed to load config: \(error)")
+            return .loadFailed
         }
 
-        return true
+        return .ok
     }
 
-    func save() {
+    /// Save the configuration. Returns `false` if the config could not be written.
+    /// On failure the error is logged and — unless `showAlertOnError` is disabled —
+    /// presented to the user in a modal alert.
+    @discardableResult
+    func save(showAlertOnError: Bool = true) -> Bool {
+        assertMainThread()
         let fileManager = FileManager.default
 
         // Ensure config directory exists
@@ -238,8 +264,9 @@ class ConfigManager {
             do {
                 try fileManager.createDirectory(at: configDirectory, withIntermediateDirectories: true)
             } catch {
-                print("Failed to create config directory: \(error)")
-                return
+                Log.error("Failed to create config directory: \(error)")
+                showSaveErrorAlert(error, showAlertOnError: showAlertOnError)
+                return false
             }
         }
 
@@ -249,9 +276,23 @@ class ConfigManager {
             let data = try encoder.encode(config)
             try data.write(to: configFilePath, options: .atomic)
             Log.info("config saved")
+            return true
         } catch {
-            print("Failed to save config: \(error)")
+            Log.error("Failed to save config: \(error)")
+            showSaveErrorAlert(error, showAlertOnError: showAlertOnError)
+            return false
         }
+    }
+
+    /// Present a modal error dialog for a failed save.
+    private func showSaveErrorAlert(_ error: Error, showAlertOnError: Bool) {
+        guard showAlertOnError else { return }
+        let alert = NSAlert()
+        alert.messageText = "Failed to save config"
+        alert.informativeText = error.localizedDescription
+        alert.alertStyle = .critical
+        alert.addButton(withTitle: "OK")
+        alert.runModal()
     }
 
     // MARK: - Backup
@@ -259,6 +300,7 @@ class ConfigManager {
     /// Create a timestamped backup of the current config file, then prune
     /// old backups so only the last `maxBackups` are retained.
     func backupConfig() {
+        assertMainThread()
         let fileManager = FileManager.default
 
         // Only back up if a config file already exists
@@ -268,7 +310,7 @@ class ConfigManager {
         do {
             try fileManager.createDirectory(at: backupsDirectory, withIntermediateDirectories: true)
         } catch {
-            print("Failed to create backups directory: \(error)")
+            Log.error("Failed to create backups directory: \(error)")
             return
         }
 
@@ -287,7 +329,7 @@ class ConfigManager {
             try fileManager.copyItem(at: configFilePath, to: backupPath)
             Log.info("backup created: \(backupFileName)")
         } catch {
-            print("Failed to create config backup: \(error)")
+            Log.error("Failed to create config backup: \(error)")
             return
         }
 
@@ -303,7 +345,7 @@ class ConfigManager {
             backupFiles = try fileManager.contentsOfDirectory(at: backupsDirectory, includingPropertiesForKeys: [.creationDateKey])
                 .filter { $0.pathExtension == "toml" && $0.lastPathComponent.hasPrefix("\(Self.appTag)-config-") }
         } catch {
-            print("Failed to list backup files: \(error)")
+            Log.error("Failed to list backup files: \(error)")
             return
         }
 
@@ -317,7 +359,7 @@ class ConfigManager {
             do {
                 try fileManager.removeItem(at: file)
             } catch {
-                print("Failed to delete old backup \(file.lastPathComponent): \(error)")
+                Log.error("Failed to delete old backup \(file.lastPathComponent): \(error)")
             }
         }
     }

@@ -223,8 +223,11 @@ class ConfigMigrator {
         // Apply to ConfigManager
         ConfigManager.shared.config = config
 
-        // Save the new config
-        ConfigManager.shared.save()
+        // Save the new config. Disable the alert — migration shows its own
+        // error dialog on failure.
+        if !ConfigManager.shared.save(showAlertOnError: false) {
+            throw MigrationError.saveError("Config file was not written")
+        }
 
         // Verify the save was successful
         let fileManager = FileManager.default

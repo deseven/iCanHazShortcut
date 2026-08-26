@@ -26,6 +26,12 @@ class CommandRunner {
     /// The currently running process (only tracked in test mode).
     private var process: Process?
 
+    /// Dedicated serial queue for test-mode execution. Test processes are
+    /// blocked on via `waitUntilExit()`; using a private serial queue instead
+    /// of a global concurrent one avoids exhausting the shared QoS thread pool
+    /// when long-running commands are tested.
+    private let testQueue = DispatchQueue(label: "info.deseven.icanhazshortcut.command-runner")
+
     // MARK: - Public API
 
     /// Run a command asynchronously.
@@ -143,7 +149,10 @@ class CommandRunner {
 
         self.process = task
 
-        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+        // Synchronizing on the serial queue ensures each CommandRunner runs at
+        // most one test process at a time and never blocks a global pool thread
+        // for the (potentially long) process lifetime.
+        testQueue.async { [weak self] in
             do {
                 try task.run()
 
@@ -193,7 +202,11 @@ class CommandRunner {
                 }
             }
 
-            self?.process = nil
+            // Clear the tracked process on the main thread, matching where
+            // `process` is set and where `kill()` reads it.
+            DispatchQueue.main.async {
+                self?.process = nil
+            }
         }
     }
 

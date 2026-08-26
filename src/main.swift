@@ -33,8 +33,17 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         Log.info("started \(ConfigManager.appName) v\(version)")
 
         // Load configuration first thing; if migration was triggered but failed, exit
-        if !ConfigManager.shared.load() {
+        switch ConfigManager.shared.load() {
+        case .migrationFailed:
             NSApplication.shared.terminate(nil)
+        case .loadFailed:
+            // Config exists but couldn't be read — show where it is and quit.
+            // Continuing with defaults would risk overwriting the user's config
+            // on the next save.
+            showConfigLoadErrorDialog()
+            NSApplication.shared.terminate(nil)
+        case .ok:
+            break
         }
 
         // Sync launch-at-login state with config (handles migration & fresh start)
@@ -294,7 +303,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 }
                 registeredHotkeyIDs[index] = hotkeyID
             } catch {
-                print("Failed to register hotkey '\(shortcut.shortcut)': \(error)")
+                Log.error("Failed to register hotkey '\(shortcut.shortcut)': \(error)")
                 failedRegistrations.insert(index)
             }
         }
@@ -320,7 +329,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             failedRegistrations.remove(index)
             return true
         } catch {
-            print("Failed to register hotkey '\(shortcut.shortcut)': \(error)")
+            Log.error("Failed to register hotkey '\(shortcut.shortcut)': \(error)")
             failedRegistrations.insert(index)
             return false
         }
@@ -404,6 +413,17 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc func quitClicked() {
         NSApplication.shared.terminate(nil)
+    }
+
+    // MARK: - Config error handling
+
+    private func showConfigLoadErrorDialog() {
+        let alert = NSAlert()
+        alert.messageText = "Failed to load config"
+        alert.informativeText = "The config file at\n\(ConfigManager.shared.configFilePath.path)\ncould not be read. To not lose your data, the app will quit — please fix your config or remove it for a fresh start."
+        alert.alertStyle = .critical
+        alert.addButton(withTitle: "OK")
+        alert.runModal()
     }
 
     func applicationWillTerminate(_ notification: Notification) {
