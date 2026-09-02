@@ -104,7 +104,7 @@ class PreferencesViewController: NSViewController {
 
         // Custom shell text field
         customShellField.translatesAutoresizingMaskIntoConstraints = false
-        customShellField.placeholderString = "/usr/local/bin/fish -l"
+        customShellField.placeholderString = "for example, /opt/homebrew/bin/fish -l"
         customShellField.font = NSFont.systemFont(ofSize: NSFont.systemFontSize)
         customShellField.usesSingleLineMode = true
         customShellField.lineBreakMode = .byTruncatingTail
